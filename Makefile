@@ -29,7 +29,7 @@ exe: mainexe
 all: libUVLM mainexe
 
 clean:
-	rm -r -f ./Debug
+	rm -r -f ./lib/* ./bin/*
 
 
 ################################################################################
@@ -106,26 +106,26 @@ clean:
 #
 # -Wall: enables a bunch of warning messages
 #
-# -g{level}: Request debugging information and also use level to specify how much
+# -g{level}: Request libging information and also use level to specify how much
 # information.
 # Level 1 produces minimal information, enough for making backtraces in parts of
-# the program that you don't plan to debug. This includes descriptions of functions
+# the program that you don't plan to lib. This includes descriptions of functions
 # and external variables, but no information about local variables and no line numbers.
 # Level 3 includes extra information, such as all the macro definitions present
-# in the program. Some debuggers support macro expansion when you use `-g3'.
+# in the program. Some libgers support macro expansion when you use `-g3'.
 #
 #
 
-CPPCOMP= g++
+CPPCOMP= g++-5
 
 # include headers and external libraries
-INCLOPT= -I"$(HDIR)" -I"$(EIGENDIR)" -I"$(BOOSTDIR)"
+INCLOPT= -I"$(HDIR)" #-I"$(EIGENDIR)" -I"$(BOOSTDIR)"
 
 # Linking options
-LINKOPT= -fopenmp -sharedlibUVLM
+LINKOPT= -fopenmp -shared
 # Compiling options
 # try also -Ofast...
-COMPOPT= -O3 -g3 -Wall -fmessage-length=0 -fopenmp -fPIC -MMD -MP
+COMPOPT= -O3 -g3 -Wall -fmessage-length=0 -fopenmp -fPIC -lm -std=gnu++14
 
 
 ################################################################################
@@ -135,18 +135,19 @@ COMPOPT= -O3 -g3 -Wall -fmessage-length=0 -fopenmp -fPIC -MMD -MP
 # - when inputting folder names, avoid spaces at the end of any assignment
 
 # Building directories
-BUILDDIR=./Debug
-OBJDIR=$(BUILDDIR)/lib
+BINDIR=./bin
+LIBDIR=./lib
+OBJDIR=$(LIBDIR)/obj
 
 # Headers
 HDIR=./include
 
 # External Libraries
-EIGENDIR=/home/sm6110/git/eigen-eigen-3.2.5
-BOOSTDIR=/home/sm6110/git/boost_1_58_0
+# EIGENDIR=/home/sm6110/git/eigen-eigen-3.2.5
+# BOOSTDIR=/home/sm6110/git/boost_1_58_0
 
 # Source Folder
-SRCDIR=./lib
+SRCDIR=./src
 
 
 ################################################################################
@@ -175,20 +176,22 @@ OBJS=\
 # $? names of all prerequisites that are newer than the target, separated by spaces.
 
 #--------------------------------------------------------------- dynamic Library
+all: mainexe
+
 libUVLM: buildfolder $(OBJS)
-	@echo 'Building target: ./Debug/main.o'
-	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c -o ./Debug/main.o ./main/main.cpp
-	@echo 'Finished building target: ./Debug/main.o'
-	@echo 'Building target: $(BUILDDIR)/libUVLM.so'
-	$(CPPCOMP) $(LINKOPT) -o $(BUILDDIR)/libUVLM.so ./Debug/main.o $(OBJS)
+	@echo 'Building target: $(LIBDIR)/libUVLM.so'
+	$(CPPCOMP) $(LINKOPT) -o $(LIBDIR)/libUVLM.so $(OBJS)
 	@echo 'Finished building target: $(BUILDDIR)/libUVLM.so'
+	@echo 'Building target: ./bin/main.o'
+	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c -o ./bin/main.o ./src/main.cpp
+	@echo 'Finished building target: ./bin/main.o'
 
-#	g++ -fopenmp -shared  -o ./Debug/libUVLM.so ./Debug/main.o  ./Debug/lib/PanelTools.o ./Debug/lib/VLM.o ./Debug/lib/aicMats.o ./Debug/lib/datatypesx.o ./Debug/lib/indices.o ./Debug/lib/triads.o ./Debug/lib/vorticity.o ./Debug/lib/wrapper.o
-#	$(CPPCOMP)               $(LINKOPT) -o $(BUILDDIR)/libUVLM.so $(OBJS) ./Debug/main.o
+#	g++ -fopenmp -shared  -o ./lib/libUVLM.so ./lib/main.o  ./lib/lib/PanelTools.o ./lib/lib/VLM.o ./lib/lib/aicMats.o ./lib/lib/datatypesx.o ./lib/lib/indices.o ./lib/lib/triads.o ./lib/lib/vorticity.o ./lib/lib/wrapper.o
+#	$(CPPCOMP)               $(LINKOPT) -o $(BUILDDIR)/libUVLM.so $(OBJS) ./lib/main.o
 
-mainexe: buildfolder  $(OBJS)
-	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c -o ./Debug/main.o ./main/main.cpp
-	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -o $(BUILDDIR)/UVLM.exe ./Debug/main.o $(OBJS)
+mainexe: buildfolder libUVLM $(OBJS)
+	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c -o ./lib/main.o ./src/main.cpp
+	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -o $(BINDIR)/main ./lib/main.o $(OBJS)
 
 
 ################################################################################
@@ -199,12 +202,13 @@ mainexe: buildfolder  $(OBJS)
 	#$(CPPCOMP) $(INCLOPT) $(COMPOPT) -MF"$(OBJDIR)/$(%).d" -MT"$(OBJDIR)/$(%%).d" -o $@ $<
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@echo 'Building target: $@'
-	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c -o $@ $<
+	$(CPPCOMP) $(INCLOPT) $(COMPOPT) -c $< -o $@
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 buildfolder:
-	mkdir -p Debug
-	mkdir -p Debug/lib
+	mkdir -p $(LIBDIR)
+	mkdir -p $(BINDIR)
+	mkdir -p $(OBJDIR)
 #	@echo 'Source folder $(SRCDIR) contains:'
 #	ls $(SRCDIR)
