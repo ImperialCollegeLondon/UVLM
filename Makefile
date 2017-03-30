@@ -121,11 +121,13 @@ CPPCOMP= g++-5
 # include headers and external libraries
 INCLOPT= -I"$(HDIR)" #-I"$(EIGENDIR)" -I"$(BOOSTDIR)"
 
+FOMP=
+
 # Linking options
-LINKOPT= -fopenmp -shared
+LINKOPT= $(FOMP) -shared
 # Compiling options
 # try also -Ofast...
-COMPOPT= -O3 -g3 -Wall -fmessage-length=0 -fopenmp -fPIC -lm -std=gnu++14
+COMPOPT= -O0 -g3 -Wall -fmessage-length=0 $(FOMP) -fPIC -lm -std=gnu++14
 
 
 ################################################################################
