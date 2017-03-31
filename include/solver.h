@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+// DECLARATIONS
 namespace UVLM
 {
     namespace Solver
@@ -35,6 +36,7 @@ namespace UVLM
     }
 }
 
+// SOURCE CODE
 /*-----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------*/
@@ -108,5 +110,12 @@ void UVLM::Solver::solve
     UVLM::Types::allocate_VecVecMat(uinc, zeta_col);
     UVLM::Triads::VecVecMatrix_difference(uext_col, zeta_dot_col, uinc);
 
+    // contribution of the velocity of the deforming wake to the speed
+    // of the wake collocation points
+    // (only for unsteady simulations, even if the ake is prescribed)
+    if (!VMOPTS.Steady)
+    {
+        
+    }
 
 }
