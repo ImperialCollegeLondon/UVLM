@@ -30,8 +30,6 @@ namespace UVLM
 
 
         struct VMopts {
-        	unsigned int M;
-        	unsigned int N;
         	bool ImageMethod;
         	unsigned int Mstar;
         	bool Steady;
@@ -42,6 +40,56 @@ namespace UVLM
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
         };
+
+        template <typename t_mat>
+        inline void generate_dimensions
+        (
+            const t_mat& mat,
+            UVLM::Types::VecDimensions& dimensions
+        )
+        {
+            dimensions.resize(mat.size());
+            for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
+            {
+                dimensions[i_surf] = UVLM::Types::IntPair
+                                                    (
+                                                        mat[i_surf][0].rows(),
+                                                        mat[i_surf][0].cols()
+                                                    );
+            }
+        }
+
+
+        inline void allocate_VecMat
+        (
+            UVLM::Types::VecMatrixX& mat,
+            const UVLM::Types::VecDimensions& dimensions,
+            const int& correction = 0,
+            const UVLM::Types::Real& initial_value = 0.0
+        )
+        {
+            unsigned int n_surf = dimensions.size();
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                int M = dimensions[i_surf].first + correction;
+                int N = dimensions[i_surf].second + correction;
+                mat.push_back(UVLM::Types::MatrixX());
+                if (initial_value == 0.0)
+                {
+                    mat[i_surf].setZero(M,N);
+                } else if (initial_value == 1.0)
+                {
+                    mat[i_surf].setOnes(M,N);
+                } else
+                {
+                    mat[i_surf].setConstant(M,N,initial_value);
+                }
+
+
+            }
+        }
+
+
 
         inline void allocate_VecVecMat
         (
@@ -113,3 +161,5 @@ namespace UVLM
         }
     }
 }
+
+#include "typeutils.h"

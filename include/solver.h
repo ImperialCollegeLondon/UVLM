@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "mapping.h"
 #include "geometry.h"
+#include "biotsavart.h"
 
 #include <iostream>
 
@@ -16,13 +17,17 @@ namespace UVLM
         template <typename t_zeta,
                   typename t_zeta_dot,
                   typename t_uext,
-                  typename t_zeta_star>
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star>
         void solve
         (
             t_zeta& zeta,
             t_zeta_dot& zeta_dot,
             t_uext& uext,
             t_zeta_star& zeta_star,
+            t_gamma& gamma,
+            t_gamma_star& gamma_star,
             UVLM::Types::VMopts& VMOPTS
         );
 
@@ -78,13 +83,17 @@ void UVLM::Solver::generate_colocationMesh
 template <typename t_zeta,
           typename t_zeta_dot,
           typename t_uext,
-          typename t_zeta_star>
+          typename t_zeta_star,
+          typename t_gamma,
+          typename t_gamma_star>
 void UVLM::Solver::solve
 (
     t_zeta& zeta,
     t_zeta_dot& zeta_dot,
     t_uext& uext,
     t_zeta_star& zeta_star,
+    t_gamma& gamma,
+    t_gamma_star& gamma_star,
     UVLM::Types::VMopts& VMOPTS
 )
 {
@@ -94,6 +103,7 @@ void UVLM::Solver::solve
     UVLM::Types::VecVecMatrixX zeta_dot_col;
     UVLM::Types::VecVecMatrixX uext_col;
     UVLM::Types::VecVecMatrixX zeta_star_col;
+
     //  Allocation and mapping
     UVLM::Solver::generate_colocationMesh(zeta, zeta_col);
     UVLM::Solver::generate_colocationMesh(zeta_dot, zeta_dot_col);
@@ -107,15 +117,21 @@ void UVLM::Solver::solve
 
     // normal wash
     UVLM::Types::VecVecMatrixX uinc;
-    UVLM::Types::allocate_VecVecMat(uinc, zeta_col);
-    UVLM::Triads::VecVecMatrix_difference(uext_col, zeta_dot_col, uinc);
+    uinc = uext_col - zeta_dot_col;
 
-    // contribution of the velocity of the deforming wake to the speed
-    // of the wake collocation points
-    // (only for unsteady simulations, even if the ake is prescribed)
+    // contribution of the wake to the incident velocity at the bound panels
     if (!VMOPTS.Steady)
     {
-        
+        UVLM::Types::VecVecMatrixX uout;
+        UVLM::Types::allocate_VecVecMat(uout, zeta_col);
+        UVLM::BiotSavart::multimultisurface
+        (
+            zeta_star,
+            gamma_star,
+            zeta_col,
+            uout
+        );
+        uinc += uout;
     }
 
 }

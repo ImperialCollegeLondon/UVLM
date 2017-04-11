@@ -1,6 +1,8 @@
 #pragma once
 #include "types.h"
 
+#include <iostream>
+
 namespace UVLM
 {
     namespace Triads
@@ -32,7 +34,24 @@ namespace UVLM
             {
                 for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
                 {
-                    mat_out[i_surf][i_dim] = mat1[i_surf][i_dim] - mat2[i_surf][i_dim];
+                    mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] - mat2[i_surf][i_dim];
+                }
+            }
+        }
+
+
+        template <typename t_1,
+                  typename t_2,
+                  typename t_out>
+        void VecVecMatrix_addition(const t_1& mat1,
+                                    const t_2& mat2,
+                                    t_out& mat_out)
+        {
+            for (unsigned int i_surf=0; i_surf<mat1.size(); ++i_surf)
+            {
+                for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
+                {
+                    mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] + mat2[i_surf][i_dim];
                 }
             }
         }

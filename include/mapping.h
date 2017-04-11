@@ -7,6 +7,27 @@ namespace UVLM
 {
     namespace Mapping
     {
+        // this matrix contains the mapping from the corner index to the
+        // matrix indices.
+        // It contains:
+        // vortex_indices = [0, 0
+        //                   0, 1,
+        //                   1, 1,
+        //                   1, 0]
+        // With the numbering as:
+        //          M -->
+        //      0---------3
+        //   N  |         |
+        //   |  |         |
+        //   V  1---------2
+        // so, the first element (0), has the coordinate (for example)
+        // indices of: vortex_indices(0), that is, 0 and 0
+        Eigen::Matrix<unsigned int, 4, 2>
+                vortex_indices((Eigen::Matrix<unsigned int, 4, 2>()
+                                        << 0,0,0,1,1,1,1,0).finished());
+
+
+
         template <typename t_in, typename t_out>
         void BilinearMapping(t_in& in,
                              t_out& out)
