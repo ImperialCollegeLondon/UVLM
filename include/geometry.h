@@ -24,7 +24,7 @@ namespace UVLM
                                    y(1,0) - y(0,1),
                                    z(1,0) - z(0,1));
 
-            normal = A.cross(B);
+            normal = B.cross(A);
             normal.normalize();
         }
 
@@ -77,6 +77,6 @@ namespace UVLM
 
 
 
-        
+
     }
 }

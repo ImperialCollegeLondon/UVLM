@@ -38,6 +38,16 @@ namespace UVLM
             t_in& vortex_mesh,
             t_out& collocation_mesh
         );
+
+        template <typename t_uinc,
+                  typename t_normal>
+        void generate_RHS
+        (
+            const t_uinc& uinc,
+            const t_normal& normal,
+            UVLM::Types::VectorX& rhs,
+            unsigned int& Ktotal
+        );
     }
 }
 
@@ -134,4 +144,61 @@ void UVLM::Solver::solve
         uinc += uout;
     }
 
+    // RHS generation
+    UVLM::Types::VectorX rhs;
+    unsigned int Ktotal;
+    UVLM::Solver::generate_RHS(uinc, normal, rhs, Ktotal);
+
+
+}
+
+
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
+template <typename t_uinc,
+          typename t_normal>
+void UVLM::Solver::generate_RHS
+(
+    const t_uinc& uinc,
+    const t_normal& normal,
+    UVLM::Types::VectorX& rhs,
+    unsigned int& Ktotal
+)
+{
+    unsigned int n_surf = uinc.size();
+
+    // size of rhs
+    unsigned int ii = 0;
+    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        unsigned int M = uinc[i_surf][0].rows();
+        unsigned int N = uinc[i_surf][0].cols();
+
+        ii += M*N;
+    }
+    Ktotal = ii;
+    rhs.setZero(Ktotal);
+
+    // filling up RHS
+    ii = -1;
+    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        unsigned int M = uinc[i_surf][0].rows();
+        unsigned int N = uinc[i_surf][0].cols();
+
+        for (unsigned int i=0; i<M; ++i)
+        {
+            for (unsigned int j=0; j<N; ++j)
+            {
+                // dot product of uinc and normal
+                rhs(++ii) =
+                (
+                    uinc[i_surf][0](i,j) + normal[i_surf][0](i,j) +
+                    uinc[i_surf][1](i,j) + normal[i_surf][1](i,j) +
+                    uinc[i_surf][2](i,j) + normal[i_surf][2](i,j)
+                );
+            }
+        }
+    }
 }
