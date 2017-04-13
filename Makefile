@@ -6,9 +6,8 @@ ifeq ($(UNAME), Darwin)
 EXT = dylib
 endif
 default:
-	$(MAKE) -C src/
 	mkdir -p lib
-	mv src/lib/*.$(EXT) lib/
+	$(MAKE) -C src/
 
 clean:
 	cd src; make clean

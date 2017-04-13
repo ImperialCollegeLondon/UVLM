@@ -12,7 +12,7 @@ CPP = g++-5
 endif
 LINKER = ar cr
 object_dir = obj/
-lib_dir = lib/
+lib_dir = ../lib/
 
 
 ifeq ($(UNAME), Linux)
@@ -35,7 +35,6 @@ default: $(target)
 
 $(target): $(objects)
 	$(CPP) -o $(target) $(addprefix $(object_dir), $(objects)) -I$(include_dir) $(LINKER_FLAGS)
-	mkdir -p $(lib_dir)
 	mv $(target) $(lib_dir)$(target)
 
 %.o: %.cpp
