@@ -19,10 +19,6 @@ namespace UVLM
             UVLM::Types::Vector3 A(x(1,1) - x(0,0),
                                    y(1,1) - y(0,0),
                                    z(1,1) - z(0,0));
-            std::cout << "x=" << x << std::endl;
-            std::cout << "y=" << y << std::endl;
-            std::cout << "z=" << z << std::endl;
-            std::cout << "=" << std::endl;
 
             UVLM::Types::Vector3 B(x(1,0) - x(0,1),
                                    y(1,0) - y(0,1),
