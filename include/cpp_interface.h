@@ -1,6 +1,7 @@
 #include "EigenInclude.h"
 #include "constants.h"
 #include "types.h"
+#include "geometry.h"
 
 #include <iostream>
 
@@ -11,19 +12,21 @@ namespace UVLM
     {
         void map_VecVecMat(const UVLM::Types::VecDimensions& dimensions,
                            double** in,
-                           UVLM::Types::VecVecMapX& map)
+                           UVLM::Types::VecVecMapX& map,
+                           const int& correction=0,
+                           const int& n_dim=UVLM::Constants::NDIM)
         {
             const unsigned int n_surf = dimensions.size();
             map.resize(n_surf);
-            unsigned int counter = -1;
+            unsigned int counter = 0;
             for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
             {
-                // map[i_surf].resize(UVLM::Constants::NDIM);
-                for (unsigned int i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (unsigned int i_dim=0; i_dim<n_dim; ++i_dim)
                 {
-                    map[i_surf].push_back(UVLM::Types::MapMatrixX (in[++counter],
-                                                                   dimensions[i_surf].first,
-                                                                   dimensions[i_surf].second));
+                    map[i_surf].push_back(UVLM::Types::MapMatrixX (in[counter],
+                                                                   dimensions[i_surf].first + correction,
+                                                                   dimensions[i_surf].second + correction));
+                    counter++;
                 }
             }
         }

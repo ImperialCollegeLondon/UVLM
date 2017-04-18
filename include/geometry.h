@@ -19,6 +19,10 @@ namespace UVLM
             UVLM::Types::Vector3 A(x(1,1) - x(0,0),
                                    y(1,1) - y(0,0),
                                    z(1,1) - z(0,0));
+            std::cout << "x=" << x << std::endl;
+            std::cout << "y=" << y << std::endl;
+            std::cout << "z=" << z << std::endl;
+            std::cout << "=" << std::endl;
 
             UVLM::Types::Vector3 B(x(1,0) - x(0,1),
                                    y(1,0) - y(0,1),
@@ -53,8 +57,8 @@ namespace UVLM
             {
                 for (unsigned int i_dim=0; i_dim<zeta[i_surf].size(); i_dim++)
                 {
-                    const unsigned int M = normal[i_surf][i_dim].rows();
-                    const unsigned int N = normal[i_surf][i_dim].cols();
+                    const unsigned int M = zeta[i_surf][i_dim].rows() - 1;
+                    const unsigned int N = zeta[i_surf][i_dim].cols() - 1;
 
                     for (unsigned int iM=0; iM<M; ++iM)
                     {
@@ -74,9 +78,5 @@ namespace UVLM
                 }
             }
         }
-
-
-
-
     }
 }

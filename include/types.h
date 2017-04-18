@@ -13,16 +13,19 @@ namespace UVLM
 
         // Eigen shortcuts
         // Matrices
-        typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic> MatrixX;
+        typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixX;
         typedef Eigen::Map<MatrixX> MapMatrixX;
         typedef Eigen::Map<const MatrixX> cMapMatrixX;
         typedef std::vector<MatrixX> VecMatrixX;
         typedef std::vector<VecMatrixX> VecVecMatrixX;
+        typedef std::vector<MapMatrixX> VecMapX;
+        typedef std::vector<VecMapX> VecVecMapX;
 
         typedef Eigen::DenseBase<Real> DenseBase;
 
         // Vectors
         typedef Eigen::Matrix<Real, 3, 1> Vector3;
+        typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
 
         // std custom containers
         typedef std::pair<unsigned int, unsigned int> IntPair;

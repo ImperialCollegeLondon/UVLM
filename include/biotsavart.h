@@ -258,13 +258,12 @@ void UVLM::BiotSavart::multimultisurface
 {
     unsigned int n_surf = target_surface.size();
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
         UVLM::BiotSavart::multisurface(zeta,
                                        gamma,
                                        target_surface[i_surf],
                                        uout[i_surf]);
-
     }
 }

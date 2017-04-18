@@ -149,6 +149,12 @@ void UVLM::Solver::solve
     unsigned int Ktotal;
     UVLM::Solver::generate_RHS(uinc, normal, rhs, Ktotal);
 
+    // AIC generation
+    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Solver::generate_AIC()
+
+
+
 
 }
 
