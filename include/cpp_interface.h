@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#define DLLEXPORT extern "C"
 
 namespace UVLM
 {
@@ -31,7 +32,7 @@ namespace UVLM
             }
         }
 
-        void transform_dimensions(int& n_surf,
+        void transform_dimensions(unsigned int& n_surf,
                                   int** dimensions_in,
                                   UVLM::Types::VecDimensions& dimensions)
         {

@@ -21,8 +21,8 @@ int main()
     int Mstar = VMOPTS.Mstar;
     int n_surf = VMOPTS.NumSurfaces;
 
-    unsigned int M = 200;
-    unsigned int N = 300;
+    unsigned int M = 2;
+    unsigned int N = 3;
 
     UVLM::Types::VecDimensions dimensions;
     dimensions.resize(n_surf);
@@ -101,7 +101,7 @@ int main()
     // std::cout << zeta[i_surf][0] << std::endl;
 
     temp1.setLinSpaced(dimensions[1].first + 1, 1.0, 1.0);
-    temp2.setLinSpaced(dimensions[1].second + 1, 0.0, -2.0);
+    temp2.setLinSpaced(dimensions[1].second + 1, -2.0, 0.0);
     zeta[i_surf][1].noalias() = temp1*temp2.transpose();
     // std::cout << zeta[i_surf][1] << std::endl;
 
@@ -111,7 +111,7 @@ int main()
     // std::cout << zeta_star[i_surf][1] << std::endl;
 
     temp1.setLinSpaced(dimensions_star[1].first + 1, 1.0, 1.0);
-    temp2.setLinSpaced(dimensions_star[1].second + 1, 0.0, -2.0);
+    temp2.setLinSpaced(dimensions_star[1].second + 1, -2.0, 0.0);
     zeta_star[i_surf][1].noalias() = temp1*temp2.transpose();
     // std::cout << zeta_star[i_surf][1] << std::endl;
 
