@@ -6,6 +6,7 @@
 #include "mapping.h"
 #include "geometry.h"
 #include "biotsavart.h"
+#include "matrix.h"
 
 #include <iostream>
 
@@ -28,7 +29,7 @@ namespace UVLM
             t_zeta_star& zeta_star,
             t_gamma& gamma,
             t_gamma_star& gamma_star,
-            UVLM::Types::VMopts& VMOPTS
+            UVLM::Types::VMopts& options
         );
 
         template <typename t_in,
@@ -104,7 +105,7 @@ void UVLM::Solver::solve
     t_zeta_star& zeta_star,
     t_gamma& gamma,
     t_gamma_star& gamma_star,
-    UVLM::Types::VMopts& VMOPTS
+    UVLM::Types::VMopts& options
 )
 {
     // Generate collocation points info
@@ -120,91 +121,27 @@ void UVLM::Solver::solve
     UVLM::Solver::generate_colocationMesh(uext, uext_col);
     UVLM::Solver::generate_colocationMesh(zeta_star, zeta_star_col);
 
-    // panel normal
+    // panel normals
     UVLM::Types::VecVecMatrixX normal;
     UVLM::Types::allocate_VecVecMat(normal, zeta_col);
     UVLM::Geometry::generate_surfaceNormal(zeta, normal);
 
-    // normal wash
-    UVLM::Types::VecVecMatrixX uinc;
-    uinc = uext_col - zeta_dot_col;
-
-    // contribution of the wake to the incident velocity at the bound panels
-    if (!VMOPTS.Steady)
-    {
-        UVLM::Types::VecVecMatrixX uout;
-        UVLM::Types::allocate_VecVecMat(uout, zeta_col);
-        UVLM::BiotSavart::multimultisurface
-        (
-            zeta_star,
-            gamma_star,
-            zeta_col,
-            uout
-        );
-        uinc += uout;
-    }
-
     // RHS generation
     UVLM::Types::VectorX rhs;
     unsigned int Ktotal;
-    UVLM::Solver::generate_RHS(uinc, normal, rhs, Ktotal);
+    UVLM::Matrix::RHS(zeta_col,
+                      zeta_star,
+                      uext_col,
+                      zeta_dot_col,
+                      options,
+                      rhs,
+                      Ktotal);
 
     // AIC generation
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Solver::generate_AIC()
+    UVLM::Matrix::AIC()
 
 
 
 
-}
-
-
-/*-----------------------------------------------------------------------------
-
------------------------------------------------------------------------------*/
-template <typename t_uinc,
-          typename t_normal>
-void UVLM::Solver::generate_RHS
-(
-    const t_uinc& uinc,
-    const t_normal& normal,
-    UVLM::Types::VectorX& rhs,
-    unsigned int& Ktotal
-)
-{
-    unsigned int n_surf = uinc.size();
-
-    // size of rhs
-    unsigned int ii = 0;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        unsigned int M = uinc[i_surf][0].rows();
-        unsigned int N = uinc[i_surf][0].cols();
-
-        ii += M*N;
-    }
-    Ktotal = ii;
-    rhs.setZero(Ktotal);
-
-    // filling up RHS
-    ii = -1;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        unsigned int M = uinc[i_surf][0].rows();
-        unsigned int N = uinc[i_surf][0].cols();
-
-        for (unsigned int i=0; i<M; ++i)
-        {
-            for (unsigned int j=0; j<N; ++j)
-            {
-                // dot product of uinc and normal
-                rhs(++ii) =
-                (
-                    uinc[i_surf][0](i,j) + normal[i_surf][0](i,j) +
-                    uinc[i_surf][1](i,j) + normal[i_surf][1](i,j) +
-                    uinc[i_surf][2](i,j) + normal[i_surf][2](i,j)
-                );
-            }
-        }
-    }
 }
