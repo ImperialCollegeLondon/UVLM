@@ -16,6 +16,15 @@ namespace UVLM
                           UVLM::Types::Vector3& normal
                           )
         {
+            // correction for left-oriented panels
+            UVLM::Types::Vector3 v_01(x(0,1) - x(0,0),
+                                      y(0,1) - y(0,0),
+                                      z(0,1) - z(0,0));
+            UVLM::Types::Vector3 v_03(x(1,0) - x(0,0),
+                                      y(1,0) - y(0,0),
+                                      z(1,0) - z(0,0));
+            UVLM::Types::Vector3 diff = v_01.cross(v_03);
+
             UVLM::Types::Vector3 A(x(1,1) - x(0,0),
                                    y(1,1) - y(0,0),
                                    z(1,1) - z(0,0));
@@ -24,7 +33,13 @@ namespace UVLM
                                    y(1,0) - y(0,1),
                                    z(1,0) - z(0,1));
 
-            normal = B.cross(A);
+            if (diff(2) < 0.0)
+            {
+                normal = B.cross(A);
+            } else
+            {
+                normal = A.cross(B);
+            }
             normal.normalize();
         }
 
