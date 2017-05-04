@@ -15,11 +15,11 @@ namespace UVLM
         //                   1, 1,
         //                   1, 0]
         // With the numbering as:
-        //          M -->
-        //      0---------3
-        //   N  |         |
+        //          N -->
+        //      0---------1
+        //   M  |         |
         //   |  |         |
-        //   V  1---------2
+        //   V  3---------2
         // so, the first element (0), has the coordinate (for example)
         // indices of: vortex_indices(0), that is, 0 and 0
         Eigen::Matrix<unsigned int, 4, 2>
