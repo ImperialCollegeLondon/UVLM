@@ -1,6 +1,6 @@
-FLAGS = -g3 -fPIC -O0 -Wall -Wextra -std=c++14 -I/usr/local/eigen/
-# FFLAGS = -fPIC -O3 -funroll-loops -ftree-parallelize-loops=4 -march=native -fomit-frame-pointer -I/usr/include -Wunused
-LINKER_FLAGS = -shared
+# FLAGS = -g3 -fPIC -O0 -Wall -Wextra -std=c++14 -I/usr/local/eigen/
+FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/
+LINKER_FLAGS = -shared -fPIC
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
 # FC = gfortran

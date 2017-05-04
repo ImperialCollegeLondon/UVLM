@@ -22,6 +22,7 @@ namespace UVLM
         typedef std::vector<VecMapX> VecVecMapX;
 
         typedef Eigen::DenseBase<Real> DenseBase;
+        typedef Eigen::Block<MatrixX> Block;
 
         // Vectors
         typedef Eigen::Matrix<Real, 3, 1> Vector3;
@@ -92,15 +93,53 @@ namespace UVLM
             }
         }
 
+        template <typename t_dimensions_in>
+        inline void allocate_VecMat
+        (
+            UVLM::Types::VecMatrixX& mat,
+            const t_dimensions_in& dimensions_in,
+            const int& correction = 0,
+            const double& initial_value = 0.0
+        )
+        {
+            const unsigned int n_mats = dimensions_in.size();
+            mat.resize(n_mats);
+            for (unsigned int i=0; i<n_mats; ++i)
+            {
+                mat[i].setConstant
+                (
+                    dimensions_in[i].rows(),
+                    dimensions_in[i].cols(),
+                    initial_value
+                );
+            }
+        }
+
+        inline void initialise_VecMat
+        (
+            UVLM::Types::VecMatrixX& mat,
+            const double& value = 0.0
+        )
+        {
+            const unsigned int n_mats = mat.size();
+            for (unsigned int i=0; i<n_mats; ++i)
+            {
+                mat[i].setConstant(
+                    mat[i].rows(),
+                    mat[i].cols(),
+                    value);
+            }
+        }
+
 
 
         inline void allocate_VecVecMat
         (
             UVLM::Types::VecVecMatrixX& mat,
-            const int& n_surf,
-            const int& n_dim,
-            const int& M,
-            const int& N
+            const unsigned int& n_surf,
+            const unsigned int& n_dim,
+            const unsigned int& M,
+            const unsigned int& N
         )
         {
             mat.resize(n_surf);
@@ -119,7 +158,7 @@ namespace UVLM
         inline void allocate_VecVecMat
         (
             UVLM::Types::VecVecMatrixX& mat,
-            const int& n_dim,
+            const unsigned int& n_dim,
             const UVLM::Types::VecDimensions& dimensions,
             const int& correction = 0
         )
@@ -140,10 +179,11 @@ namespace UVLM
             }
         }
 
+        template <typename t_dimensions>
         inline void allocate_VecVecMat
         (
             UVLM::Types::VecVecMatrixX& mat,
-            const UVLM::Types::VecVecMatrixX& in_dimensions,
+            const t_dimensions& in_dimensions,
             const int& correction = 0
         )
         {

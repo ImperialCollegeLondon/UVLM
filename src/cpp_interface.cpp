@@ -4,46 +4,82 @@
 DLLEXPORT void run_VLM
 (
     const UVLM::Types::VMopts& options,
-    const int& n_dim,
-    int** dimensions_in,
-    int** dimensions_star_in,
-    double** zeta_in,
-    double** zeta_star_in,
-    double** normals_in
-    // double** u_ext,
-    // double** zeta_star,
-    // double** gamma,
-    // double** gamma_star,
-    // UVLM::Types::VMopts& VMOPTS
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_u_ext,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_normals,
+    double** p_forces
 )
 {
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
-                                             dimensions_in,
+                                             p_dimensions,
                                              dimensions);
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::CppInterface::transform_dimensions(n_surf,
-                                             dimensions_star_in,
+                                             p_dimensions_star,
                                              dimensions_star);
 
     UVLM::Types::VecVecMapX zeta;
     UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      zeta_in,
+                                      p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_star;
     UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      zeta_star_in,
+                                      p_zeta_star,
                                       zeta_star,
                                       1);
 
+    UVLM::Types::VecVecMapX u_ext;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_u_ext,
+                                      u_ext,
+                                      1);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
     UVLM::Types::VecVecMapX normals;
     UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      normals_in,
-                                      normals);
+                                      p_normals,
+                                      normals,
+                                      0);
 
-    UVLM::Geometry::generate_surfaceNormal(zeta, normals);
+    UVLM::Types::VecVecMapX forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_forces,
+                                      forces,
+                                      0);
+
+    // zeta_dot is zero for VLM simulations
+    UVLM::Types::VecVecMatrixX zeta_dot;
+    UVLM::Types::allocate_VecVecMat(zeta_dot,
+                                    zeta);
+
+    UVLM::Solver::solve(zeta,
+                        zeta_dot,
+                        u_ext,
+                        zeta_star,
+                        gamma,
+                        gamma_star,
+                        normals,
+                        forces,
+                        options);
 }
