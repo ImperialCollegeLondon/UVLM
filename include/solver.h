@@ -7,6 +7,7 @@
 #include "geometry.h"
 #include "biotsavart.h"
 #include "matrix.h"
+#include "wake.h"
 
 #include <iostream>
 
@@ -33,7 +34,8 @@ namespace UVLM
             t_gamma_star& gamma_star,
             t_normals& normals,
             t_forces& forces,
-            const UVLM::Types::VMopts& options
+            const UVLM::Types::VMopts& options,
+            const UVLM::Types::FlightConditions& flightconditions
         );
 
         template <typename t_in,
@@ -103,7 +105,8 @@ void UVLM::Solver::solve
     t_gamma_star& gamma_star,
     t_normals& normals,
     t_forces& forces,
-    const UVLM::Types::VMopts& options
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions
 )
 {
     // Generate collocation points info
@@ -121,6 +124,12 @@ void UVLM::Solver::solve
 
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
+
+    // wake generation for steady solutions
+    if (options.Steady)
+    {
+        UVLM::Wake::init_steady_wake(zeta, zeta_star, flightconditions);
+    }
 
     // RHS generation
     UVLM::Types::VectorX rhs;
@@ -151,8 +160,6 @@ void UVLM::Solver::solve
 
     UVLM::Types::VectorX gamma_flat;
     gamma_flat = aic.partialPivLu().solve(rhs);
-    std::cout << "gamma-------------------------" << std::endl;
-    std::cout << gamma_flat<< std::endl;
 
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
@@ -160,6 +167,8 @@ void UVLM::Solver::solve
                                     zeta_col,
                                     zeta_star_col,
                                     options);
-    // std::cout << gamma_flat << std::endl;
 
+    // copy gamma from trailing edge to wake if steady solution
+    UVLM::Wake::steady_wake_circulation(gamma,
+                                        gamma_star);
 }
