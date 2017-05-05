@@ -4,6 +4,9 @@
 #include <vector>
 #include <utility>
 
+// convenience declarations
+typedef unsigned int uint;
+
 namespace UVLM
 {
     namespace Types
@@ -43,6 +46,13 @@ namespace UVLM
         	bool Rollup;
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
+        };
+
+        struct FlightConditions
+        {
+            double uinf;
+            double uinf_direction[3];
+            double rho;
         };
 
         template <typename t_mat>
