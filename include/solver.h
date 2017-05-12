@@ -167,6 +167,8 @@ void UVLM::Solver::solve
                                     zeta_col,
                                     zeta_star_col,
                                     options);
-    // std::cout << gamma_flat << std::endl;
 
+    // copy gamma from trailing edge to wake if steady solution
+    UVLM::Wake::steady_wake_circulation(gamma,
+                                        gamma_star);
 }

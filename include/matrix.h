@@ -112,9 +112,9 @@ void UVLM::Matrix::AIC
                               dimensions[icol_surf].second;
 
         unsigned int ii_offset = 0;
-        // SURFACE - SURFACE coeffs
         for (unsigned int ii_surf=0; ii_surf<n_surf; ++ii_surf)
         {
+            // SURFACE - SURFACE coeffs
             unsigned int kk_surf = dimensions[ii_surf].first*
                                    dimensions[ii_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
@@ -128,23 +128,38 @@ void UVLM::Matrix::AIC
                 dummy_gamma,
                 zeta_col[icol_surf],
                 block,
+                dimensions[ii_surf],
                 true,
                 options.ImageMethod,
                 normals[icol_surf]
             );
+            // steady wake coefficients
+            if (options.Steady)
+            {
+                dummy_gamma.setOnes(dimensions_star[ii_surf].first,
+                                    dimensions_star[ii_surf].second);
+                UVLM::BiotSavart::multisurface
+                (
+                    zeta_star[ii_surf],
+                    dummy_gamma,
+                    zeta_col[icol_surf],
+                    block,
+                    dimensions[ii_surf],
+                    true,
+                    options.ImageMethod,
+                    normals[icol_surf],
+                    true
+                );
+            }
             ii_offset += kk_surf;
-        } // end of surface-surface coeffs
+        }
         i_offset += k_surf;
-        // SURFACE-WAKE coeffs
-        // TODO
+
     }
-    
-    std::ofstream file;
-    file.open("file.dat");
-    file << aic << std::endl;
-    file.close();
-
-
+    // std::ofstream file;
+    // file.open("file.dat");
+    // file << aic << std::endl;
+    // file.close();
 }
 
 /*-----------------------------------------------------------------------------

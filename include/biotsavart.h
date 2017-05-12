@@ -5,6 +5,7 @@
 #include "mapping.h"
 
 #include <limits>
+#include <math.h>
 
 namespace UVLM
 {
@@ -22,9 +23,11 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_tsurface&   target_surface,
             t_uout&             uout,
+            const UVLM::Types::IntPair& dimensions,
             const bool&         reduction = false,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
+            const bool&         horseshoe = false,
             const UVLM::Types::Real vortex_radius = 1e-5
         );
 
@@ -38,6 +41,7 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_ttriad&     target_triad,
             t_uout&             uout,
+            const bool&         horseshoe = false,
             unsigned int        Mstart = 0,
             unsigned int        Nstart = 0,
             unsigned int        Mend   = -1,
@@ -49,6 +53,19 @@ namespace UVLM
         template <typename t_triad,
                   typename t_block>
         void vortex_ring
+        (
+            const t_triad& target_triad,
+            const t_block& x,
+            const t_block& y,
+            const t_block& z,
+            const UVLM::Types::Real& gamma_star,
+            UVLM::Types::Vector3& uind,
+            const UVLM::Types::Real vortex_radius = 1e-8
+        );
+
+        template <typename t_triad,
+                  typename t_block>
+        void horseshoe
         (
             const t_triad& target_triad,
             const t_block& x,
@@ -124,6 +141,105 @@ void UVLM::BiotSavart::segment
 
 template <typename t_triad,
           typename t_block>
+void UVLM::BiotSavart::horseshoe
+(
+    const t_triad& target_triad,
+    const t_block& x,
+    const t_block& y,
+    const t_block& z,
+    const UVLM::Types::Real& gamma_star,
+    UVLM::Types::Vector3& uind,
+    const UVLM::Types::Real vortex_radius
+)
+{
+    if (std::abs(gamma_star) < UVLM::Constants::EPSILON)
+    {
+        std::cerr << "Gamma almost 0 " << std::endl;
+        return;
+    }
+    // three segments.
+    //
+    //     0___________3
+    //      |         |
+    //      |         |
+    //      |         |
+    //      |         |
+    //      |         |
+    //      |         |
+    //      |         |
+    //     1|         |2
+    //
+    // segments 0-1 and 2-3 are represented as length 1, but they are effectively
+    // infinite
+    // segment 3-0 is considered as a normal one
+
+    UVLM::Types::Vector3 v1;
+    UVLM::Types::Vector3 v2;
+    // segment 3-0
+    v1 << x(UVLM::Mapping::vortex_indices(3, 0),
+            UVLM::Mapping::vortex_indices(3, 1)),
+          y(UVLM::Mapping::vortex_indices(3, 0),
+            UVLM::Mapping::vortex_indices(3, 1)),
+          z(UVLM::Mapping::vortex_indices(3, 0),
+            UVLM::Mapping::vortex_indices(3, 1));
+    v2 << x(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1)),
+          y(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1)),
+          z(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1));
+    UVLM::BiotSavart::segment(target_triad,
+                              v1,
+                              v2,
+                              gamma_star,
+                              uind);
+    // segment 0-1
+    v1 << x(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1)),
+          y(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1)),
+          z(UVLM::Mapping::vortex_indices(0, 0),
+            UVLM::Mapping::vortex_indices(0, 1));
+    v2 << x(UVLM::Mapping::vortex_indices(1, 0),
+            UVLM::Mapping::vortex_indices(1, 1)),
+          y(UVLM::Mapping::vortex_indices(1, 0),
+            UVLM::Mapping::vortex_indices(1, 1)),
+          z(UVLM::Mapping::vortex_indices(1, 0),
+            UVLM::Mapping::vortex_indices(1, 1));
+
+    // here the segment will be considered as 1----->2 and the
+    // point 2 is in infinity, so beta2=pi
+    UVLM::Types::Vector3 r0 = v2 - v1;
+    UVLM::Types::Vector3 r1 = target_triad - v1;
+    UVLM::Types::Vector3 r2 = target_triad - v2;
+    UVLM::Types::Real beta1 = r0.dot(r1)/(r0.norm()*r1.norm());
+    UVLM::Types::Real beta2 = UVLM::Constants::PI;
+    UVLM::Types::Real dist = (r1.cross(r0 + r1)).norm();
+
+    UVLM::Types::Vector3 u_radial = (r1.cross(r2))/(r1.cross(r2)).norm();
+
+    uind += gamma_star/(UVLM::Constants::PI4*dist)*(cos(beta1) - cos(beta2))*
+            u_radial;
+
+    // here the segment will be considered as 1----->2 and the
+    // point 1 is in infinity, so beta1=0
+    r0 = v2 - v1;
+    r1 = target_triad - v1;
+    r2 = target_triad - v2;
+    beta1 = 0.0;
+    beta2 = r0.dot(r2)/(r0.norm()*r2.norm());
+    dist = (r1.cross(r2)).norm()/r0.norm();
+
+    u_radial = (r1.cross(r2))/(r1.cross(r2)).norm();
+
+    uind += gamma_star/(UVLM::Constants::PI4*dist)*(cos(beta1) - cos(beta2))*
+            u_radial;
+
+}
+
+
+template <typename t_triad,
+          typename t_block>
 void UVLM::BiotSavart::vortex_ring
 (
     const t_triad& target_triad,
@@ -171,7 +287,6 @@ void UVLM::BiotSavart::vortex_ring
 }
 
 
-
 template <typename t_zeta,
           typename t_gamma,
           typename t_ttriad,
@@ -182,6 +297,7 @@ void UVLM::BiotSavart::surface
     const t_gamma&      gamma,
     const t_ttriad&     target_triad,
     t_uout&             uout,
+    const bool&         horseshoe,
     unsigned int        Mstart,
     unsigned int        Nstart,
     unsigned int        Mend,
@@ -195,24 +311,44 @@ void UVLM::BiotSavart::surface
     if (Nend == -1) {Nend = gamma.cols();}
 
     UVLM::Types::Vector3 temp_uout;
-    for (unsigned int i=Mstart; i<Mend; ++i)
+    if (!horseshoe)
     {
-        for (unsigned int j=Nstart; j<Nend; ++j)
+        for (unsigned int i=Mstart; i<Mend; ++i)
         {
-            temp_uout.setZero();
-            UVLM::BiotSavart::vortex_ring(target_triad,
-                                          zeta[0].template block<2, 2>(i,j),
-                                          zeta[1].template block<2, 2>(i,j),
-                                          zeta[2].template block<2, 2>(i,j),
-                                          gamma(i,j),
-                                          temp_uout);
-            uout[0](i, j) = temp_uout(0);
-            uout[1](i, j) = temp_uout(1);
-            uout[2](i, j) = temp_uout(2);
+            for (unsigned int j=Nstart; j<Nend; ++j)
+            {
+                temp_uout.setZero();
+                UVLM::BiotSavart::vortex_ring(target_triad,
+                                              zeta[0].template block<2, 2>(i,j),
+                                              zeta[1].template block<2, 2>(i,j),
+                                              zeta[2].template block<2, 2>(i,j),
+                                              gamma(i,j),
+                                              temp_uout);
+                uout[0](i, j) = temp_uout(0);
+                uout[1](i, j) = temp_uout(1);
+                uout[2](i, j) = temp_uout(2);
+            }
+        }
+    } else
+    {
+        for (unsigned int i=Mstart; i<Mend; ++i)
+        {
+            for (unsigned int j=Nstart; j<Nend; ++j)
+            {
+                temp_uout.setZero();
+                UVLM::BiotSavart::horseshoe(target_triad,
+                                            zeta[0].template block<2, 2>(i,j),
+                                            zeta[1].template block<2, 2>(i,j),
+                                            zeta[2].template block<2, 2>(i,j),
+                                            gamma(i,j),
+                                            temp_uout);
+                uout[0](i, j) = temp_uout(0);
+                uout[1](i, j) = temp_uout(1);
+                uout[2](i, j) = temp_uout(2);
+            }
         }
     }
 }
-
 
 
 template <typename t_zeta,
@@ -226,9 +362,11 @@ void UVLM::BiotSavart::multisurface
     const t_gamma&      gamma,
     const t_tsurface&   target_surface,
     t_uout&             uout,
+    const UVLM::Types::IntPair& dimensions,
     const bool&         reduction,
     const bool&         image_method,
     const t_normals&    normal,
+    const bool&         horseshoe,
     const UVLM::Types::Real vortex_radius
 )
 {
@@ -236,7 +374,6 @@ void UVLM::BiotSavart::multisurface
     const unsigned int cols_collocation = target_surface[0].cols();
 
     UVLM::Types::VecMatrixX temp_uout;
-    // UVLM::Types::allocate_VecMat(temp_uout, target_surface);
     UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
 
     if (!reduction)
@@ -260,20 +397,35 @@ void UVLM::BiotSavart::multisurface
             UVLM::BiotSavart::surface(zeta,
                                       gamma,
                                       target_triad,
-                                      temp_uout);
+                                      temp_uout,
+                                      horseshoe);
             unsigned int surf_rows = gamma.rows();
             unsigned int surf_cols = gamma.cols();
 
-            surface_counter = -1;
-            for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
+            if (!horseshoe)
             {
+                surface_counter = -1;
+                for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
+                {
+                    for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                    {
+                        ++surface_counter;
+                        uout(collocation_counter, surface_counter) +=
+                            temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
+                            temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
+                            temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                    }
+                }
+            } else
+            {
+                surface_counter = dimensions.second*(dimensions.first- 1) - 1;
+                uint i = 0;
                 for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
                 {
-                    ++surface_counter;
-                    uout(collocation_counter, surface_counter) =
-                        temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
-                        temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
-                        temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                    uout(collocation_counter, surface_counter + j_surf) +=
+                        temp_uout[0](i, j_surf)*normal[0](i_col, j_col) +
+                        temp_uout[1](i, j_surf)*normal[1](i_col, j_col) +
+                        temp_uout[2](i, j_surf)*normal[2](i_col, j_col);
                 }
             }
         }

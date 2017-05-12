@@ -41,7 +41,22 @@ namespace UVLM
                     }
                 }
             }
+        }
 
+        
+        template <typename t_gamma,
+                  typename t_gamma_star>
+        void steady_wake_circulation
+        (
+            const t_gamma& gamma,
+            t_gamma_star& gamma_star
+        )
+        {
+            const uint n_surf = gamma.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                gamma_star[i_surf] = gamma[i_surf].template bottomRows<1>();
+            }
         }
     }
 }
