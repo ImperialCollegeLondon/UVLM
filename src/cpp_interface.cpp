@@ -4,6 +4,7 @@
 DLLEXPORT void run_VLM
 (
     const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
     unsigned int** p_dimensions,
     unsigned int** p_dimensions_star,
     double** p_zeta,
@@ -81,5 +82,6 @@ DLLEXPORT void run_VLM
                         gamma_star,
                         normals,
                         forces,
-                        options);
+                        options,
+                        flightconditions);
 }

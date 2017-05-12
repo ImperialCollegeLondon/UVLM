@@ -1,4 +1,4 @@
-# FLAGS = -g3 -fPIC -O0 -Wall -Wextra -std=c++14 -I/usr/local/eigen/
+# FLAGS = -g3 -fPIC -O0 -Wall -std=c++14 -I/usr/local/eigen/
 FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/
 LINKER_FLAGS = -shared -fPIC
 UNAME := $(shell uname)
