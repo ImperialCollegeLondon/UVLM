@@ -22,9 +22,9 @@ namespace UVLM
             const unsigned int n_surf = dimensions.size();
             map.resize(n_surf);
             unsigned int counter = 0;
-            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
-                for (unsigned int i_dim=0; i_dim<n_dim; ++i_dim)
+                for (uint i_dim=0; i_dim<n_dim; ++i_dim)
                 {
                     map[i_surf].push_back(UVLM::Types::MapMatrixX (in[counter],
                                                                    dimensions[i_surf].first + correction,

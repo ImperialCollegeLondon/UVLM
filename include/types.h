@@ -50,9 +50,10 @@ namespace UVLM
 
         struct FlightConditions
         {
-            double uinf;
+            double uinf = 1.0;
             double uinf_direction[3];
-            double rho;
+            double rho = 1.225;
+            double c_ref = 1.0;
         };
 
         template <typename t_mat>

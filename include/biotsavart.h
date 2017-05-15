@@ -24,7 +24,6 @@ namespace UVLM
             const t_tsurface&   target_surface,
             t_uout&             uout,
             const UVLM::Types::IntPair& dimensions,
-            const bool&         reduction = false,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
             const bool&         horseshoe = false,
@@ -363,7 +362,6 @@ void UVLM::BiotSavart::multisurface
     const t_tsurface&   target_surface,
     t_uout&             uout,
     const UVLM::Types::IntPair& dimensions,
-    const bool&         reduction,
     const bool&         image_method,
     const t_normals&    normal,
     const bool&         horseshoe,
@@ -376,12 +374,6 @@ void UVLM::BiotSavart::multisurface
     UVLM::Types::VecMatrixX temp_uout;
     UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
 
-    if (!reduction)
-    {
-        std::cerr << "Not implemented, biotsavart.h, line "
-                  << __LINE__
-                  << std::endl;
-    }
     int collocation_counter = -1;
     int surface_counter;
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
@@ -418,14 +410,21 @@ void UVLM::BiotSavart::multisurface
                 }
             } else
             {
-                surface_counter = dimensions.second*(dimensions.first- 1) - 1;
-                uint i = 0;
-                for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                // surface_counter = dimensions.second*(dimensions.first - 1) - 1;
+                std::cout << dimensions.first << ", " << dimensions.second << std::endl;
+                std::cout << uout.rows() << ", " << uout.cols() << std::endl;
+                surface_counter = (dimensions.second)*(dimensions.first - 1);
+                std::cout << surface_counter << std::endl;
+                for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
                 {
-                    uout(collocation_counter, surface_counter + j_surf) +=
-                        temp_uout[0](i, j_surf)*normal[0](i_col, j_col) +
-                        temp_uout[1](i, j_surf)*normal[1](i_col, j_col) +
-                        temp_uout[2](i, j_surf)*normal[2](i_col, j_col);
+                    for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                    {
+                        std::cout << "surf_counter + j_surf = " << surface_counter + j_surf << std::endl;
+                        uout(collocation_counter, surface_counter + j_surf) +=
+                            temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
+                            temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
+                            temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                    }
                 }
             }
         }

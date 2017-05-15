@@ -20,7 +20,7 @@ namespace UVLM
                   typename t_aic>
         void AIC
         (
-            const unsigned int& Ktotal,
+            const uint& Ktotal,
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
@@ -48,7 +48,7 @@ namespace UVLM
             const t_normal& normal,
             const UVLM::Types::VMopts& options,
             UVLM::Types::VectorX& rhs,
-            unsigned int& Ktotal
+            uint& Ktotal
         );
 
 
@@ -87,7 +87,7 @@ template <typename t_zeta,
           typename t_aic>
 void UVLM::Matrix::AIC
 (
-    const unsigned int& Ktotal,
+    const uint& Ktotal,
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
@@ -98,24 +98,24 @@ void UVLM::Matrix::AIC
     t_aic& aic
 )
 {
-    const unsigned int n_surf = options.NumSurfaces;
+    const uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star_col, dimensions_star);
 
     // fill up AIC
-    unsigned int i_offset = 0;
-    for (unsigned int icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    uint i_offset = 0;
+    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
     {
-        unsigned int k_surf = dimensions[icol_surf].first*
+        uint k_surf = dimensions[icol_surf].first*
                               dimensions[icol_surf].second;
 
-        unsigned int ii_offset = 0;
-        for (unsigned int ii_surf=0; ii_surf<n_surf; ++ii_surf)
+        uint ii_offset = 0;
+        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
         {
             // SURFACE - SURFACE coeffs
-            unsigned int kk_surf = dimensions[ii_surf].first*
+            uint kk_surf = dimensions[ii_surf].first*
                                    dimensions[ii_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
             dummy_gamma.setOnes(dimensions[ii_surf].first,
@@ -129,9 +129,9 @@ void UVLM::Matrix::AIC
                 zeta_col[icol_surf],
                 block,
                 dimensions[ii_surf],
-                true,
                 options.ImageMethod,
-                normals[icol_surf]
+                normals[icol_surf],
+                false
             );
             // steady wake coefficients
             if (options.Steady)
@@ -145,7 +145,6 @@ void UVLM::Matrix::AIC
                     zeta_col[icol_surf],
                     block,
                     dimensions[ii_surf],
-                    true,
                     options.ImageMethod,
                     normals[icol_surf],
                     true
@@ -181,10 +180,10 @@ void UVLM::Matrix::RHS
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
     UVLM::Types::VectorX& rhs,
-    unsigned int& Ktotal
+    uint& Ktotal
 )
 {
-    const unsigned int n_surf = options.NumSurfaces;
+    const uint n_surf = options.NumSurfaces;
 
     // normal wash
     UVLM::Types::VecVecMatrixX uinc;
@@ -209,11 +208,11 @@ void UVLM::Matrix::RHS
 
 
     // size of rhs
-    unsigned int ii = 0;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    uint ii = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        unsigned int M = uinc[i_surf][0].rows();
-        unsigned int N = uinc[i_surf][0].cols();
+        uint M = uinc[i_surf][0].rows();
+        uint N = uinc[i_surf][0].cols();
 
         ii += M*N;
     }
@@ -222,14 +221,14 @@ void UVLM::Matrix::RHS
 
     // filling up RHS
     ii = -1;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        unsigned int M = uinc[i_surf][0].rows();
-        unsigned int N = uinc[i_surf][0].cols();
+        uint M = uinc[i_surf][0].rows();
+        uint N = uinc[i_surf][0].cols();
 
-        for (unsigned int i=0; i<M; ++i)
+        for (uint i=0; i<M; ++i)
         {
-            for (unsigned int j=0; j<N; ++j)
+            for (uint j=0; j<N; ++j)
             {
                 ++ii;
                 // dot product of uinc and normal
@@ -253,11 +252,11 @@ void UVLM::Matrix::generate_assembly_offset
     const bool steady
 )
 {
-    unsigned int n_surf = dimensions.size();
+    uint n_surf = dimensions.size();
     offset.setZero(n_surf, 2);
 
-    unsigned int counter = 0;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    uint counter = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         offset(i_surf, 0) = counter;
         counter += dimensions[i_surf].first*
@@ -288,18 +287,18 @@ void UVLM::Matrix::reconstruct_gamma
     {
         std::cerr << "Not implemented in matrix.h, line=" << __LINE__ << std::endl;
     }
-    const unsigned int n_surf = zeta_col.size();
+    const uint n_surf = zeta_col.size();
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star_col, dimensions_star);
 
-    unsigned int i_flat = 0;
-    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    uint i_flat = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        for (unsigned int i=0; i<dimensions[i_surf].first; ++i)
+        for (uint i=0; i<dimensions[i_surf].first; ++i)
         {
-            for (unsigned int j=0; j<dimensions[i_surf].second; ++j)
+            for (uint j=0; j<dimensions[i_surf].second; ++j)
             {
                 gamma[i_surf](i, j) = gamma_flat(i_flat++);
             }

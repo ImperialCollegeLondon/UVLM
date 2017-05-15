@@ -67,7 +67,8 @@ DLLEXPORT void run_VLM
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_forces,
                                       forces,
-                                      0);
+                                      1,
+                                      2*UVLM::Constants::NDIM);
 
     // zeta_dot is zero for VLM simulations
     UVLM::Types::VecVecMatrixX zeta_dot;

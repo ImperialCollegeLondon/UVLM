@@ -8,6 +8,7 @@
 #include "biotsavart.h"
 #include "matrix.h"
 #include "wake.h"
+#include "postproc.h"
 
 #include <iostream>
 
@@ -171,4 +172,14 @@ void UVLM::Solver::solve
     // copy gamma from trailing edge to wake if steady solution
     UVLM::Wake::steady_wake_circulation(gamma,
                                         gamma_star);
+
+    // static forces
+    UVLM::PostProc::calculate_static_forces
+    (
+        zeta,
+        gamma,
+        uext,
+        forces,
+        flightconditions
+    );
 }
