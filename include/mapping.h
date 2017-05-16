@@ -11,20 +11,20 @@ namespace UVLM
         // matrix indices.
         // It contains:
         // vortex_indices = [0, 0
-        //                   0, 1,
+        //                   1, 0,
         //                   1, 1,
-        //                   1, 0]
+        //                   0, 1]
         // With the numbering as:
         //          N -->
-        //      0---------1
+        //      0---------3
         //   M  |         |
         //   |  |         |
-        //   V  3---------2
+        //   V  1---------2
         // so, the first element (0), has the coordinate (for example)
         // indices of: vortex_indices(0), that is, 0 and 0
         Eigen::Matrix<unsigned int, 4, 2>
                 vortex_indices((Eigen::Matrix<unsigned int, 4, 2>()
-                                        << 0,0,0,1,1,1,1,0).finished());
+                                        << 0,0,1,0,1,1,0,1).finished());
 
 
 
@@ -40,6 +40,6 @@ namespace UVLM
             }
         }
 
-        
+
     }
 }
