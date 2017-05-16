@@ -118,47 +118,34 @@ void UVLM::Matrix::AIC
             uint kk_surf = dimensions[ii_surf].first*
                                    dimensions[ii_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
-            dummy_gamma.setOnes(dimensions[ii_surf].first,
-                                dimensions[ii_surf].second);
-
             UVLM::Types::Block block = aic.block(i_offset, ii_offset, k_surf, kk_surf);
-            UVLM::BiotSavart::multisurface
-            (
-                zeta[ii_surf],
-                dummy_gamma,
-                zeta_col[icol_surf],
-                block,
-                dimensions[ii_surf],
-                options.ImageMethod,
-                normals[icol_surf],
-                false
-            );
             // steady wake coefficients
             if (options.Steady)
             {
-                dummy_gamma.setOnes(dimensions_star[ii_surf].first,
-                                    dimensions_star[ii_surf].second);
-                UVLM::BiotSavart::multisurface
+                dummy_gamma.setOnes(dimensions[ii_surf].first,
+                                    dimensions[ii_surf].second);
+                UVLM::BiotSavart::multisurface_steady_wake
                 (
+                    zeta[ii_surf],
                     zeta_star[ii_surf],
                     dummy_gamma,
+                    dummy_gamma.bottomRows(1),
                     zeta_col[icol_surf],
                     block,
-                    dimensions[ii_surf],
                     options.ImageMethod,
-                    normals[icol_surf],
-                    true
+                    normals[icol_surf]
                 );
+            } else
+            {
+                std::cerr << "Not implemented in matrix.h, line "
+                          << __LINE__
+                          << std::endl;
             }
             ii_offset += kk_surf;
         }
         i_offset += k_surf;
 
     }
-    // std::ofstream file;
-    // file.open("file.dat");
-    // file << aic << std::endl;
-    // file.close();
 }
 
 /*-----------------------------------------------------------------------------

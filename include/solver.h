@@ -132,6 +132,7 @@ void UVLM::Solver::solve
         UVLM::Wake::init_steady_wake(zeta, zeta_star, flightconditions);
     }
 
+
     // RHS generation
     UVLM::Types::VectorX rhs;
     unsigned int Ktotal;
@@ -177,9 +178,76 @@ void UVLM::Solver::solve
     UVLM::PostProc::calculate_static_forces
     (
         zeta,
+        zeta_star,
         gamma,
+        gamma_star,
         uext,
         forces,
+        options,
         flightconditions
     );
+
+
+    // // // temporary output of velocities at nodes
+    // uint n_surf = gamma.size();
+    // UVLM::Types::Vector3 dl;
+    // UVLM::Types::Vector3 v;
+    // UVLM::Types::Vector3 f;
+    // UVLM::Types::Vector3 v_ind;
+    // UVLM::Types::Vector3 vp;
+    // uint start;
+    // uint end;
+    // for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    // {
+    //     const uint M = gamma[i_surf].rows();
+    //     const uint N = gamma[i_surf].cols();
+    //
+    //     for (uint i_M=0; i_M<M; ++i_M)
+    //     {
+    //         for (uint i_N=0; i_N<N; ++i_N)
+    //         {
+    //             UVLM::Types::Vector3 v1;
+    //             const unsigned int n_segment = 4;
+    //             for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
+    //             {
+    //                 unsigned int start = i_segment;
+    //                 unsigned int end = (start + 1)%n_segment;
+    //                 uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
+    //                 uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
+    //                 uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
+    //                 uint j_end = i_N + UVLM::Mapping::vortex_indices(end, 1);
+    //
+    //                 v1 << zeta[i_surf][0](i_start, j_start),
+    //                       zeta[i_surf][1](i_start, j_start),
+    //                       zeta[i_surf][2](i_start, j_start);
+    //
+    //                 // induced vel by vortices at v1
+    //                 v_ind.setZero();
+    //                 forces[i_surf][0](i_start, j_start) = 0.0;
+    //                 forces[i_surf][1](i_start, j_start) = 0.0;
+    //                 forces[i_surf][2](i_start, j_start) = 0.0;
+    //                 for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+    //                 {
+    //                     UVLM::Types::VecMatrixX temp_uout;
+    //                     UVLM::Types::allocate_VecMat(temp_uout,
+    //                                                  zeta[ii_surf],
+    //                                                  -1);
+    //                     UVLM::BiotSavart::surface_with_horseshoe
+    //                     (
+    //                         zeta[ii_surf],
+    //                         zeta_star[ii_surf],
+    //                         gamma[ii_surf],
+    //                         gamma_star[ii_surf],
+    //                         v1,
+    //                         temp_uout,
+    //                         options.ImageMethod
+    //                     );
+    //                     forces[i_surf][0](i_start, j_start) += temp_uout[0].sum();//+uext[i_surf][0](i_start, j_start);
+    //                     forces[i_surf][1](i_start, j_start) += temp_uout[1].sum();//+uext[i_surf][1](i_start, j_start);
+    //                     forces[i_surf][2](i_start, j_start) += temp_uout[2].sum();//+uext[i_surf][2](i_start, j_start);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
