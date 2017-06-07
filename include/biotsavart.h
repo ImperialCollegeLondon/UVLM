@@ -208,7 +208,7 @@ void UVLM::BiotSavart::horseshoe
 {
     if (std::abs(gamma_star) < UVLM::Constants::EPSILON)
     {
-        std::cerr << "Gamma almost 0 " << std::endl;
+        // std::cerr << "Gamma almost 0 " << std::endl;
         return;
     }
     // three segments.
@@ -347,7 +347,7 @@ void UVLM::BiotSavart::vortex_ring
 {
     if (std::abs(gamma) < UVLM::Constants::EPSILON)
     {
-        std::cerr << "Gamma almost 0 " << std::endl;
+        // std::cerr << "Gamma almost 0 " << std::endl;
         return;
     }
 

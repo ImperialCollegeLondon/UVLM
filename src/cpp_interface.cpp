@@ -1,4 +1,5 @@
 #include "cpp_interface.h"
+#include <fenv.h>
 
 
 DLLEXPORT void run_VLM
@@ -16,6 +17,7 @@ DLLEXPORT void run_VLM
     double** p_forces
 )
 {
+    // feenableexcept(FE_INVALID | FE_OVERFLOW);
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;

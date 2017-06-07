@@ -28,13 +28,6 @@ namespace UVLM
             // not bothered with effciency.
             // if it is so critical, it could be improved
             const uint n_surf = zeta.size();
-            const UVLM::Types::Real q_inf =  1;
-            // const UVLM::Types::Real q_inf =  0.5
-            //                                 *flightconditions.rho
-            //                                 *flightconditions.uinf
-            //                                 *flightconditions.uinf
-            //                                 *flightconditions.c_ref;
-
             UVLM::Types::Vector3 dl;
             UVLM::Types::Vector3 v;
             UVLM::Types::Vector3 f;
@@ -118,7 +111,7 @@ namespace UVLM
 
                             v = (v + v_ind).eval();
 
-                            f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl)/q_inf;
+                            f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
 
                             // transfer forces to matrix
                             // there are no moments
