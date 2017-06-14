@@ -247,9 +247,6 @@ void UVLM::BiotSavart::horseshoe
                               v2,
                               gamma_star,
                               uind);
-    // std::cout << "segment 30" << std::endl;
-    // std::cout << v1.transpose() << std::endl;
-    // std::cout << v2.transpose() << std::endl;
 
     // segment 0-1
     v1 << x(UVLM::Mapping::vortex_indices(0, 0),
@@ -265,14 +262,9 @@ void UVLM::BiotSavart::horseshoe
           z(UVLM::Mapping::vortex_indices(1, 0),
             UVLM::Mapping::vortex_indices(1, 1));
 
-    // std::cout << "segment 01" << std::endl;
-    // std::cout << v1.transpose() << std::endl;
-    // std::cout << v2.transpose() << std::endl;
     // here the segment will be considered as 1----->2 and the
     // point 2 is in infinity, so beta2=pi
     UVLM::Types::Vector3 r0 = v2 - v1;
-    // UVLM::Types::Vector3 r1 = v1 - target_triad;
-    // UVLM::Types::Vector3 r2 = v2 - target_triad;
     UVLM::Types::Vector3 r1 = target_triad - v1;
     UVLM::Types::Vector3 r2 = target_triad - v2;
     UVLM::Types::Vector3 r1_cross_r2 = r1.cross(r2);
@@ -307,9 +299,6 @@ void UVLM::BiotSavart::horseshoe
           z(UVLM::Mapping::vortex_indices(3, 0),
             UVLM::Mapping::vortex_indices(3, 1));
 
-    // std::cout << "segment 23" << std::endl;
-    // std::cout << v1.transpose() << std::endl;
-    // std::cout << v2.transpose() << std::endl;
     // here the segment will be considered as 1----->2 and the
     // point 1 is in infinity, so beta1=0
     r0 = v2 - v1;

@@ -25,14 +25,57 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions
         )
         {
-            // not bothered with effciency.
-            // if it is so critical, it could be improved
+            // first calculate all the velocities at the corner points
+            UVLM::Types::VecVecMatrixX velocities;
+            UVLM::Types::allocate_VecVecMat(velocities, zeta);
+            // free stream contribution
+            UVLM::Types::copy_VecVecMat(uext, velocities);
+
+            // temp variables
+            UVLM::Types::Vector3 rp;
+
             const uint n_surf = zeta.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                uint M = zeta[i_surf][0].rows();
+                uint N = zeta[i_surf][0].cols();
+                for (uint i_M; i_M<M; ++i_M)
+                {
+                    for (uint i_N; i_N<N; ++i_N)
+                    {
+                        // coordinates of corner
+                        rp << zeta[i_surf][0](i_M, i_N),
+                              zeta[i_surf][1](i_M, i_N),
+                              zeta[i_surf][2](i_M, i_N);
+
+                        // induced velocities by every vortex of every surface
+                        // (including its own surf)
+                        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                        {
+                            UVLM::Types::VecMatrixX tp_uout;
+                            UVLM::Types::allocate_VecMat(tp_uout, uext[ii_surf]);
+                            UVLM::BiotSavart::surface_with_horseshoe
+                            (
+                                zeta[ii_surf],
+                                zeta_star[ii_surf],
+                                gamma[ii_surf],
+                                gamma_star[ii_surf],
+                                rp,
+                                tp_uout,
+                                options.ImageMethod
+                            );
+                            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                            {
+                                velocities[i_surf][i_dim](i_M, i_N) += tp_uout[i_dim].sum();
+                            }
+                        }
+                    }
+                }
+            }
+
             UVLM::Types::Vector3 dl;
             UVLM::Types::Vector3 v;
             UVLM::Types::Vector3 f;
-            UVLM::Types::Vector3 v_ind;
-            UVLM::Types::Vector3 vp;
             uint start;
             uint end;
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -44,16 +87,11 @@ namespace UVLM
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
-                        UVLM::Types::Vector3 v1;
-                        UVLM::Types::Vector3 v2;
+                        UVLM::Types::Vector3 r1;
+                        UVLM::Types::Vector3 r2;
                         const unsigned int n_segment = 4;
                         for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
                         {
-                            // if ((i_segment == 2) || (i_segment == 0))
-                            // {
-                            //     // chordwise filaments
-                            //     continue;
-                            // }
                             if ((i_segment == 1) && (i_M == M - 1))
                             {
                                 // trailing edge
@@ -66,50 +104,21 @@ namespace UVLM
                             uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
                             uint j_end = i_N + UVLM::Mapping::vortex_indices(end, 1);
 
-
-                            v1 << zeta[i_surf][0](i_start, j_start),
+                            r1 << zeta[i_surf][0](i_start, j_start),
                                   zeta[i_surf][1](i_start, j_start),
                                   zeta[i_surf][2](i_start, j_start);
-                            v2 << zeta[i_surf][0](i_end, j_end),
+                            r2 << zeta[i_surf][0](i_end, j_end),
                                   zeta[i_surf][1](i_end, j_end),
                                   zeta[i_surf][2](i_end, j_end);
 
-                            // position of the center point of the vortex filament
-                            vp = 0.5*(v1 + v2);
+                            dl = r2-r1;
 
-                            // induced vel by vortices at vp
-                            v_ind.setZero();
-                            for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
-                            {
-                                UVLM::Types::VecMatrixX temp_uout;
-                                UVLM::Types::allocate_VecMat(temp_uout,
-                                                             zeta[ii_surf],
-                                                             -1);
-                                UVLM::BiotSavart::surface_with_horseshoe
-                                (
-                                    zeta[ii_surf],
-                                    zeta_star[ii_surf],
-                                    gamma[ii_surf],
-                                    gamma_star[ii_surf],
-                                    vp,
-                                    temp_uout,
-                                    options.ImageMethod
-                                );
-                                v_ind(0) += temp_uout[0].sum();
-                                v_ind(1) += temp_uout[1].sum();
-                                v_ind(2) += temp_uout[2].sum();
-                            }
-
-                            dl = v2-v1;
-
-                            v << 0.5*(uext[i_surf][0](i_start, j_start) +
-                                      uext[i_surf][0](i_end, j_end)),
-                                 0.5*(uext[i_surf][1](i_start, j_start) +
-                                      uext[i_surf][1](i_end, j_end)),
-                                 0.5*(uext[i_surf][2](i_start, j_start) +
-                                      uext[i_surf][2](i_end, j_end));
-
-                            v = (v + v_ind).eval();
+                            v << 0.5*(velocities[i_surf][0](i_start, j_start) +
+                                      velocities[i_surf][0](i_end, j_end)),
+                                 0.5*(velocities[i_surf][1](i_start, j_start) +
+                                      velocities[i_surf][1](i_end, j_end)),
+                                 0.5*(velocities[i_surf][2](i_start, j_start) +
+                                      velocities[i_surf][2](i_end, j_end));
 
                             f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
 
@@ -126,6 +135,115 @@ namespace UVLM
                     }
                 }
             }
+
+
+
+
+
+
+
+
+    //         // not bothered with effciency.
+    //         // if it is so critical, it could be improved
+    //         const uint n_surf = zeta.size();
+    //         UVLM::Types::Vector3 dl;
+    //         UVLM::Types::Vector3 v;
+    //         UVLM::Types::Vector3 f;
+    //         UVLM::Types::Vector3 v_ind;
+    //         UVLM::Types::Vector3 rp;
+    //         uint start;
+    //         uint end;
+    //         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    //         {
+    //             const uint M = gamma[i_surf].rows();
+    //             const uint N = gamma[i_surf].cols();
+    //
+    //             for (uint i_M=0; i_M<M; ++i_M)
+    //             {
+    //                 for (uint i_N=0; i_N<N; ++i_N)
+    //                 {
+    //                     UVLM::Types::Vector3 r1;
+    //                     UVLM::Types::Vector3 r2;
+    //                     const unsigned int n_segment = 4;
+    //                     for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
+    //                     {
+    //                         // if ((i_segment == 2) || (i_segment == 0))
+    //                         // {
+    //                         //     // chordwise filaments
+    //                         //     continue;
+    //                         // }
+    //                         if ((i_segment == 1) && (i_M == M - 1))
+    //                         {
+    //                             // trailing edge
+    //                             continue;
+    //                         }
+    //                         unsigned int start = i_segment;
+    //                         unsigned int end = (start + 1)%n_segment;
+    //                         uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
+    //                         uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
+    //                         uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
+    //                         uint j_end = i_N + UVLM::Mapping::vortex_indices(end, 1);
+    //
+    //
+    //                         r1 << zeta[i_surf][0](i_start, j_start),
+    //                               zeta[i_surf][1](i_start, j_start),
+    //                               zeta[i_surf][2](i_start, j_start);
+    //                         r2 << zeta[i_surf][0](i_end, j_end),
+    //                               zeta[i_surf][1](i_end, j_end),
+    //                               zeta[i_surf][2](i_end, j_end);
+    //
+    //                         // position of the center point of the vortex filament
+    //                         rp = 0.5*(r1 + r2);
+    //
+    //                         // induced vel by vortices at vp
+    //                         v_ind.setZero();
+    //                         for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+    //                         {
+    //                             UVLM::Types::VecMatrixX temp_uout;
+    //                             UVLM::Types::allocate_VecMat(temp_uout,
+    //                                                          zeta[ii_surf],
+    //                                                          -1);
+    //                             UVLM::BiotSavart::surface_with_horseshoe
+    //                             (
+    //                                 zeta[ii_surf],
+    //                                 zeta_star[ii_surf],
+    //                                 gamma[ii_surf],
+    //                                 gamma_star[ii_surf],
+    //                                 rp,
+    //                                 temp_uout,
+    //                                 options.ImageMethod
+    //                             );
+    //                             v_ind(0) += temp_uout[0].sum();
+    //                             v_ind(1) += temp_uout[1].sum();
+    //                             v_ind(2) += temp_uout[2].sum();
+    //                         }
+    //
+    //                         dl = r2-r1;
+    //
+    //                         v << 0.5*(uext[i_surf][0](i_start, j_start) +
+    //                                   uext[i_surf][0](i_end, j_end)),
+    //                              0.5*(uext[i_surf][1](i_start, j_start) +
+    //                                   uext[i_surf][1](i_end, j_end)),
+    //                              0.5*(uext[i_surf][2](i_start, j_start) +
+    //                                   uext[i_surf][2](i_end, j_end));
+    //
+    //                         v = (v + v_ind).eval();
+    //
+    //                         f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
+    //
+    //                         // transfer forces to matrix
+    //                         // there are no moments
+    //                         for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+    //                         {
+    //                             forces[i_surf][i_dim](i_start, j_start) +=
+    //                                 0.5*f(i_dim);
+    //                             forces[i_surf][i_dim](i_end, j_end) +=
+    //                                 0.5*f(i_dim);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
         }
     }
 }

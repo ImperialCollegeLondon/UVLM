@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EigenInclude.h"
+#include "constants.h"
 #include <vector>
 #include <utility>
 
@@ -213,7 +214,27 @@ namespace UVLM
                 }
             }
         }
+
+        template <typename t_in,
+                  typename t_out>
+        inline void copy_VecVecMat
+        (
+            const t_in& in,
+            t_out& out
+        )
+        {
+            uint n_surf = in.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                uint n_dim = in[i_surf].size();
+                for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+                {
+                    out[i_surf][i_dim] = in[i_surf][i_dim];
+                }
+            }
+        }
     }
 }
+
 
 #include "typeutils.h"

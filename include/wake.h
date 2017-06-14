@@ -17,10 +17,10 @@ namespace UVLM
         )
         {
             // wake convected in freestream direction
-            // UVLM::Types::Vector3 dir_stream(
-            //               flightconditions.uinf_direction);
-            UVLM::Types::Vector3 dir_stream;
-            dir_stream << 1, 0, 0;
+            UVLM::Types::Vector3 dir_stream(
+                          flightconditions.uinf_direction);
+            // UVLM::Types::Vector3 dir_stream;
+            // dir_stream << 1, 0, 0;
 
             const uint n_surf = zeta.size();
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
