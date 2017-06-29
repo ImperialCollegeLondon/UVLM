@@ -18,6 +18,7 @@ DLLEXPORT void run_VLM
 )
 {
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
+    Eigen::setNbThreads(options.NumCores);
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
