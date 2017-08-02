@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "types.h"
 #include "geometry.h"
-#include "solver.h"
+#include "steady.h"
 
 #include <iostream>
 

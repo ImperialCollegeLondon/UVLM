@@ -41,6 +41,7 @@ namespace UVLM
         	bool ImageMethod;
         	unsigned int Mstar;
         	bool Steady;
+            bool horseshoe;
         	bool KJMeth;
         	bool NewAIC;
         	double DelTime;
@@ -61,7 +62,8 @@ namespace UVLM
         inline void generate_dimensions
         (
             const t_mat& mat,
-            UVLM::Types::VecDimensions& dimensions
+            UVLM::Types::VecDimensions& dimensions,
+            const int& correction = 0
         )
         {
             dimensions.resize(mat.size());
@@ -69,8 +71,8 @@ namespace UVLM
             {
                 dimensions[i_surf] = UVLM::Types::IntPair
                                                     (
-                                                        mat[i_surf][0].rows(),
-                                                        mat[i_surf][0].cols()
+                                                        mat[i_surf][0].rows() + correction,
+                                                        mat[i_surf][0].cols() + correction
                                                     );
             }
         }

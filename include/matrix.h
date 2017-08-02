@@ -14,7 +14,7 @@ namespace UVLM
         template <typename t_zeta,
                   typename t_zeta_col,
                   typename t_zeta_star,
-                  typename t_zeta_star_col,
+                //   typename t_zeta_star_col,
                   typename t_uext_col,
                   typename t_normals,
                   typename t_aic>
@@ -24,7 +24,7 @@ namespace UVLM
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
-            const t_zeta_star_col& zeta_star_col,
+            // const t_zeta_star_col& zeta_star_col,
             const t_uext_col& uext_col,
             const t_normals& normals,
             const UVLM::Types::VMopts& options,
@@ -35,7 +35,7 @@ namespace UVLM
         template <typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_uext_col,
-                  typename t_zeta_dot_col,
+                //   typename t_zeta_dot_col,
                   typename t_gamma_star,
                   typename t_normal>
         void RHS
@@ -43,7 +43,7 @@ namespace UVLM
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
             const t_uext_col& uext_col,
-            const t_zeta_dot_col& zeta_dot_col,
+            // const t_zeta_dot_col& zeta_dot_col,
             const t_gamma_star& gamma_star,
             const t_normal& normal,
             const UVLM::Types::VMopts& options,
@@ -63,13 +63,13 @@ namespace UVLM
 
         template <typename t_gamma,
                   typename t_zeta_col,
-                  typename t_zeta_star_col>
+                  typename t_zeta_star>
         void reconstruct_gamma
         (
             const UVLM::Types::VectorX& gamma_flat,
             t_gamma& gamma,
             const t_zeta_col& zeta_col,
-            const t_zeta_star_col& zeta_star_col,
+            const t_zeta_star& zeta_star,
             const UVLM::Types::VMopts& options
         );
     }
@@ -81,7 +81,7 @@ namespace UVLM
 template <typename t_zeta,
           typename t_zeta_col,
           typename t_zeta_star,
-          typename t_zeta_star_col,
+        //   typename t_zeta_star_col,
           typename t_uext_col,
           typename t_normals,
           typename t_aic>
@@ -91,7 +91,7 @@ void UVLM::Matrix::AIC
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
-    const t_zeta_star_col& zeta_star_col,
+    // const t_zeta_star_col& zeta_star_col,
     const t_uext_col& uext_col,
     const t_normals& normals,
     const UVLM::Types::VMopts& options,
@@ -102,7 +102,7 @@ void UVLM::Matrix::AIC
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::Types::generate_dimensions(zeta_star_col, dimensions_star);
+    UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
 
     // fill up AIC
     uint i_offset = 0;
@@ -154,7 +154,7 @@ void UVLM::Matrix::AIC
 template <typename t_zeta_col,
           typename t_zeta_star,
           typename t_uext_col,
-          typename t_zeta_dot_col,
+        //   typename t_zeta_dot_col,
           typename t_gamma_star,
           typename t_normal>
 void UVLM::Matrix::RHS
@@ -162,7 +162,7 @@ void UVLM::Matrix::RHS
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
     const t_uext_col& uext_col,
-    const t_zeta_dot_col& zeta_dot_col,
+    // const t_zeta_dot_col& zeta_dot_col,
     const t_gamma_star& gamma_star,
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
@@ -174,7 +174,8 @@ void UVLM::Matrix::RHS
 
     // normal wash
     UVLM::Types::VecVecMatrixX uinc;
-    uinc = uext_col - zeta_dot_col;
+    // uinc = uext_col - zeta_dot_col;
+    uinc = uext_col;
 
     // contribution of the wake to the incident velocity at the bound panels
     if (!options.Steady)
@@ -260,13 +261,13 @@ void UVLM::Matrix::generate_assembly_offset
 
 template <typename t_gamma,
           typename t_zeta_col,
-          typename t_zeta_star_col>
+          typename t_zeta_star>
 void UVLM::Matrix::reconstruct_gamma
 (
     const UVLM::Types::VectorX& gamma_flat,
     t_gamma& gamma,
     const t_zeta_col& zeta_col,
-    const t_zeta_star_col& zeta_star_col,
+    const t_zeta_star& zeta_star,
     const UVLM::Types::VMopts& options
 )
 {
@@ -278,7 +279,7 @@ void UVLM::Matrix::reconstruct_gamma
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::Types::generate_dimensions(zeta_star_col, dimensions_star);
+    UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
 
     uint i_flat = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)

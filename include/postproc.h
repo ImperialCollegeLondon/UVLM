@@ -31,118 +31,6 @@ namespace UVLM
             // free stream contribution
             UVLM::Types::copy_VecVecMat(uext, velocities);
 
-            // // temp variables
-            // UVLM::Types::Vector3 rp;
-            //
-            // const uint n_surf = zeta.size();
-            // for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-            // {
-            //     uint M = zeta[i_surf][0].rows();
-            //     uint N = zeta[i_surf][0].cols();
-            //     for (uint i_M; i_M<M; ++i_M)
-            //     {
-            //         for (uint i_N; i_N<N; ++i_N)
-            //         {
-            //             // coordinates of corner
-            //             rp << zeta[i_surf][0](i_M, i_N),
-            //                   zeta[i_surf][1](i_M, i_N),
-            //                   zeta[i_surf][2](i_M, i_N);
-            //
-            //             // induced velocities by every vortex of every surface
-            //             // (including its own surf)
-            //             for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
-            //             {
-            //                 UVLM::Types::VecMatrixX tp_uout;
-            //                 UVLM::Types::allocate_VecMat(tp_uout, uext[ii_surf]);
-            //                 UVLM::BiotSavart::surface_with_horseshoe
-            //                 (
-            //                     zeta[ii_surf],
-            //                     zeta_star[ii_surf],
-            //                     gamma[ii_surf],
-            //                     gamma_star[ii_surf],
-            //                     rp,
-            //                     tp_uout,
-            //                     options.ImageMethod
-            //                 );
-            //                 for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-            //                 {
-            //                     velocities[i_surf][i_dim](i_M, i_N) += tp_uout[i_dim].sum();
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-            //
-            // UVLM::Types::Vector3 dl;
-            // UVLM::Types::Vector3 v;
-            // UVLM::Types::Vector3 f;
-            // uint start;
-            // uint end;
-            // for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-            // {
-            //     const uint M = gamma[i_surf].rows();
-            //     const uint N = gamma[i_surf].cols();
-            //
-            //     for (uint i_M=0; i_M<M; ++i_M)
-            //     {
-            //         for (uint i_N=0; i_N<N; ++i_N)
-            //         {
-            //             UVLM::Types::Vector3 r1;
-            //             UVLM::Types::Vector3 r2;
-            //             const unsigned int n_segment = 4;
-            //             for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
-            //             {
-            //                 if ((i_segment == 1) && (i_M == M - 1))
-            //                 {
-            //                     // trailing edge
-            //                     continue;
-            //                 }
-            //                 unsigned int start = i_segment;
-            //                 unsigned int end = (start + 1)%n_segment;
-            //                 uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
-            //                 uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
-            //                 uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
-            //                 uint j_end = i_N + UVLM::Mapping::vortex_indices(end, 1);
-            //
-            //                 r1 << zeta[i_surf][0](i_start, j_start),
-            //                       zeta[i_surf][1](i_start, j_start),
-            //                       zeta[i_surf][2](i_start, j_start);
-            //                 r2 << zeta[i_surf][0](i_end, j_end),
-            //                       zeta[i_surf][1](i_end, j_end),
-            //                       zeta[i_surf][2](i_end, j_end);
-            //
-            //                 dl = r2-r1;
-            //
-            //                 v << 0.5*(velocities[i_surf][0](i_start, j_start) +
-            //                           velocities[i_surf][0](i_end, j_end)),
-            //                      0.5*(velocities[i_surf][1](i_start, j_start) +
-            //                           velocities[i_surf][1](i_end, j_end)),
-            //                      0.5*(velocities[i_surf][2](i_start, j_start) +
-            //                           velocities[i_surf][2](i_end, j_end));
-            //
-            //                 f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
-            //
-            //                 // transfer forces to matrix
-            //                 // there are no moments
-            //                 for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-            //                 {
-            //                     forces[i_surf][i_dim](i_start, j_start) +=
-            //                         0.5*f(i_dim);
-            //                     forces[i_surf][i_dim](i_end, j_end) +=
-            //                         0.5*f(i_dim);
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
-
-
-
-
-
-
-
             // not bothered with effciency.
             // if it is so critical, it could be improved
             const uint n_surf = zeta.size();
@@ -167,11 +55,6 @@ namespace UVLM
                         const unsigned int n_segment = 4;
                         for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
                         {
-                            // if ((i_segment == 2) || (i_segment == 0))
-                            // {
-                            //     // chordwise filaments
-                            //     continue;
-                            // }
                             if ((i_segment == 1) && (i_M == M - 1))
                             {
                                 // trailing edge

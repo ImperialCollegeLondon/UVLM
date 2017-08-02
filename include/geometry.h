@@ -2,6 +2,7 @@
 
 #include "EigenInclude.h"
 #include "types.h"
+#include "mapping.h"
 
 #include <iostream>
 
@@ -87,6 +88,39 @@ namespace UVLM
                         }
                     }
                 }
+            }
+        }
+
+
+        template <typename t_in,
+                  typename t_out>
+        void generate_colocationMesh
+        (
+            t_in& vortex_mesh,
+            t_out& collocation_mesh
+        )
+        {
+            // Size of surfaces contained in a vector of tuples
+            UVLM::Types::VecDimensions dimensions;
+            dimensions.resize(vortex_mesh.size());
+            for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
+            {
+                dimensions[i_surf] = UVLM::Types::IntPair(
+                                                    vortex_mesh[i_surf][0].rows(),
+                                                    vortex_mesh[i_surf][0].cols());
+            }
+
+            if (collocation_mesh.empty())
+            {
+                UVLM::Types::allocate_VecVecMat(collocation_mesh,
+                                                UVLM::Constants::NDIM,
+                                                dimensions,
+                                                -1);
+            }
+            for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
+            {
+                UVLM::Mapping::BilinearMapping(vortex_mesh[i_surf],
+                                               collocation_mesh[i_surf]);
             }
         }
     }

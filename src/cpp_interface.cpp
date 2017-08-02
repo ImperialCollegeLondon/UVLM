@@ -60,12 +60,6 @@ DLLEXPORT void run_VLM
                                    gamma_star,
                                    0);
 
-    UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_normals,
-                                      normals,
-                                      0);
-
     UVLM::Types::VecVecMapX forces;
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_forces,
@@ -78,14 +72,13 @@ DLLEXPORT void run_VLM
     UVLM::Types::allocate_VecVecMat(zeta_dot,
                                     zeta);
 
-    UVLM::Solver::solve(zeta,
-                        zeta_dot,
-                        u_ext,
-                        zeta_star,
-                        gamma,
-                        gamma_star,
-                        normals,
-                        forces,
-                        options,
-                        flightconditions);
+    UVLM::Steady::solver(zeta,
+                         zeta_dot,
+                         u_ext,
+                         zeta_star,
+                         gamma,
+                         gamma_star,
+                         forces,
+                         options,
+                         flightconditions);
 }
