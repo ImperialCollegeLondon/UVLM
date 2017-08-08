@@ -28,6 +28,7 @@ namespace UVLM
             const t_uext_col& uext_col,
             const t_normals& normals,
             const UVLM::Types::VMopts& options,
+            const bool horseshoe,
             t_aic& aic
         );
 
@@ -95,6 +96,7 @@ void UVLM::Matrix::AIC
     const t_uext_col& uext_col,
     const t_normals& normals,
     const UVLM::Types::VMopts& options,
+    const bool horseshoe,
     t_aic& aic
 )
 {
@@ -118,29 +120,34 @@ void UVLM::Matrix::AIC
             uint kk_surf = dimensions[ii_surf].first*
                                    dimensions[ii_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
+            UVLM::Types::MatrixX dummy_gamma_star;
             UVLM::Types::Block block = aic.block(i_offset, ii_offset, k_surf, kk_surf);
-            // steady wake coefficients
             if (options.Steady)
             {
+                // steady wake coefficients
                 dummy_gamma.setOnes(dimensions[ii_surf].first,
                                     dimensions[ii_surf].second);
+                dummy_gamma_star.setOnes(dimensions_star[ii_surf].first,
+                                         dimensions_star[ii_surf].second);
                 UVLM::BiotSavart::multisurface_steady_wake
                 (
                     zeta[ii_surf],
                     zeta_star[ii_surf],
                     dummy_gamma,
-                    dummy_gamma.bottomRows(1),
+                    dummy_gamma_star,
                     zeta_col[icol_surf],
+                    horseshoe,
                     block,
                     options.ImageMethod,
                     normals[icol_surf]
                 );
-            } else
+            } else // unsteady case/free wake/no rollup
             {
                 std::cerr << "Not implemented in matrix.h, line "
                           << __LINE__
                           << std::endl;
             }
+
             ii_offset += kk_surf;
         }
         i_offset += k_surf;

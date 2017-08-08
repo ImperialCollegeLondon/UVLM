@@ -17,6 +17,16 @@ UVLM::Types::VecVecMatrixX operator-
     UVLM::Triads::VecVecMatrix_difference(v1, v2, vout);
     return vout;
 }
+UVLM::Types::VecVecMatrixX operator-
+        (const UVLM::Types::VecVecMapX& v1,
+         const UVLM::Types::VecVecMatrixX& v2)
+{
+    UVLM::Types::VecVecMatrixX vout;
+    UVLM::Types::allocate_VecVecMat(vout, v1);
+
+    UVLM::Triads::VecVecMatrix_difference(v1, v2, vout);
+    return vout;
+}
 
 
 // addition operator

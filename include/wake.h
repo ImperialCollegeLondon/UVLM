@@ -7,6 +7,85 @@ namespace UVLM
 {
     namespace Wake
     {
+        namespace General
+        {
+            template <typename t_mat>
+            void displace_VecVecMat
+            (
+                t_mat& mat
+            )
+            {
+                const uint n_surf = mat.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    const uint n_rows = mat[i_surf][0].rows();
+                    const uint n_dim = mat[i_surf].size();
+                    for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+                    {
+                        for (uint i_row=n_rows - 1; i_row>0; --i_row)
+                        {
+                            mat[i_surf][i_dim].template row(i_row) =
+                                mat [i_surf][i_dim].template row(i_row - 1);
+                        }
+                    }
+                }
+            }
+            template <typename t_mat>
+            void displace_VecMat
+            (
+                t_mat& mat
+            )
+            {
+                const uint n_surf = mat.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    const uint n_rows = mat[i_surf].rows();
+                    for (uint i_row=n_rows - 1; i_row>0; --i_row)
+                    {
+                        mat[i_surf].template row(i_row) =
+                            mat [i_surf].template row(i_row - 1);
+                    }
+                }
+            }
+        }
+        namespace Discretised
+        {
+            /*******************************************************************
+            Given a velocity field at the vertices of the grid, convect it
+            following:
+            x^{n+1} = x^{n} + \Delta v \cdot dt
+            *******************************************************************/
+            template <typename t_zeta_star,
+                      typename t_u_ind>
+            void convect
+            (
+                t_zeta_star& zeta_star,
+                const t_u_ind& u_ind,
+                const double& delta_t
+            )
+            {
+                const uint n_surf = zeta_star.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        const uint n_M = zeta_star[i_surf][i_dim].rows();
+                        const uint n_N = zeta_star[i_surf][i_dim].cols();
+                        for (uint i_M=0; i_M<n_M; ++i_M)
+                        {
+                            for (uint j_N=0; j_N<n_N; ++j_N)
+                            {
+                                zeta_star[i_surf][i_dim](i_M, j_N) += (
+                                    u_ind[i_surf][i_dim](i_M, j_N)*delta_t
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
         namespace Horseshoe
         {
             template <typename t_zeta,
@@ -47,8 +126,7 @@ namespace UVLM
 
             template <typename t_zeta_star,
                       typename t_gamma_star>
-            void to_wake
-            // TODO TO FINISH!!!! note: maybe it is finished
+            void to_discretised
             (
                 t_zeta_star& zeta_star,
                 t_gamma_star& gamma_star,
@@ -56,9 +134,9 @@ namespace UVLM
             )
             {
                 UVLM::Types::Vector3 dir_stream;
-                dir_stream << zeta_star[0][0](1, 0),
-                              zeta_star[0][1](1, 0),
-                              zeta_star[0][2](1, 0);
+                dir_stream << zeta_star[0][0](1, 0) - zeta_star[0][0](0, 0),
+                              zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
+                              zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
                 dir_stream.normalize();
                 UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;
 
@@ -82,9 +160,6 @@ namespace UVLM
                             }
                         }
                     }
-                    std::cout << "   " << std::endl;
-                    std::cout << gamma_star[i_surf].rows() << std::endl;
-                    std::cout << gamma_star[i_surf].cols() << std::endl;
                     for (uint j=0; j<n_spanwise_panels; ++j)
                     {
                         for (uint i=1; i<mstar; ++i)
@@ -101,13 +176,22 @@ namespace UVLM
             void circulation_transfer
             (
                 const t_gamma& gamma,
-                t_gamma_star& gamma_star
+                t_gamma_star& gamma_star,
+                const uint in_n_rows = -1
             )
             {
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    gamma_star[i_surf].template topRows<1>() = gamma[i_surf].template bottomRows<1>();
+                    uint n_rows = in_n_rows;
+                    if (n_rows == -1)
+                    {
+                        n_rows = gamma_star[i_surf].rows();
+                    }
+                    for (uint i_m=0; i_m<n_rows; ++i_m)
+                    {
+                        gamma_star[i_surf].template row(i_m) = gamma[i_surf].template bottomRows<1>();
+                    }
                 }
             }
         }

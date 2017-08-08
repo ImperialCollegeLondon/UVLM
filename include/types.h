@@ -4,6 +4,7 @@
 #include "constants.h"
 #include <vector>
 #include <utility>
+#include <iostream>
 
 // convenience declarations
 typedef unsigned int uint;
@@ -48,6 +49,10 @@ namespace UVLM
         	bool Rollup;
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
+            double dt;
+            unsigned int n_rollup;
+            double rollup_tolerance;
+            unsigned int rollup_aic_refresh;
         };
 
         struct FlightConditions
@@ -210,7 +215,6 @@ namespace UVLM
                 mat[i_surf].resize(in_dimensions[i_surf].size());
                 for (unsigned int i_dim=0; i_dim<in_dimensions[i_surf].size(); ++i_dim)
                 {
-                    mat[i_surf].push_back(UVLM::Types::MatrixX());
                     mat[i_surf][i_dim].resize(M, N);
                     mat[i_surf][i_dim].setZero(M, N);
                 }
@@ -234,6 +238,44 @@ namespace UVLM
                     out[i_surf][i_dim] = in[i_surf][i_dim];
                 }
             }
+        }
+
+        template <typename t_mat>
+        inline double norm_VecVec_mat
+        (
+            const t_mat& mat
+        )
+        {
+            double norm = 0.0;
+            uint n_surf = mat.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                uint n_dim = mat[i_surf].size();
+                for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+                {
+                    norm += mat[i_surf][i_dim].norm();
+                }
+            }
+            return norm;
+        }
+
+        template <typename t_mat>
+        inline double max_VecVecMat
+        (
+            const t_mat& mat
+        )
+        {
+            double max = 0.0;
+            uint n_surf = mat.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                uint n_dim = mat[i_surf].size();
+                for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+                {
+                    max = std::max(max, std::abs(mat[i_surf][i_dim].maxCoeff()));
+                }
+            }
+            return max;
         }
     }
 }

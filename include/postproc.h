@@ -86,13 +86,14 @@ namespace UVLM
                                 UVLM::Types::allocate_VecMat(temp_uout,
                                                              zeta[ii_surf],
                                                              -1);
-                                UVLM::BiotSavart::surface_with_horseshoe
+                                UVLM::BiotSavart::surface_with_steady_wake
                                 (
                                     zeta[ii_surf],
                                     zeta_star[ii_surf],
                                     gamma[ii_surf],
                                     gamma_star[ii_surf],
                                     rp,
+                                    options.horseshoe,
                                     temp_uout,
                                     options.ImageMethod
                                 );
