@@ -1,6 +1,5 @@
-# FLAGS = -g3 -fPIC -O0 -Wall -std=c++14 -I/usr/local/eigen/
-# FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/# -fopenmp
-FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/ -fomit-frame-pointer -fopenmp
+#FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/ -fomit-frame-pointer -fopenmp
+FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -fopenmp
 LINKER_FLAGS = -shared -fPIC -fopenmp
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
