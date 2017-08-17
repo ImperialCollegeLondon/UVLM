@@ -198,15 +198,6 @@ void UVLM::Steady::solver
             }
         }
 
-        // // remove induced velocity of the trailing edge (first row)
-        // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
-        // {
-        //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-        //     {
-        //         u_ind[i_surf][i_dim].topRows<1>().setZero();
-        //     }
-        // }
-
         // convect based on u_ind for all the grid.
         UVLM::Wake::Discretised::convect(zeta_star,
                                          u_ind,

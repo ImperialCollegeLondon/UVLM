@@ -183,10 +183,18 @@ void UVLM::Matrix::RHS
     UVLM::Types::VecVecMatrixX uinc;
     // uinc = uext_col - zeta_dot_col;
     uinc = uext_col;
+    // for dynamic simulations, add the influence of
+    // RBM, deformation velocty, and wake induced velocity (except first row).
 
-    // contribution of the wake to the incident velocity at the bound panels
+
+
     if (!options.Steady)
     {
+        // RBM
+
+        // zeta_dot due to deformation
+        
+        // contribution of the wake to the incident velocity at the bound panels
         UVLM::Types::VecVecMatrixX uout;
         UVLM::Types::allocate_VecVecMat(uout, zeta_col);
         // TODO

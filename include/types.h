@@ -23,8 +23,10 @@ namespace UVLM
         typedef Eigen::Map<const MatrixX> cMapMatrixX;
         typedef std::vector<MatrixX> VecMatrixX;
         typedef std::vector<VecMatrixX> VecVecMatrixX;
+        typedef std::vector<VecVecMatrixX> VecVecVecMatrixX;
         typedef std::vector<MapMatrixX> VecMapX;
         typedef std::vector<VecMapX> VecVecMapX;
+        typedef std::vector<VecVecMapX> VecVecVecMapX;
 
         typedef Eigen::DenseBase<Real> DenseBase;
         typedef Eigen::Block<MatrixX> Block;
@@ -277,6 +279,36 @@ namespace UVLM
             }
             return max;
         }
+
+
+        // inline void allocate_VecVecVecMat
+        // (
+        //     UVLM::Types::VecVecVecMatrixX& mat,
+        //     const int& n_tsteps,
+        //     const UVLM::Types::VecDimensions& dimensions,
+        //     const int& correction = 0
+        // )
+        // {
+        //     mat.resize(n_tsteps);
+        //     UVLM::Types::allocate_VecVecMat(mat,
+        //                                     UVLM::Constants::NDIM,
+        //                                     dimensions,
+        //                                     correction);
+        // }
+
+        // template <typename t_in_dimensions>
+        // inline void allocate_VecVecVecMat
+        // (
+        //     UVLM::Types::VecVecVecMatrixX& mat,
+        //     const t_in_dimensions& in_dimensions,
+        //     const int& correction = 0
+        // )
+        // {
+        //     mat.resize(n_tsteps);
+        //     UVLM::Types::allocate_VecVecMat(mat,
+        //                                     in_dimensions,
+        //                                     correction);
+        // }
     }
 }
 

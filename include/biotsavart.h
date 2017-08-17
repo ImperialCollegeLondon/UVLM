@@ -99,7 +99,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma_star,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = 1e-4
+            const UVLM::Types::Real vortex_radius = 1e-2
         );
 
         template <typename t_triad,
@@ -123,7 +123,7 @@ namespace UVLM
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = 1e-3
+            const UVLM::Types::Real vortex_radius = 1e-8
         );
 
 
