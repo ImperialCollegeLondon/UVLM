@@ -23,6 +23,27 @@ namespace UVLM
             }
         }
 
+        // transfer information from the collocation
+        // points to the cornerpoints
+        // mat has 1 less element per dimension than out
+        template <typename t_mat,
+                  typename t_out>
+        inline void InvBilinearMap1d(const t_mat& mat,
+                                     t_out& out)
+        {
+            const int n_rows = mat.rows();
+            const int n_cols = mat.cols();
+
+            for (int i=0; i<n_rows; ++i)
+            {
+                for (int j=0; j<n_cols; ++j)
+                {
+                    out.template block<2,2>(i,j) +=
+                        0.25*mat(i,j);
+                }
+            }
+        }
+
         template <typename t_1,
                   typename t_2,
                   typename t_out>

@@ -48,12 +48,13 @@ namespace UVLM
                 }
             }
         }
+
         namespace Discretised
         {
             /*******************************************************************
             Given a velocity field at the vertices of the grid, convect it
             following:
-            x^{n+1} = x^{n} + \Delta v \cdot dt
+            x^{n+1} = x^{n} + u_ind \cdot dt
             *******************************************************************/
             template <typename t_zeta_star,
                       typename t_u_ind>
@@ -171,13 +172,15 @@ namespace UVLM
                 }
             }
 
+            // It can be used for unsteady too with in_n_rows = 1
+            // (only one row to be copied from the trailing edge)
             template <typename t_gamma,
                       typename t_gamma_star>
             void circulation_transfer
             (
                 const t_gamma& gamma,
                 t_gamma_star& gamma_star,
-                const uint in_n_rows = -1
+                const int in_n_rows = -1
             )
             {
                 const uint n_surf = gamma.size();

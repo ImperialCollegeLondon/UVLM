@@ -25,6 +25,9 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions
         )
         {
+            // Set forces to 0
+            UVLM::Types::initialise_VecVecMat(forces);
+
             // first calculate all the velocities at the corner points
             UVLM::Types::VecVecMatrixX velocities;
             UVLM::Types::allocate_VecVecMat(velocities, zeta);
@@ -129,5 +132,62 @@ namespace UVLM
                 }
             }
         }
+
+        // Forces is not set to 0, forces are added
+        // NOTE: uext has to include all the velocities contribution
+        template <typename t_zeta,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_previous_gamma,
+                  typename t_uext,
+                  typename t_forces>
+        void calculate_dynamic_forces
+        (
+            const t_zeta& zeta,
+            const t_zeta_star& zeta_star,
+            const t_gamma& gamma,
+            const t_gamma_star& gamma_star,
+            const t_previous_gamma& previous_gamma,
+            const t_uext& uext,
+            t_forces&  forces,
+            const UVLM::Types::VMopts options,
+            const UVLM::Types::FlightConditions& flightconditions
+        )
+        {
+            // TODO not finished
+
+            const UVLM::Types::Real dt = options.dt;
+            const uint n_surf = zeta.size();
+
+            UVLM::Types::VecVecMatrixX unsteady_force;
+            UVLM::Types::allocate_VecVecMat(unsteady_force, forces, -1);
+
+            // calculate gamma_dot
+            UVLM::Types::VecMatrixX gamma_dot;
+            UVLM::Types::allocate_VecMat(gamma_dot, gamma);
+            // simple finite differences:
+            // f' = (f+ - f-)/dt
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                const uint n_rows = gamma[i_surf].rows();
+                const uint n_cols = gamma[i_surf].cols();
+
+                for (uint i=0; i<n_rows; ++i)
+                {
+                    for (uint j=0; j<n_cols; ++j)
+                    {
+                        gamma_dot[i_surf](i,j) =
+                            (gamma[i_surf](i,j)
+                             -
+                             previous_gamma[i_surf](i,j))/dt;
+                    }
+                }
+            }
+
+            UVLM::Triads::InvBilinearMap1d(unsteady_force, forces);
+
+        }
+
     }
 }

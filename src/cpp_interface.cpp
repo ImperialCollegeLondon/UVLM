@@ -82,3 +82,204 @@ DLLEXPORT void run_VLM
                          options,
                          flightconditions);
 }
+
+
+DLLEXPORT void init_UVLM
+(
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_uext,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_zeta_dot,
+    double** p_zeta_star_dot,
+    double*  p_rbm_vel,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_normals,
+    double** p_forces
+)
+{
+    // feenableexcept(FE_INVALID | FE_OVERFLOW);
+    Eigen::setNbThreads(options.NumCores);
+    uint n_surf = options.NumSurfaces;
+
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+    UVLM::Types::VecDimensions dimensions_star;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions_star,
+                                             dimensions_star);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star,
+                                      zeta_star,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta_dot,
+                                      zeta_dot,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star_dot,
+                                      zeta_star_dot,
+                                      1);
+
+    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+
+    UVLM::Types::VecVecMapX uext;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_uext,
+                                      uext,
+                                      1);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
+    UVLM::Types::VecVecMapX forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_forces,
+                                      forces,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+
+
+    // UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
+    UVLM::Unsteady::initialise(
+        zeta,
+        zeta_dot,
+        zeta_star,
+        zeta_star_dot,
+        uext,
+        gamma,
+        gamma_star,
+        rbm_velocity,
+        forces,
+        options,
+        flightconditions
+    );
+}
+
+
+DLLEXPORT void run_UVLM
+(
+    const UVLM::Types::UVMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_uext,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_zeta_dot,
+    double** p_zeta_star_dot,
+    double*  p_rbm_vel,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_normals,
+    double** p_forces
+)
+{
+    // feenableexcept(FE_INVALID | FE_OVERFLOW);
+    Eigen::setNbThreads(options.NumCores);
+    uint n_surf = options.NumSurfaces;
+    std::cout << "cpp_interface, n_surf = " << n_surf << std::endl;
+
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+    UVLM::Types::VecDimensions dimensions_star;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions_star,
+                                             dimensions_star);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star,
+                                      zeta_star,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta_dot,
+                                      zeta_dot,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star_dot,
+                                      zeta_star_dot,
+                                      1);
+
+    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+
+    UVLM::Types::VecVecMapX uext;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_uext,
+                                      uext,
+                                      1);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
+    UVLM::Types::VecVecMapX forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_forces,
+                                      forces,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+
+
+    std::cout << "Calling solver " << std::endl;
+    UVLM::Unsteady::solver
+    (
+        zeta,
+        zeta_dot,
+        uext,
+        zeta_star,
+        gamma,
+        gamma_star,
+        rbm_velocity,
+        forces,
+        options,
+        flightconditions
+    );
+}

@@ -148,7 +148,7 @@ void UVLM::Steady::solver
         return;
     }
 
-    // if not, the wake has to be transformed into a normal, non-horseshoe
+    // if not, the wake has to be transformed into a discretised, non-horseshoe
     // one:
     UVLM::Types::Vector3 u_steady;
     u_steady << uext[0][0](0,0),
@@ -383,6 +383,7 @@ void UVLM::Steady::solve_discretised
                       aic);
 
     UVLM::Types::VectorX gamma_flat;
+    // std::cout << aic << std::endl;
     gamma_flat = aic.partialPivLu().solve(rhs);
 
     // probably could be done better with a Map
@@ -392,8 +393,11 @@ void UVLM::Steady::solve_discretised
                                     zeta_star,
                                     options);
 
-    // copy gamma from trailing edge to wake if steady solution
+    // copy gamma from trailing edge to wake
+    int in_n_rows = -1;
+    if (!options.Steady) {in_n_rows = 1;}
     UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                                gamma_star);
+                                                gamma_star,
+                                                in_n_rows);
 
 }

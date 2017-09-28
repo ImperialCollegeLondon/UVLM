@@ -53,6 +53,26 @@ namespace UVLM
         );
 
         template <typename t_zeta,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_tsurface,
+                  typename t_uout,
+                  typename t_normals>
+        void multisurface_unsteady_wake
+        (
+            const t_zeta&       zeta,
+            const t_zeta_star&  zeta_star,
+            const t_gamma&      gamma,
+            const t_gamma_star& gamma_star,
+            const t_tsurface&   target_surface,
+            t_uout&             uout,
+            const bool&         image_method,
+            const t_normals&    normal,
+            const int&          n_rows = -1
+        );
+
+        template <typename t_zeta,
                   typename t_gamma,
                   typename t_ttriad,
                   typename t_uout>
@@ -87,6 +107,24 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method = false,
             const UVLM::Types::Real vortex_radius = 1e-5
+        );
+
+        template <typename t_zeta,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_ttriad,
+                  typename t_uout>
+        void surface_with_unsteady_wake
+        (
+            const t_zeta&       zeta,
+            const t_zeta_star&  zeta_star,
+            const t_gamma&      gamma,
+            const t_gamma_star& gamma_star,
+            const t_ttriad&     target_triad,
+            t_uout&             uout,
+            const bool&         image_method,
+            const int&          n_rows = -1 // default val = -1
         );
 
         template <typename t_triad,
@@ -431,33 +469,12 @@ void UVLM::BiotSavart::surface
                                           zeta[2].template block<2, 2>(i,j),
                                           gamma(i,j),
                                           temp_uout);
-            uout[0](i, j) = temp_uout(0);
-            uout[1](i, j) = temp_uout(1);
-            uout[2](i, j) = temp_uout(2);
+            uout[0](i, j) += temp_uout(0);
+            uout[1](i, j) += temp_uout(1);
+            uout[2](i, j) += temp_uout(2);
         }
     }
 }
-
-// template <typename t_zeta,
-//           typename t_gamma,
-//           typename t_ttriad,
-//           typename t_uout>
-// void UVLM::BiotSavart::
-// (
-//     const t_zeta&       zeta,
-//     const t_gamma&      gamma,
-//     const t_ttriad&     target_triad,
-//     t_uout&             uout,
-//     unsigned int        Mstart,
-//     unsigned int        Nstart,
-//     unsigned int        Mend,
-//     unsigned int        Nend,
-//     const bool&         image_method,
-//     const UVLM::Types::Real vortex_radius
-// )
-// {
-//
-// }
 
 
 template <typename t_zeta,
@@ -466,7 +483,6 @@ template <typename t_zeta,
           typename t_gamma_star,
           typename t_ttriad,
           typename t_uout>
-// void UVLM::BiotSavart::surface_with_horseshoe
 void UVLM::BiotSavart::surface_with_steady_wake
 (
     const t_zeta&       zeta,
@@ -543,6 +559,73 @@ void UVLM::BiotSavart::surface_with_steady_wake
 }
 
 template <typename t_zeta,
+          typename t_zeta_star,
+          typename t_gamma,
+          typename t_gamma_star,
+          typename t_ttriad,
+          typename t_uout>
+void UVLM::BiotSavart::surface_with_unsteady_wake
+(
+    const t_zeta&       zeta,
+    const t_zeta_star&  zeta_star,
+    const t_gamma&      gamma,
+    const t_gamma_star& gamma_star,
+    const t_ttriad&     target_triad,
+    t_uout&             uout,
+    const bool&         image_method,
+    const int&          n_rows // default val = -1
+)
+{
+    const uint Mstart = 0;
+    const uint Nstart = 0;
+    const uint Mend = gamma.rows();
+    const uint Nend = gamma.cols();
+
+    UVLM::Types::Vector3 temp_uout;
+    const uint ii = 0;
+    // surface contribution
+    for (unsigned int i=Mstart; i<Mend; ++i)
+    {
+        for (unsigned int j=Nstart; j<Nend; ++j)
+        {
+            temp_uout.setZero();
+            UVLM::BiotSavart::vortex_ring(target_triad,
+                                          zeta[0].template block<2,2>(i,j),
+                                          zeta[1].template block<2,2>(i,j),
+                                          zeta[2].template block<2,2>(i,j),
+                                          gamma(i,j),
+                                          temp_uout);
+            uout[0](i, j) = temp_uout(0);
+            uout[1](i, j) = temp_uout(1);
+            uout[2](i, j) = temp_uout(2);
+        }
+    }
+    // wake contribution
+    // n_rows controls the number of panels that are included
+    // in the final result. Usually for unsteady wake, the value
+    // will be 1 when computing AIC coeffs.
+    const uint mstar = (n_rows == -1) ? gamma_star.rows(): n_rows;
+    std::cout << n_rows << "  " <<  mstar << std::endl;
+    const uint i = Mend - 1;
+    for (uint j=Nstart; j<Nend; ++j)
+    {
+        for (uint i_star=0; i_star<mstar; ++i_star)
+        {
+            temp_uout.setZero();
+            UVLM::BiotSavart::vortex_ring(target_triad,
+                                          zeta_star[0].template block<2,2>(i_star, j),
+                                          zeta_star[1].template block<2,2>(i_star, j),
+                                          zeta_star[2].template block<2,2>(i_star, j),
+                                          gamma_star(i_star, j),
+                                          temp_uout);
+            uout[0](i, j) += temp_uout(0);
+            uout[1](i, j) += temp_uout(1);
+            uout[2](i, j) += temp_uout(2);
+        }
+    }
+}
+
+template <typename t_zeta,
           typename t_gamma,
           typename t_tsurface,
           typename t_uout,
@@ -553,10 +636,8 @@ void UVLM::BiotSavart::multisurface
     const t_gamma&      gamma,
     const t_tsurface&   target_surface,
     t_uout&             uout,
-    const UVLM::Types::IntPair& dimensions,
     const bool&         image_method,
     const t_normals&    normal,
-    const bool&         horseshoe,
     const UVLM::Types::Real vortex_radius
 )
 {
@@ -581,8 +662,7 @@ void UVLM::BiotSavart::multisurface
             UVLM::BiotSavart::surface(zeta,
                                       gamma,
                                       target_triad,
-                                      temp_uout,
-                                      horseshoe);
+                                      temp_uout);
             unsigned int surf_rows = gamma.rows();
             unsigned int surf_cols = gamma.cols();
 
@@ -645,17 +725,16 @@ void UVLM::BiotSavart::multisurface_steady_wake
                             target_surface[1](i_col, j_col),
                             target_surface[2](i_col, j_col);
             UVLM::Types::initialise_VecMat(temp_uout, 0.0);
-            // if (horseshoe)
-            // {
-                UVLM::BiotSavart::surface_with_steady_wake(zeta,
-                                                         zeta_star,
-                                                         gamma,
-                                                         gamma_star,
-                                                         target_triad,
-                                                         horseshoe,
-                                                         temp_uout
-                                                        );
-            // }
+
+            UVLM::BiotSavart::surface_with_steady_wake(zeta,
+                                                       zeta_star,
+                                                       gamma,
+                                                       gamma_star,
+                                                       target_triad,
+                                                       horseshoe,
+                                                       temp_uout
+                                                      );
+
             unsigned int surf_rows = gamma.rows();
             unsigned int surf_cols = gamma.cols();
 
@@ -675,6 +754,73 @@ void UVLM::BiotSavart::multisurface_steady_wake
     }
 }
 
+template <typename t_zeta,
+          typename t_zeta_star,
+          typename t_gamma,
+          typename t_gamma_star,
+          typename t_tsurface,
+          typename t_uout,
+          typename t_normals>
+void UVLM::BiotSavart::multisurface_unsteady_wake
+(
+    const t_zeta&       zeta,
+    const t_zeta_star&  zeta_star,
+    const t_gamma&      gamma,
+    const t_gamma_star& gamma_star,
+    const t_tsurface&   target_surface,
+    t_uout&             uout,
+    const bool&         image_method,
+    const t_normals&    normal,
+    const int&          n_rows // default val = -1
+)
+{
+    const unsigned int rows_collocation = target_surface[0].rows();
+    const unsigned int cols_collocation = target_surface[0].cols();
+
+    UVLM::Types::VecMatrixX temp_uout;
+    UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
+
+    int collocation_counter = -1;
+    int surface_counter;
+    for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
+    {
+        for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
+        {
+            ++collocation_counter;
+            UVLM::Types::Vector3 target_triad;
+            target_triad << target_surface[0](i_col, j_col),
+                            target_surface[1](i_col, j_col),
+                            target_surface[2](i_col, j_col);
+            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
+
+            UVLM::BiotSavart::surface_with_unsteady_wake(zeta,
+                                                         zeta_star,
+                                                         gamma,
+                                                         gamma_star,
+                                                         target_triad,
+                                                         temp_uout,
+                                                         image_method,
+                                                         n_rows
+                                                        );
+
+            unsigned int surf_rows = gamma.rows();
+            unsigned int surf_cols = gamma.cols();
+
+            surface_counter = -1;
+            for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
+            {
+                for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                {
+                    ++surface_counter;
+                    uout(collocation_counter, surface_counter) +=
+                        temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
+                        temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
+                        temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                }
+            }
+        }
+    }
+}
 
 // template <typename t_zeta,
 //           typename t_gamma,

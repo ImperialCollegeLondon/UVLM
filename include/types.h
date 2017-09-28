@@ -34,13 +34,15 @@ namespace UVLM
         // Vectors
         typedef Eigen::Matrix<Real, 3, 1> Vector3;
         typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
+        typedef Eigen::Map<VectorX> MapVectorX;
 
         // std custom containers
         typedef std::pair<unsigned int, unsigned int> IntPair;
         typedef std::vector<IntPair> VecDimensions;
 
 
-        struct VMopts {
+        struct VMopts
+        {
         	bool ImageMethod;
         	unsigned int Mstar;
         	bool Steady;
@@ -55,6 +57,33 @@ namespace UVLM
             unsigned int n_rollup;
             double rollup_tolerance;
             unsigned int rollup_aic_refresh;
+        };
+
+        struct UVMopts
+        {
+            double dt;
+            uint NumCores;
+            uint NumSurfaces;
+            // uint steady_n_rollup;
+            // uint steady_rollup_tolerance;
+            // uint steady_rollup_aic_refresh;
+            uint convection_scheme;
+            uint Mstar;
+            bool ImageMethod;
+        };
+
+        VMopts UVMopts2VMopts(const UVMopts& uvm)
+        {
+            VMopts vm;
+            vm.dt = uvm.dt;
+            vm.NumCores = uvm.NumCores;
+            vm.NumSurfaces = uvm.NumSurfaces;
+            vm.Mstar = uvm.Mstar;
+            vm.ImageMethod = uvm.ImageMethod;
+            vm.horseshoe = false;
+            vm.Steady = false;
+
+            return vm;
         };
 
         struct FlightConditions
@@ -152,7 +181,23 @@ namespace UVLM
             }
         }
 
-
+        template <typename t_mat>
+        inline void initialise_VecVecMat
+        (
+            t_mat& mat,
+            const double& value = 0.0
+        )
+        {
+            const unsigned int n_surf = mat.size();
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                const uint n_dim = mat[i_surf].size();
+                for (unsigned int i_dim=0; i_dim<n_dim; ++i_dim)
+                {
+                    mat[i_surf][i_dim].setConstant(value);
+                }
+            }
+        }
 
         inline void allocate_VecVecMat
         (
