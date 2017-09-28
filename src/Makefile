@@ -1,14 +1,14 @@
-#FLAGS = -fPIC -O3 -march=native -std=c++14 -I/usr/local/eigen/ -fomit-frame-pointer -fopenmp
 FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -fopenmp
+# FLAGS = -fPIC -g -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -fopenmp
 LINKER_FLAGS = -shared -fPIC -fopenmp
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
 # FC = gfortran
-CPP = g++-5
+CPP = g++
 endif
 ifeq ($(UNAME), Darwin)
 # FC = ifort
-CPP = g++-5
+CPP = g++
 endif
 LINKER = ar cr
 object_dir = obj/
