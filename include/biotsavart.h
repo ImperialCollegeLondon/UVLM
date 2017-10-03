@@ -604,8 +604,7 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     // n_rows controls the number of panels that are included
     // in the final result. Usually for unsteady wake, the value
     // will be 1 when computing AIC coeffs.
-    const uint mstar = (n_rows == -1) ? gamma_star.rows(): n_rows;
-    std::cout << n_rows << "  " <<  mstar << std::endl;
+    const uint mstar = (n_rows == -1) ? gamma_star.rows():n_rows;
     const uint i = Mend - 1;
     for (uint j=Nstart; j<Nend; ++j)
     {

@@ -143,17 +143,29 @@ void UVLM::Matrix::AIC
                 );
             } else // unsteady case
             {
-                UVLM::BiotSavart::multisurface_unsteady_wake
+                // UVLM::BiotSavart::multisurface_unsteady_wake
+                // (
+                //     zeta[ii_surf],
+                //     zeta_star[ii_surf],
+                //     dummy_gamma,
+                //     dummy_gamma_star,
+                //     zeta_col[icol_surf],
+                //     block,
+                //     options.ImageMethod,
+                //     normals[icol_surf],
+                //     1
+                // );
+                UVLM::BiotSavart::multisurface_steady_wake
                 (
                     zeta[ii_surf],
                     zeta_star[ii_surf],
                     dummy_gamma,
-                    dummy_gamma_star,
+                    dummy_gamma_star.topRows<1>(),
                     zeta_col[icol_surf],
+                    false,
                     block,
                     options.ImageMethod,
-                    normals[icol_surf],
-                    1
+                    normals[icol_surf]
                 );
             }
 

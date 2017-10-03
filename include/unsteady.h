@@ -21,6 +21,7 @@ namespace UVLM
         template <typename t_zeta,
                   typename t_zeta_dot,
                   typename t_uext,
+                  typename t_uext_star,
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
@@ -31,6 +32,7 @@ namespace UVLM
             t_zeta& zeta,
             t_zeta_dot& zeta_dot,
             t_uext& uext,
+            t_uext_star& uext_star,
             t_zeta_star& zeta_star,
             t_gamma& gamma,
             t_gamma_star& gamma_star,
@@ -39,7 +41,6 @@ namespace UVLM
             const UVLM::Types::UVMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
-
 
         template <typename t_zeta,
                   typename t_zeta_dot,
@@ -145,6 +146,7 @@ void UVLM::Unsteady::initialise
 template <typename t_zeta,
           typename t_zeta_dot,
           typename t_uext,
+          typename t_uext_star,
           typename t_zeta_star,
           typename t_gamma,
           typename t_gamma_star,
@@ -155,6 +157,7 @@ void UVLM::Unsteady::solver
     t_zeta& zeta,
     t_zeta_dot& zeta_dot,
     t_uext& uext,
+    t_uext_star& uext_star,
     t_zeta_star& zeta_star,
     t_gamma& gamma,
     t_gamma_star& gamma_star,
@@ -208,16 +211,101 @@ void UVLM::Unsteady::solver
     if (options.convection_scheme == 0)
     {
         UVLM::Wake::General::displace_VecMat(gamma_star);
-        // set first row's gamma_star to 0
+    } else if (options.convection_scheme == 1)
+    {
+        std::cerr << "convection_scheme == "
+                  << options.convection_scheme
+                  << " is not yet implemented in the UVLM solver"
+                  << std::endl;
+    } else if (options.convection_scheme == 2)
+    {
+        UVLM::Types::VecVecMatrixX uext_star_total;
+        UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
+        UVLM::Types::VecVecMatrixX zeros;
+        UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+        // total stream velocity
+        UVLM::Unsteady::compute_resultant_grid_velocity
+        (
+            zeta_star,
+            zeros,
+            uext_star,
+            rbm_velocity,
+            uext_star_total
+        );
+        // convection with uext + delta u (perturbation)
+        // (no u_induced)
+        UVLM::Wake::Discretised::convect(zeta_star,
+                                         uext_star_total,
+                                         options.dt);
+        // displace both zeta and gamma
+        UVLM::Wake::General::displace_VecMat(gamma_star);
+        UVLM::Wake::General::displace_VecVecMat(zeta_star);
+
+        // copy last row of zeta into zeta_star
+        UVLM::Wake::Discretised::generate_new_row
+        (
+            zeta_star,
+            zeta
+        );
+    } else if (options.convection_scheme == 3)
+    {
+        UVLM::Types::VecVecMatrixX uext_star_total;
+        UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
+        UVLM::Types::VecVecMatrixX zeros;
+        UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+        // total stream velocity
+        UVLM::Unsteady::compute_resultant_grid_velocity
+        (
+            zeta_star,
+            zeros,
+            uext_star,
+            rbm_velocity,
+            uext_star_total
+        );
+        // convection with uext + delta u (perturbation) + u_ind
+        UVLM::Types::VecVecMatrixX u_convection;
+        UVLM::Types::allocate_VecVecMat
+        (
+            u_convection,
+            uext_star_total
+        );
+        // induced velocity by vortex rings
+        UVLM::BiotSavart::total_induced_velocity_on_wake
+        (
+            zeta,
+            zeta_star,
+            gamma,
+            gamma_star,
+            u_convection
+        );
+        // u_convection = u_convection + uext_star;
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
-            gamma_star[i_surf].template row(0).setZero();
+            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+            {
+                u_convection[i_surf][i_dim] = u_convection[i_surf][i_dim] + uext_star_total[i_surf][i_dim];
+            }
         }
+
+        UVLM::Wake::Discretised::convect(zeta_star,
+                                         u_convection,
+                                         options.dt);
+        // displace both zeta and gamma
+        UVLM::Wake::General::displace_VecMat(gamma_star);
+        UVLM::Wake::General::displace_VecVecMat(zeta_star);
+
+        // copy last row of zeta into zeta_star
+        UVLM::Wake::Discretised::generate_new_row
+        (
+            zeta_star,
+            zeta
+        );
     } else
     {
         std::cerr << "convection_scheme == "
                   << options.convection_scheme
-                  << " is not yet supported by the UVLM solver"
+                  << " is not supported by the UVLM solver. \n"
+                  << "Supported options are from [0->3]"
                   << std::endl;
     }
 
@@ -238,10 +326,23 @@ void UVLM::Unsteady::solver
     );
 
     // forces calculation
+    // set forces to 0 just in case
+    UVLM::Types::initialise_VecVecMat(forces);
     // UVLM::Types::
     // static:
-
+    UVLM::PostProc::calculate_static_forces
+    (
+        zeta,
+        zeta_star,
+        gamma,
+        gamma_star,
+        uext,
+        forces,
+        steady_options,
+        flightconditions
+    );
     // dynamic::
+
 }
 
 

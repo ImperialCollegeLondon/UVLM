@@ -30,6 +30,7 @@ namespace UVLM
                     }
                 }
             }
+
             template <typename t_mat>
             void displace_VecMat
             (
@@ -43,7 +44,7 @@ namespace UVLM
                     for (uint i_row=n_rows - 1; i_row>0; --i_row)
                     {
                         mat[i_surf].template row(i_row) =
-                            mat [i_surf].template row(i_row - 1);
+                            mat[i_surf].template row(i_row - 1);
                     }
                 }
             }
@@ -51,6 +52,27 @@ namespace UVLM
 
         namespace Discretised
         {
+            template <typename t_zeta_star,
+                      typename t_zeta>
+            void generate_new_row
+            (
+                t_zeta_star& zeta_star,
+                const t_zeta& zeta
+            )
+            {
+                const uint n_surf = zeta_star.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        zeta_star[i_surf][i_dim].template topRows<1>() =
+                            zeta[i_surf][i_dim].template bottomRows<1>();
+                    }
+                }
+
+            }
+
+
             /*******************************************************************
             Given a velocity field at the vertices of the grid, convect it
             following:

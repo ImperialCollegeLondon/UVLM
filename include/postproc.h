@@ -185,7 +185,7 @@ namespace UVLM
                 }
             }
 
-            UVLM::Triads::InvBilinearMap1d(unsteady_force, forces);
+            // transfer forces to vortex corners
 
         }
 

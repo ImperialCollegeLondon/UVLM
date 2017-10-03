@@ -191,6 +191,7 @@ DLLEXPORT void run_UVLM
     unsigned int** p_dimensions,
     unsigned int** p_dimensions_star,
     double** p_uext,
+    double** p_uext_star,
     double** p_zeta,
     double** p_zeta_star,
     double** p_zeta_dot,
@@ -205,7 +206,6 @@ DLLEXPORT void run_UVLM
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
     Eigen::setNbThreads(options.NumCores);
     uint n_surf = options.NumSurfaces;
-    std::cout << "cpp_interface, n_surf = " << n_surf << std::endl;
 
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -248,6 +248,12 @@ DLLEXPORT void run_UVLM
                                       uext,
                                       1);
 
+    UVLM::Types::VecVecMapX uext_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_uext_star,
+                                      uext_star,
+                                      1);
+
     UVLM::Types::VecMapX gamma;
     UVLM::CppInterface::map_VecMat(dimensions,
                                    p_gamma,
@@ -268,12 +274,12 @@ DLLEXPORT void run_UVLM
                                       2*UVLM::Constants::NDIM);
 
 
-    std::cout << "Calling solver " << std::endl;
     UVLM::Unsteady::solver
     (
         zeta,
         zeta_dot,
         uext,
+        uext_star,
         zeta_star,
         gamma,
         gamma_star,
