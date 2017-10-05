@@ -137,57 +137,118 @@ namespace UVLM
         // NOTE: uext has to include all the velocities contribution
         template <typename t_zeta,
                   typename t_zeta_star,
+                  typename t_zeta_col,
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_previous_gamma,
                   typename t_uext,
+                  typename t_normals,
                   typename t_forces>
         void calculate_dynamic_forces
         (
             const t_zeta& zeta,
             const t_zeta_star& zeta_star,
+            const t_zeta_col& zeta_col,
             const t_gamma& gamma,
             const t_gamma_star& gamma_star,
             const t_previous_gamma& previous_gamma,
             const t_uext& uext,
+            const t_normals& normals,
             t_forces&  forces,
-            const UVLM::Types::VMopts options,
+            const UVLM::Types::UVMopts options,
             const UVLM::Types::FlightConditions& flightconditions
         )
         {
-            // TODO not finished
-
             const UVLM::Types::Real dt = options.dt;
             const uint n_surf = zeta.size();
 
             UVLM::Types::VecVecMatrixX unsteady_force;
             UVLM::Types::allocate_VecVecMat(unsteady_force, forces, -1);
 
-            // calculate gamma_dot
-            UVLM::Types::VecMatrixX gamma_dot;
-            UVLM::Types::allocate_VecMat(gamma_dot, gamma);
-            // simple finite differences:
-            // f' = (f+ - f-)/dt
+            // calculate unsteady forces
+            // f_uns = rho*A*n*gamma_dot
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 const uint n_rows = gamma[i_surf].rows();
                 const uint n_cols = gamma[i_surf].cols();
-
                 for (uint i=0; i<n_rows; ++i)
                 {
                     for (uint j=0; j<n_cols; ++j)
                     {
-                        gamma_dot[i_surf](i,j) =
+                        // gamma_dot
+                        // simple finite differences:
+                        // f' = (f+ - f-)/dt
+                        UVLM::Types::Real gamma_dot;
+                        gamma_dot =
                             (gamma[i_surf](i,j)
                              -
                              previous_gamma[i_surf](i,j))/dt;
+
+                        // area calculation
+                        UVLM::Types::Real area = 0;
+                        area = UVLM::Geometry::panel_area
+                        (
+                            zeta[i_surf][0].template block<2,2>(i, j),
+                            zeta[i_surf][1].template block<2,2>(i, j),
+                            zeta[i_surf][1].template block<2,2>(i, j)
+                        );
+
+                        // rho*A*n*gamma_dot
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            unsteady_force[i_surf][i_dim](i, j) =
+                            (
+                                flightconditions.rho
+                               *area
+                               *normals[i_surf][i_dim](i, j)
+                               *gamma_dot
+                            );
+                        }
+
+                        // transfer forces to vortex corners
+                        UVLM::Types::Vector3 zeta_col_panel;
+                        zeta_col_panel << zeta_col[i_surf][0](i, j),
+                                          zeta_col[i_surf][1](i, j),
+                                          zeta_col[i_surf][2](i, j);
+                        UVLM::Types::Vector3 panel_force;
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            panel_force(i_dim) = unsteady_force[i_surf][i_dim](i, j);
+                        }
+
+                        for (uint ii=0; ii<2; ++ii)
+                        {
+                            for (uint jj=0; jj<2; ++jj)
+                            {
+                                // forces
+                                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                                {
+                                    forces[i_surf][i_dim](i + ii, j + jj) +=
+                                        0.25*panel_force(i_dim);
+                                }
+                                // moments
+                                // moment = r cross F
+                                UVLM::Types::Vector3 zeta_corner;
+                                zeta_corner << zeta[i_surf][0](i + ii, j + jj),
+                                               zeta[i_surf][1](i + ii, j + jj),
+                                               zeta[i_surf][2](i + ii, j + jj);
+
+                                UVLM::Types::Vector3 r;
+                                r = zeta_corner - zeta_col_panel;
+                                UVLM::Types::Vector3 moment;
+                                moment = 0.25*r.cross(panel_force);
+
+                                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                                {
+                                    uint i_moment = i_dim + 3;
+                                    forces[i_surf][i_moment](i + ii, j + jj) +=
+                                        moment(i_dim);
+                                }
+                            }
+                        }
                     }
                 }
             }
-
-            // transfer forces to vortex corners
-
         }
-
     }
 }

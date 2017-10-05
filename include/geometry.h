@@ -5,11 +5,88 @@
 #include "mapping.h"
 
 #include <iostream>
+#include <cmath>
 
 namespace UVLM
 {
     namespace Geometry
     {
+        // calculates the area of a triangle given its
+        // side lengths: a, b, and c.
+        // It uses Heron's fomula:
+        // s = 0.5*(a + b + c)
+        // A = sqrt(s*(s-a)*(s-b)*(s-c))
+        UVLM::Types::Real triangle_area
+        (
+            const UVLM::Types::Real& a,
+            const UVLM::Types::Real& b,
+            const UVLM::Types::Real& c
+        )
+        {
+            UVLM::Types::Real s = 0.5*(a + b + c);
+
+            return std::sqrt(s*(s - a)*(s - b)*(s - c));
+        }
+
+
+        
+        // Calculates the area of a quadrilateral in 3D
+        // The method used is:
+        // 1) divide the quad with a diagonal from 0 to 2
+        // 2) calculate area of resulting triangles
+        // 3) divide the quad with a diagonal from 1 to 3
+        // 4) calculate area of resulting triangles
+        // 5) average the two areas
+        template <typename t_block>
+        UVLM::Types::Real panel_area
+        (
+            const t_block& x,
+            const t_block& y,
+            const t_block& z
+        )
+        {
+            UVLM::Types::Real area = 0;
+            // calculate side length
+            UVLM::Types::VectorX sides;
+            sides.resize(4);
+            uint i_side = 0;
+            for (uint i_side=0; i_side<4; ++i_side)
+            {
+                uint i_first = UVLM::Mapping::vortex_indices(i_side, 0);
+                uint j_first = UVLM::Mapping::vortex_indices(i_side, 1);
+                uint i_second = UVLM::Mapping::vortex_indices((i_side + 1) % 4, 0);
+                uint j_second = UVLM::Mapping::vortex_indices((i_side + 1) % 4, 1);
+                sides(i_side) = std::sqrt(
+                    (x(i_second,j_second) - x(i_first,j_first))*(x(i_second,j_second) - x(i_first,j_first)) +
+                    (y(i_second,j_second) - y(i_first,j_first))*(y(i_second,j_second) - y(i_first,j_first)) +
+                    (z(i_second,j_second) - z(i_first,j_first))*(z(i_second,j_second) - z(i_first,j_first)));
+            }
+
+            // diagonal from 0 to 2
+            UVLM::Types::Real diagonal = 0;
+            diagonal = std::sqrt(
+                    (x(1,1) - x(0,0))*(x(1,1) - x(0,0)) +
+                    (y(1,1) - y(0,0))*(y(1,1) - y(0,0)) +
+                    (z(1,1) - z(0,0))*(z(1,1) - z(0,0)));
+
+            area += triangle_area(sides(0), sides(1), diagonal);
+            area += triangle_area(sides(2), sides(3), diagonal);
+
+            // diagonal from 1 to 3
+            diagonal = std::sqrt(
+                    (x(1,0) - x(0,1))*(x(1,0) - x(0,1)) +
+                    (y(1,0) - y(0,1))*(y(1,0) - y(0,1)) +
+                    (z(1,0) - z(0,1))*(z(1,0) - z(0,1)));
+
+            area += triangle_area(sides(1), sides(2), diagonal);
+            area += triangle_area(sides(0), sides(3), diagonal);
+            area *= 0.5;
+
+            return area;
+        }
+
+
+
         template <typename type>
         void panel_normal(type& x,
                           type& y,

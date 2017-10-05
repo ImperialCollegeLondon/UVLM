@@ -1,7 +1,7 @@
 #pragma once
 #include "EigenInclude.h"
-#include "constants.h"
 #include "types.h"
+#include "constants.h"
 #include "geometry.h"
 #include "steady.h"
 #include "unsteady.h"

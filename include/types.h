@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EigenInclude.h"
-#include "constants.h"
 #include <vector>
 #include <utility>
 #include <iostream>
@@ -57,6 +56,9 @@ namespace UVLM
             unsigned int n_rollup;
             double rollup_tolerance;
             unsigned int rollup_aic_refresh;
+            bool iterative_solver;
+            double iterative_tol;
+            bool iterative_precond;
         };
 
         struct UVMopts
@@ -70,6 +72,9 @@ namespace UVLM
             uint convection_scheme;
             uint Mstar;
             bool ImageMethod;
+            bool iterative_solver;
+            double iterative_tol;
+            bool iterative_precond;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -80,6 +85,9 @@ namespace UVLM
             vm.NumSurfaces = uvm.NumSurfaces;
             vm.Mstar = uvm.Mstar;
             vm.ImageMethod = uvm.ImageMethod;
+            vm.iterative_solver = uvm.iterative_solver;
+            vm.iterative_tol = uvm.iterative_tol;
+            vm.iterative_precond = uvm.iterative_precond;
             vm.horseshoe = false;
             vm.Steady = false;
 

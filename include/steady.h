@@ -1,14 +1,15 @@
 #pragma once
 
 #include "types.h"
-#include "triads.h"
 #include "constants.h"
+#include "triads.h"
 #include "mapping.h"
 #include "geometry.h"
 #include "biotsavart.h"
 #include "matrix.h"
 #include "wake.h"
 #include "postproc.h"
+#include "linear_solver.h"
 
 #include <iostream>
 
@@ -77,8 +78,6 @@ namespace UVLM
         );
     }
 }
-
-// SOURCE CODE
 
 /*-----------------------------------------------------------------------------
 
@@ -318,7 +317,14 @@ void UVLM::Steady::solve_horseshoe
                       aic);
 
     UVLM::Types::VectorX gamma_flat;
-    gamma_flat = aic.partialPivLu().solve(rhs);
+    // gamma_flat = aic.partialPivLu().solve(rhs);
+    UVLM::LinearSolver::solve_system
+    (
+        aic,
+        rhs,
+        options,
+        gamma_flat
+    );
 
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
@@ -384,7 +390,14 @@ void UVLM::Steady::solve_discretised
 
     UVLM::Types::VectorX gamma_flat;
     // std::cout << aic << std::endl;
-    gamma_flat = aic.partialPivLu().solve(rhs);
+    // gamma_flat = aic.partialPivLu().solve(rhs);
+    UVLM::LinearSolver::solve_system
+    (
+        aic,
+        rhs,
+        options,
+        gamma_flat
+    );
 
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,

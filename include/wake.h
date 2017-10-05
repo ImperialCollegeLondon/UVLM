@@ -2,6 +2,8 @@
 
 #include "EigenInclude.h"
 #include "types.h"
+// #include "unsteady.h"
+// #include "steady.h"
 
 namespace UVLM
 {
@@ -69,9 +71,7 @@ namespace UVLM
                             zeta[i_surf][i_dim].template bottomRows<1>();
                     }
                 }
-
             }
-
 
             /*******************************************************************
             Given a velocity field at the vertices of the grid, convect it
@@ -106,10 +106,10 @@ namespace UVLM
                     }
                 }
             }
+
         }
-
-
         namespace Horseshoe
+
         {
             template <typename t_zeta,
                       typename t_zeta_star>

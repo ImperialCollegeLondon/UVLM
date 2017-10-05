@@ -22,7 +22,7 @@ namespace UVLM
         //   V  1---------2
         // so, the first element (0), has the coordinate (for example)
         // indices of: vortex_indices(0), that is, 0 and 0
-        Eigen::Matrix<unsigned int, 4, 2>
+        const Eigen::Matrix<unsigned int, 4, 2>
                 vortex_indices((Eigen::Matrix<unsigned int, 4, 2>()
                                         << 0,0,1,0,1,1,0,1).finished());
 
