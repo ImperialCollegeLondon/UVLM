@@ -8,6 +8,8 @@
 #include <math.h>
 #include <cmath>
 
+#define VORTEX_RADIUS 1e-2
+
 namespace UVLM
 {
     namespace BiotSavart
@@ -28,7 +30,7 @@ namespace UVLM
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
             const bool&         horseshoe = false,
-            const UVLM::Types::Real vortex_radius = 1e-5
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_zeta,
@@ -49,7 +51,7 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
-            const UVLM::Types::Real vortex_radius = 1e-5
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_zeta,
@@ -87,7 +89,7 @@ namespace UVLM
             unsigned int        Mend   = -1,
             unsigned int        Nend   = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = 1e-8
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_zeta,
@@ -106,7 +108,7 @@ namespace UVLM
             const bool&         horseshoe,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = 1e-5
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_zeta,
@@ -137,7 +139,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma_star,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = 1e-2
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_triad,
@@ -150,7 +152,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = 1e-4
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
         template <typename t_triad>
@@ -161,7 +163,7 @@ namespace UVLM
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = 1e-8
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
 
@@ -179,7 +181,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = 1e-8
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
 
@@ -213,7 +215,7 @@ namespace UVLM
             unsigned int        Mend = -1,
             unsigned int        Nend = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = 1e-8
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
     }
 }
