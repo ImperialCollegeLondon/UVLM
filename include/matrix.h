@@ -49,7 +49,7 @@ namespace UVLM
             const t_normal& normal,
             const UVLM::Types::VMopts& options,
             UVLM::Types::VectorX& rhs,
-            uint& Ktotal
+            const uint& Ktotal
         );
 
 
@@ -106,8 +106,30 @@ void UVLM::Matrix::AIC
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
 
-    // fill up AIC
+
+    // build the offsets beforehand
+    // (parallel variation)
+    // std::vector<uint> collocation_offset;
+    std::vector<uint> offset;
     uint i_offset = 0;
+    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    {
+        offset.push_back(i_offset);
+        uint k_surf = dimensions[icol_surf].first*
+                      dimensions[icol_surf].second;
+
+        // uint ii_offset = 0;
+        // for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+        // {
+        //     uint kk_surf = dimensions[ii_surf].first*
+        //                            dimensions[ii_surf].second;
+        //     ii_offset += kk_surf;
+        // }
+        i_offset += k_surf;
+    }
+
+    // fill up AIC
+    // uint i_offset = 0;
     for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
     {
         uint k_surf = dimensions[icol_surf].first*
@@ -116,12 +138,11 @@ void UVLM::Matrix::AIC
         uint ii_offset = 0;
         for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
         {
-            // SURFACE - SURFACE coeffs
             uint kk_surf = dimensions[ii_surf].first*
                                    dimensions[ii_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
             UVLM::Types::MatrixX dummy_gamma_star;
-            UVLM::Types::Block block = aic.block(i_offset, ii_offset, k_surf, kk_surf);
+            UVLM::Types::Block block = aic.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
             // steady wake coefficients
             dummy_gamma.setOnes(dimensions[ii_surf].first,
                                 dimensions[ii_surf].second);
@@ -143,18 +164,6 @@ void UVLM::Matrix::AIC
                 );
             } else // unsteady case
             {
-                // UVLM::BiotSavart::multisurface_unsteady_wake
-                // (
-                //     zeta[ii_surf],
-                //     zeta_star[ii_surf],
-                //     dummy_gamma,
-                //     dummy_gamma_star,
-                //     zeta_col[icol_surf],
-                //     block,
-                //     options.ImageMethod,
-                //     normals[icol_surf],
-                //     1
-                // );
                 UVLM::BiotSavart::multisurface_steady_wake
                 (
                     zeta[ii_surf],
@@ -168,11 +177,9 @@ void UVLM::Matrix::AIC
                     normals[icol_surf]
                 );
             }
-
-            ii_offset += kk_surf;
+            // ii_offset += kk_surf;
         }
-        i_offset += k_surf;
-
+        // i_offset += k_surf;
     }
 }
 
@@ -195,7 +202,7 @@ void UVLM::Matrix::RHS
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
     UVLM::Types::VectorX& rhs,
-    uint& Ktotal
+    const uint& Ktotal
 )
 {
     const uint n_surf = options.NumSurfaces;
@@ -205,20 +212,10 @@ void UVLM::Matrix::RHS
     UVLM::Types::allocate_VecVecMat(u_col, uinc_col);
     UVLM::Types::copy_VecVecMat(uinc_col, u_col);
 
-    // size of rhs
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uinc_col[i_surf][0].rows();
-        uint N = uinc_col[i_surf][0].cols();
-
-        ii += M*N;
-    }
-    Ktotal = ii;
     rhs.setZero(Ktotal);
 
     // filling up RHS
-    ii = -1;
+    int ii = -1;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         uint M = uinc_col[i_surf][0].rows();

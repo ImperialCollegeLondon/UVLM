@@ -40,7 +40,7 @@ namespace UVLM
                 // }
             } else
             {
-                    // std::cout << "direct" << std::endl;
+                //  std::cout << "direct" << std::endl;
                 x = a.partialPivLu().solve(b);
             }
         }

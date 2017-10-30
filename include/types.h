@@ -43,7 +43,7 @@ namespace UVLM
         struct VMopts
         {
         	bool ImageMethod;
-        	unsigned int Mstar;
+        	// unsigned int Mstar;
         	bool Steady;
             bool horseshoe;
         	bool KJMeth;
@@ -70,7 +70,7 @@ namespace UVLM
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
             uint convection_scheme;
-            uint Mstar;
+            // uint Mstar;
             bool ImageMethod;
             bool iterative_solver;
             double iterative_tol;
@@ -83,7 +83,7 @@ namespace UVLM
             vm.dt = uvm.dt;
             vm.NumCores = uvm.NumCores;
             vm.NumSurfaces = uvm.NumSurfaces;
-            vm.Mstar = uvm.Mstar;
+            // vm.Mstar = uvm.Mstar;
             vm.ImageMethod = uvm.ImageMethod;
             vm.iterative_solver = uvm.iterative_solver;
             vm.iterative_tol = uvm.iterative_tol;

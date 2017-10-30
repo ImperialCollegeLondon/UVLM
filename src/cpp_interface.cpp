@@ -17,8 +17,10 @@ DLLEXPORT void run_VLM
     double** p_forces
 )
 {
+    // std::cout << options.n_rollup << std::endl;
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
-    Eigen::setNbThreads(options.NumCores);
+    // omp_set_nested(1);
+    // omp_set_num_threads(options.NumCores);
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;

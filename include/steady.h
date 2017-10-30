@@ -238,10 +238,10 @@ void UVLM::Steady::solver
             // double eps = std::abs((zeta_star_norm - zeta_star_norm_previous)
             //                       /zeta_star_norm_first);
             double eps = std::abs(UVLM::Types::norm_VecVec_mat(zeta_star - zeta_star_previous))/zeta_star_norm_first;
-            std::cout << i_rollup << ", " << eps << std::endl;
+            // std::cout << i_rollup << ", " << eps << std::endl;
             if (eps < options.rollup_tolerance)
             {
-                std::cout << "converged" << std::endl;
+                // std::cout << "converged" << std::endl;
                 break;
             }
             zeta_star_norm_previous = zeta_star_norm;
@@ -292,9 +292,20 @@ void UVLM::Steady::solve_horseshoe
                                 zeta_star,
                                 flightconditions);
 
+    const uint n_surf = options.NumSurfaces;
+    // size of rhs
+    uint ii = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uext_col[i_surf][0].rows();
+        uint N = uext_col[i_surf][0].cols();
+
+        ii += M*N;
+    }
+
+    const uint Ktotal = ii;
     // RHS generation
     UVLM::Types::VectorX rhs;
-    unsigned int Ktotal;
     UVLM::Matrix::RHS(zeta_col,
                       zeta_star,
                       uext_col,
@@ -364,30 +375,48 @@ void UVLM::Steady::solve_discretised
     const UVLM::Types::FlightConditions& flightconditions
 )
 {
-    // RHS generation
+    const uint n_surf = options.NumSurfaces;
+    // size of rhs
+    uint ii = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uext_col[i_surf][0].rows();
+        uint N = uext_col[i_surf][0].cols();
+
+        ii += M*N;
+    }
+    const uint Ktotal = ii;
+
     UVLM::Types::VectorX rhs;
-    unsigned int Ktotal;
-    UVLM::Matrix::RHS(zeta_col,
-                      zeta_star,
-                      uext_col,
-                      gamma_star,
-                      normals,
-                      options,
-                      rhs,
-                      Ktotal);
-
-    // AIC generation
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Matrix::AIC(Ktotal,
-                      zeta,
-                      zeta_col,
-                      zeta_star,
-                      uext_col,
-                      normals,
-                      options,
-                      false,
-                      aic);
-
+    // #pragma omp parallel sections
+    {
+        // #pragma omp section
+        {
+            // RHS generation
+            UVLM::Matrix::RHS(zeta_col,
+                              zeta_star,
+                              uext_col,
+                              gamma_star,
+                              normals,
+                              options,
+                              rhs,
+                              Ktotal);
+        }
+        // #pragma omp section
+        {
+            // AIC generation
+            UVLM::Matrix::AIC(Ktotal,
+                              zeta,
+                              zeta_col,
+                              zeta_star,
+                              uext_col,
+                              normals,
+                              options,
+                              false,
+                              aic);
+        }
+    }
     UVLM::Types::VectorX gamma_flat;
     // std::cout << aic << std::endl;
     // gamma_flat = aic.partialPivLu().solve(rhs);

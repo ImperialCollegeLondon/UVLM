@@ -8,7 +8,7 @@
 #include <math.h>
 #include <cmath>
 
-#define VORTEX_RADIUS 1e-2
+#define VORTEX_RADIUS 1e-3
 
 namespace UVLM
 {
@@ -711,48 +711,58 @@ void UVLM::BiotSavart::multisurface_steady_wake
     const unsigned int rows_collocation = target_surface[0].rows();
     const unsigned int cols_collocation = target_surface[0].cols();
 
-    UVLM::Types::VecMatrixX temp_uout;
-    UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
-
     int collocation_counter = -1;
     int surface_counter;
-    for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
-    {
-        for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
+    const uint surf_rows = gamma.rows();
+    const uint surf_cols = gamma.cols();
+    // #pragma omp parallel for default(none) \
+    //                          shared(uout, target_surface, zeta, zeta_star, gamma, gamma_star, horseshoe,\
+    //                          normal) \
+    //                          private(collocation_counter, \
+    //                                   surface_counter)
+        for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
         {
-            ++collocation_counter;
-            UVLM::Types::Vector3 target_triad;
-            target_triad << target_surface[0](i_col, j_col),
-                            target_surface[1](i_col, j_col),
-                            target_surface[2](i_col, j_col);
-            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
-
-            UVLM::BiotSavart::surface_with_steady_wake(zeta,
-                                                       zeta_star,
-                                                       gamma,
-                                                       gamma_star,
-                                                       target_triad,
-                                                       horseshoe,
-                                                       temp_uout
-                                                      );
-
-            unsigned int surf_rows = gamma.rows();
-            unsigned int surf_cols = gamma.cols();
-
-            surface_counter = -1;
-            for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
+            for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
             {
-                for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                // for parallel, calculate directly collocation counter
+                // ++collocation_counter;
+                collocation_counter = i_col*cols_collocation + j_col;
+                UVLM::Types::Vector3 target_triad;
+                target_triad << target_surface[0](i_col, j_col),
+                                target_surface[1](i_col, j_col),
+                                target_surface[2](i_col, j_col);
+                UVLM::Types::VecMatrixX temp_uout;
+                UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
+                UVLM::Types::initialise_VecMat(temp_uout, 0.0);
+
+                UVLM::BiotSavart::surface_with_steady_wake(zeta,
+                                                           zeta_star,
+                                                           gamma,
+                                                           gamma_star,
+                                                           target_triad,
+                                                           horseshoe,
+                                                           temp_uout
+                                                          );
+
+                // std::cout << "Iter: " << collocation_counter << std::endl;
+                // std::cout << "Thread: " << omp_get_thread_num() << std::endl;
+
+                // surface_counter = -1;
+                for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
                 {
-                    ++surface_counter;
-                    uout(collocation_counter, surface_counter) +=
-                        temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
-                        temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
-                        temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                    for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
+                    {
+                        // for parallel calculate surface_counter directly
+                        // ++surface_counter;
+                        surface_counter = i_surf*surf_cols + j_surf;
+                        uout(collocation_counter, surface_counter) +=
+                            temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
+                            temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
+                            temp_uout[2](i_surf, j_surf)*normal[2](i_col, j_col);
+                    }
                 }
             }
         }
-    }
 }
 
 template <typename t_zeta,
