@@ -514,25 +514,16 @@ void UVLM::Unsteady::convect_unsteady_wake
         );
     } else if (options.convection_scheme == 3)
     {
-        UVLM::Types::VecVecMatrixX uext_star_total;
-        UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
-        // total stream velocity
-        UVLM::Unsteady::compute_resultant_grid_velocity
-        (
-            zeta_star,
-            zeros,
-            uext_star,
-            rbm_velocity,
-            uext_star_total
-        );
+        UVLM::Types::VectorX zeros_rbm = UVLM::Types::VectorX::Zero(6);
+
         // convection with uext + delta u (perturbation) + u_ind
         UVLM::Types::VecVecMatrixX u_convection;
         UVLM::Types::allocate_VecVecMat
         (
             u_convection,
-            uext_star_total
+            uext_star
         );
         // induced velocity by vortex rings
         UVLM::BiotSavart::total_induced_velocity_on_wake
@@ -543,12 +534,22 @@ void UVLM::Unsteady::convect_unsteady_wake
             gamma_star,
             u_convection
         );
+        // remove first row of convection velocities
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        {
+            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+            {
+                u_convection[i_surf][i_dim].template topRows<1>().setZero();
+            }
+        }
+
         // u_convection = u_convection + uext_star;
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
             {
-                u_convection[i_surf][i_dim] = u_convection[i_surf][i_dim] + uext_star_total[i_surf][i_dim];
+                u_convection[i_surf][i_dim] = u_convection[i_surf][i_dim] +
+                                              uext_star[i_surf][i_dim];
             }
         }
 

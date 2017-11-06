@@ -29,6 +29,7 @@ namespace UVLM
                             mat[i_surf][i_dim].template row(i_row) =
                                 mat [i_surf][i_dim].template row(i_row - 1);
                         }
+                        mat[i_surf][i_dim].template topRows<1>().setZero();
                     }
                 }
             }
@@ -48,6 +49,7 @@ namespace UVLM
                         mat[i_surf].template row(i_row) =
                             mat[i_surf].template row(i_row - 1);
                     }
+                    mat[i_surf].template topRows<1>().setZero();
                 }
             }
         }

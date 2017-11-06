@@ -198,7 +198,7 @@ namespace UVLM
                         {
                             unsteady_force[i_surf][i_dim](i, j) =
                             (
-                                flightconditions.rho
+                                -flightconditions.rho
                                *area
                                *normals[i_surf][i_dim](i, j)
                                *gamma_dot

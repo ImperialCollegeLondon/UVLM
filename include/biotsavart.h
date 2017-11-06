@@ -3,12 +3,13 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include "mapping.h"
+#include "debugutils.h"
 
 #include <limits>
 #include <math.h>
 #include <cmath>
 
-#define VORTEX_RADIUS 1e-3
+#define VORTEX_RADIUS 1e-2
 
 namespace UVLM
 {
@@ -256,7 +257,6 @@ void UVLM::BiotSavart::segment
     UVLM::Types::Real K;
     K = (gamma/(UVLM::Constants::PI4*r1_cross_r2_mod_sq))*
         (r0_dot_r1/r1_mod - r0_dot_r2/r2_mod);
-
     uind += K*r1_cross_r2;
 }
 
@@ -274,11 +274,6 @@ void UVLM::BiotSavart::horseshoe
     const UVLM::Types::Real vortex_radius
 )
 {
-    if (std::abs(gamma_star) < UVLM::Constants::EPSILON)
-    {
-        // std::cerr << "Gamma almost 0 " << std::endl;
-        return;
-    }
     // three segments.
     //
     //     0___________3
@@ -743,9 +738,6 @@ void UVLM::BiotSavart::multisurface_steady_wake
                                                            horseshoe,
                                                            temp_uout
                                                           );
-
-                // std::cout << "Iter: " << collocation_counter << std::endl;
-                // std::cout << "Thread: " << omp_get_thread_num() << std::endl;
 
                 // surface_counter = -1;
                 for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
