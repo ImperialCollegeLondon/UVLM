@@ -9,7 +9,7 @@
 #include <math.h>
 #include <cmath>
 
-#define VORTEX_RADIUS 1e-2
+#define VORTEX_RADIUS 1e-5
 
 namespace UVLM
 {

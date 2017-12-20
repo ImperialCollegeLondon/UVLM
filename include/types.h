@@ -75,6 +75,7 @@ namespace UVLM
             bool iterative_solver;
             double iterative_tol;
             bool iterative_precond;
+            bool convect_wake;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)

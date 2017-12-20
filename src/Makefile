@@ -4,12 +4,12 @@ LINKER_FLAGS = -shared -fPIC -fopenmp
 # LINKER_FLAGS = -shared -fPIC
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-# FC = gfortran
 CPP = g++
+# CPP = clang
 endif
 ifeq ($(UNAME), Darwin)
-# FC = ifort
 CPP = g++
+# CPP = clang
 endif
 LINKER = ar cr
 object_dir = obj/

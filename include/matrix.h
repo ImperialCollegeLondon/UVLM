@@ -305,16 +305,9 @@ void UVLM::Matrix::reconstruct_gamma
     const UVLM::Types::VMopts& options
 )
 {
-    // std::cout << "Entering reconstruct_gamma" << std::endl;
-    // if (!options.Steady)
-    // {
-    //     std::cerr << "Not implemented in matrix.h, line=" << __LINE__ << std::endl;
-    // }
     const uint n_surf = zeta_col.size();
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
-    // UVLM::Types::VecDimensions dimensions_star;
-    // UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
 
     uint i_flat = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)

@@ -29,7 +29,7 @@ namespace UVLM
         }
 
 
-        
+
         // Calculates the area of a quadrilateral in 3D
         // The method used is:
         // 1) divide the quad with a diagonal from 0 to 2
@@ -111,13 +111,13 @@ namespace UVLM
                                    y(1,0) - y(0,1),
                                    z(1,0) - z(0,1));
 
-            if (diff(2) < 0.0)
-            {
+            // if (diff(2) < 0.0)
+            // {
                 normal = B.cross(A);
-            } else
-            {
-                normal = A.cross(B);
-            }
+            // } else
+            // {
+                // normal = A.cross(B);
+            // }
             normal.normalize();
         }
 
