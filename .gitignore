@@ -31,3 +31,5 @@ bin/*
 
 # Tags file
 tags
+
+*.un~

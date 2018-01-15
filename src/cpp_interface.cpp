@@ -17,8 +17,10 @@ DLLEXPORT void run_VLM
     double** p_forces
 )
 {
+    // std::cout << options.n_rollup << std::endl;
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
-    Eigen::setNbThreads(options.NumCores);
+    // omp_set_nested(1);
+    // omp_set_num_threads(options.NumCores);
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
@@ -196,7 +198,6 @@ DLLEXPORT void run_UVLM
     double** p_zeta,
     double** p_zeta_star,
     double** p_zeta_dot,
-    double** p_zeta_star_dot,
     double*  p_rbm_vel,
     double** p_gamma,
     double** p_gamma_star,
@@ -236,12 +237,6 @@ DLLEXPORT void run_UVLM
                                       zeta_dot,
                                       1);
 
-    UVLM::Types::VecVecMapX zeta_star_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star_dot,
-                                      zeta_star_dot,
-                                      1);
-
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecVecMapX uext;
@@ -274,6 +269,12 @@ DLLEXPORT void run_UVLM
                                    gamma_star,
                                    0);
 
+    UVLM::Types::VecVecMapX normals;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_normals,
+                                      normals,
+                                      0);
+
     UVLM::Types::VecVecMapX forces;
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_forces,
@@ -298,6 +299,7 @@ DLLEXPORT void run_UVLM
         zeta_star,
         gamma,
         gamma_star,
+        normals,
         previous_gamma,
         rbm_velocity,
         forces,

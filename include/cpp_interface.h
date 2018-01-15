@@ -6,6 +6,8 @@
 #include "steady.h"
 #include "unsteady.h"
 
+#include "omp.h"
+
 #include <iostream>
 
 #define DLLEXPORT extern "C"
