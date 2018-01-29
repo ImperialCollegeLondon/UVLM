@@ -257,20 +257,21 @@ void UVLM::Unsteady::solver
         // std::cout << "Max dynamic forces:" << std::endl;
         // std::cout << dynamic_forces[0][2].maxCoeff() << std::endl;
         // calculate dynamic forces
-        UVLM::PostProc::calculate_dynamic_forces
-        (
-            zeta,
-            zeta_star,
-            zeta_col,
-            gamma,
-            gamma_star,
-            previous_gamma,
-            uext_total,
-            normals,
-            dynamic_forces,
-            options,
-            flightconditions
-        );
+        std::cerr << "No unsteady forces will be calculated with the old routine!" << std::endl;
+        // UVLM::PostProc::calculate_dynamic_forces
+        // (
+        //     zeta,
+        //     zeta_star,
+        //     zeta_col,
+        //     gamma,
+        //     gamma_star,
+        //     previous_gamma,
+        //     uext_total,
+        //     normals,
+        //     dynamic_forces,
+        //     options,
+        //     flightconditions
+        // );
         // std::cout << dynamic_forces[0][2].maxCoeff() << std::endl;
     // }
 }

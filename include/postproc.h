@@ -281,15 +281,14 @@ namespace UVLM
                 }
             }
         }
+
         // Forces is not set to 0, forces are added
-        // NOTE: uext has to include all the velocities contribution
         template <typename t_zeta,
                   typename t_zeta_star,
                   typename t_zeta_col,
                   typename t_gamma,
                   typename t_gamma_star,
-                  typename t_previous_gamma,
-                  typename t_uext,
+                  typename t_gamma_dot,
                   typename t_normals,
                   typename t_forces>
         void calculate_dynamic_forces
@@ -299,8 +298,7 @@ namespace UVLM
             const t_zeta_col& zeta_col,
             const t_gamma& gamma,
             const t_gamma_star& gamma_star,
-            const t_previous_gamma& previous_gamma,
-            const t_uext& uext,
+            const t_gamma_dot& gamma_dot,
             const t_normals& normals,
             t_forces&  forces,
             const UVLM::Types::UVMopts options,
@@ -326,11 +324,12 @@ namespace UVLM
                         // gamma_dot
                         // simple finite differences:
                         // f' = (f+ - f-)/dt
-                        UVLM::Types::Real gamma_dot;
-                        gamma_dot =
-                            (gamma[i_surf](i,j)
-                             -
-                             previous_gamma[i_surf](i,j))/dt;
+                        // UVLM::Types::Real gamma_dot;
+                        // gamma_dot =
+                        //     (gamma[i_surf](i,j)
+                        //      -
+                        //      previous_gamma[i_surf](i,j))/dt;
+                        //
 
                         // area calculation
                         UVLM::Types::Real area = 0;
@@ -347,11 +346,11 @@ namespace UVLM
                             unsteady_force[i_surf][i_dim](i, j) =
                             (
                                 // 0.0*flightconditions.rho
+                                // -flightconditions.rho
                                 -flightconditions.rho
-                                // +flightconditions.rho
                                *area
                                *normals[i_surf][i_dim](i, j)
-                               *gamma_dot
+                               *gamma_dot[i_surf](i, j)
                             );
                         }
 

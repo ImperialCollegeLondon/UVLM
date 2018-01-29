@@ -308,3 +308,95 @@ DLLEXPORT void run_UVLM
         flightconditions
     );
 }
+
+DLLEXPORT void calculate_unsteady_forces
+(
+    const UVLM::Types::UVMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_zeta,
+    double** p_zeta_star,
+    double*  p_rbm_vel,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_gamma_dot,
+    double** p_normals,
+    double** p_dynamic_forces
+)
+{
+    uint n_surf = options.NumSurfaces;
+
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+    UVLM::Types::VecDimensions dimensions_star;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions_star,
+                                             dimensions_star);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star,
+                                      zeta_star,
+                                      1);
+
+    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_dot;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma_dot,
+                                   gamma_dot,
+                                   0);
+
+    UVLM::Types::VecVecMapX normals;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_normals,
+                                      normals,
+                                      0);
+
+    UVLM::Types::VecVecMapX dynamic_forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_dynamic_forces,
+                                      dynamic_forces,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+
+
+    UVLM::Types::VecVecMatrixX zeta_col;
+    UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
+
+    std::cout << "Dynamic forces being calculated, new routine" << std::endl;
+    UVLM::PostProc::calculate_dynamic_forces
+    (
+        zeta,
+        zeta_star,
+        zeta_col,
+        gamma,
+        gamma_star,
+        gamma_dot,
+        normals,
+        dynamic_forces,
+        options,
+        flightconditions
+    );
+}
