@@ -385,7 +385,7 @@ DLLEXPORT void calculate_unsteady_forces
     UVLM::Types::VecVecMatrixX zeta_col;
     UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
 
-    std::cout << "Dynamic forces being calculated, new routine" << std::endl;
+    //std::cout << "Dynamic forces being calculated, new routine" << std::endl;
     UVLM::PostProc::calculate_dynamic_forces
     (
         zeta,

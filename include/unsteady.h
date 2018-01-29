@@ -257,7 +257,7 @@ void UVLM::Unsteady::solver
         // std::cout << "Max dynamic forces:" << std::endl;
         // std::cout << dynamic_forces[0][2].maxCoeff() << std::endl;
         // calculate dynamic forces
-        std::cerr << "No unsteady forces will be calculated with the old routine!" << std::endl;
+        //std::cerr << "No unsteady forces will be calculated with the old routine!" << std::endl;
         // UVLM::PostProc::calculate_dynamic_forces
         // (
         //     zeta,
