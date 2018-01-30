@@ -10,7 +10,7 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1e-4
+#define VORTEX_RADIUS 1e-5
 
 namespace UVLM
 {
