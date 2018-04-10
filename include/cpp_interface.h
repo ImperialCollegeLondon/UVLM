@@ -6,7 +6,7 @@
 #include "steady.h"
 #include "unsteady.h"
 
-#include "omp.h"
+// #include "omp.h"
 
 #include <iostream>
 

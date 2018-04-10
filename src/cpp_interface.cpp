@@ -13,7 +13,6 @@ DLLEXPORT void run_VLM
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_normals,
     double** p_forces
 )
 {
@@ -201,7 +200,7 @@ DLLEXPORT void run_UVLM
     double*  p_rbm_vel,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_previous_gamma,
+    // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
     double** p_dynamic_forces
@@ -256,12 +255,12 @@ DLLEXPORT void run_UVLM
                                    p_gamma,
                                    gamma,
                                    0);
-
-    UVLM::Types::VecMapX previous_gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_previous_gamma,
-                                   previous_gamma,
-                                   0);
+    //
+    // UVLM::Types::VecMapX previous_gamma;
+    // UVLM::CppInterface::map_VecMat(dimensions,
+    //                                p_previous_gamma,
+    //                                previous_gamma,
+    //                                0);
 
     UVLM::Types::VecMapX gamma_star;
     UVLM::CppInterface::map_VecMat(dimensions_star,
@@ -300,7 +299,7 @@ DLLEXPORT void run_UVLM
         gamma,
         gamma_star,
         normals,
-        previous_gamma,
+        // previous_gamma,
         rbm_velocity,
         forces,
         dynamic_forces,
@@ -325,8 +324,8 @@ DLLEXPORT void calculate_unsteady_forces
     double** p_dynamic_forces
 )
 {
+    // feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
     uint n_surf = options.NumSurfaces;
-
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
                                              p_dimensions,

@@ -10,7 +10,7 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1e-5
+#define VORTEX_RADIUS 1e-2
 
 namespace UVLM
 {
@@ -28,10 +28,10 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_tsurface&   target_surface,
             t_uout&             uout,
-            const UVLM::Types::IntPair& dimensions,
+            // const UVLM::Types::IntPair& dimensions,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
-            const bool&         horseshoe = false,
+            // const bool&         horseshoe = false,
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
@@ -245,9 +245,11 @@ void UVLM::BiotSavart::segment
     UVLM::Types::Real r1_mod = r1.norm();
     UVLM::Types::Real r2_mod = r2.norm();
 
-    if (r1_mod < vortex_radius ||
-        r2_mod < vortex_radius ||
-        r1_cross_r2_mod_sq < vortex_radius*vortex_radius)
+    UVLM::Types::Real relative_vortex_radius = r0.norm()*vortex_radius;
+
+    if (r1_mod < relative_vortex_radius ||
+        r2_mod < relative_vortex_radius ||
+        r1_cross_r2_mod_sq < relative_vortex_radius*relative_vortex_radius)
     {
         return;
     }
@@ -259,6 +261,18 @@ void UVLM::BiotSavart::segment
     K = (gamma/(UVLM::Constants::PI4*r1_cross_r2_mod_sq))*
         (r0_dot_r1/r1_mod - r0_dot_r2/r2_mod);
     uind += K*r1_cross_r2;
+    // if (!uind.array().isFinite().all())
+    // {
+    //     std::cerr << "Trap" << std::endl;
+    //     std::cerr << "r0 = " << r0.transpose() << std::endl;
+    //     std::cerr << "r1 = " << r1.transpose() << std::endl;
+    //     std::cerr << "r2 = " << r2.transpose() << std::endl;
+    //     std::cerr << "gamma = " <<  gamma << std::endl;
+    //     std::cerr << "r1_mod = " << r1_mod << std::endl;
+    //     std::cerr << "r2_mod = " << r2_mod << std::endl;
+    //     std::cerr << "vortex rad= " << relative_vortex_radius<< std::endl;
+    //     exit(-1);
+    // }
 }
 
 

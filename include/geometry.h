@@ -24,7 +24,6 @@ namespace UVLM
         )
         {
             UVLM::Types::Real s = 0.5*(a + b + c);
-
             return std::sqrt(s*(s - a)*(s - b)*(s - c));
         }
 

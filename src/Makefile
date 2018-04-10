@@ -1,9 +1,10 @@
-FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -fopenmp
+FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
 LINKER_FLAGS = -shared -fPIC -fopenmp
 # FLAGS = -fPIC -g -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer
 # LINKER_FLAGS = -shared -fPIC
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
+CPP = icc
 CPP = g++
 # CPP = clang
 endif

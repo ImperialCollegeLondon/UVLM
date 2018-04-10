@@ -78,7 +78,6 @@ namespace UVLM
                             r2 << zeta[i_surf][0](i_end, j_end),
                                   zeta[i_surf][1](i_end, j_end),
                                   zeta[i_surf][2](i_end, j_end);
-
                             // position of the center point of the vortex filament
                             rp = 0.5*(r1 + r2);
 
@@ -106,7 +105,7 @@ namespace UVLM
                                 v_ind(2) += temp_uout[2].sum();
                             }
 
-                            dl = r2-r1;
+                            dl = r2 - r1;
 
                             v << 0.5*(uext[i_surf][0](i_start, j_start) +
                                       uext[i_surf][0](i_end, j_end)),
@@ -264,7 +263,6 @@ namespace UVLM
                             UVLM::Types::Vector3 r_cross_f2;
                             r_cross_f2 = (r2 - rp).cross(f);
                             // transfer forces to matrix
-                            // there are no moments
                             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                             {
                                 forces[i_surf][i_dim](i_start, j_start) +=
@@ -321,23 +319,13 @@ namespace UVLM
                 {
                     for (uint j=0; j<n_cols; ++j)
                     {
-                        // gamma_dot
-                        // simple finite differences:
-                        // f' = (f+ - f-)/dt
-                        // UVLM::Types::Real gamma_dot;
-                        // gamma_dot =
-                        //     (gamma[i_surf](i,j)
-                        //      -
-                        //      previous_gamma[i_surf](i,j))/dt;
-                        //
-
                         // area calculation
                         UVLM::Types::Real area = 0;
                         area = UVLM::Geometry::panel_area
                         (
                             zeta[i_surf][0].template block<2,2>(i, j),
                             zeta[i_surf][1].template block<2,2>(i, j),
-                            zeta[i_surf][1].template block<2,2>(i, j)
+                            zeta[i_surf][2].template block<2,2>(i, j)
                         );
 
                         // rho*A*n*gamma_dot
