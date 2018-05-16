@@ -246,15 +246,13 @@ void UVLM::Matrix::RHS
                             induced_vel,
                             1
                         );
-
                         u_col[i_surf][0](i, j) += induced_vel[0].sum();
                         u_col[i_surf][1](i, j) += induced_vel[1].sum();
                         u_col[i_surf][2](i, j) += induced_vel[2].sum();
                     }
                 }
-                ++ii;
                 // dot product of uinc and panel normal
-                rhs(ii) =
+                rhs(++ii) =
                 -(
                     u_col[i_surf][0](i,j) * normal[i_surf][0](i,j) +
                     u_col[i_surf][1](i,j) * normal[i_surf][1](i,j) +
