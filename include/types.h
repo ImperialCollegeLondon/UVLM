@@ -32,6 +32,7 @@ namespace UVLM
 
         // Vectors
         typedef Eigen::Matrix<Real, 3, 1> Vector3;
+        typedef Eigen::Matrix<Real, 6, 1> Vector6;
         typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
         typedef Eigen::Map<VectorX> MapVectorX;
 
