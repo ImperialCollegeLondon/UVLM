@@ -133,15 +133,14 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
         // total stream velocity
-        t_rbm_velocity rbm_no_omega(rbm_velocity);
-        rbm_no_omega.tail(3).setZero();
+        UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
+        rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
             zeta_star,
             zeros,
             uext_star,
-            // rbm_velocity,
-            // 0*rbm_velocity,
             rbm_no_omega,
             uext_star_total
         );
@@ -174,15 +173,14 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
         // total stream velocity
-        t_rbm_velocity rbm_no_omega(rbm_velocity);
-        rbm_no_omega.tail(3).setZero();
+        UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
+        rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
             zeta_star,
             zeros,
             uext_star,
-            // 0*rbm_velocity,
-            // rbm_velocity,
             rbm_no_omega,
             uext_star_total
         );
