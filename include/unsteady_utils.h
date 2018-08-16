@@ -141,8 +141,6 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             zeta_star,
             zeros,
             uext_star,
-            // rbm_velocity,
-            // 0*rbm_velocity,
             rbm_no_omega,
             uext_star_total
         );
@@ -183,8 +181,6 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             zeta_star,
             zeros,
             uext_star,
-            // 0*rbm_velocity,
-            // rbm_velocity,
             rbm_no_omega,
             uext_star_total
         );
