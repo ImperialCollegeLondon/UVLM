@@ -393,6 +393,7 @@ namespace UVLM
         template <typename t_u_ext,
                   typename t_zeta,
                   typename t_zeta_dot,
+                  typename t_normals,
                   typename t_rbm_velocity,
                   typename t_incidence_angle>
         void calculate_incidence_angle
@@ -400,6 +401,7 @@ namespace UVLM
             const t_u_ext& u_ext,
             const t_zeta& zeta,
             const t_zeta_dot& zeta_dot,
+            const t_normals& normals,
             const t_rbm_velocity& rbm_velocity,
             t_incidence_angle& incidence_angle
         )
@@ -464,8 +466,20 @@ namespace UVLM
                     // vertical plane containing the chord line
 
                     // the normal of this plane is [0, 0, 1]_G x chord line
+                    // TODO I think it should be the panel normal, not the
+                    // [0 0 1]_G vector
                     UVLM::Types::Vector3 plane_normal;
-                    const UVLM::Types::Vector3 vertical(0.0, 0.0, 1.0);
+                    UVLM::Types::Vector3 vertical;
+                    vertical << normals[i_surf][0](0, i_N),
+                                normals[i_surf][1](0, i_N),
+                                normals[i_surf][2](0, i_N);
+
+                    // check that normal is up, if not, change the sign
+                    UVLM::Types::Real sign = 1;
+                    if (vertical(2) < 0)
+                    {
+                        sign = -1;
+                    }
 
                     plane_normal = vertical.cross(chord_line_g).normalized();
 
@@ -480,7 +494,7 @@ namespace UVLM
                     );
                     for (uint i_M=0; i_M<M; ++i_M)
                     {
-                        incidence_angle[i_surf](i_M, i_N) = -angle;
+                        incidence_angle[i_surf](i_M, i_N) = -angle*sign;
                     }
                 }
             }

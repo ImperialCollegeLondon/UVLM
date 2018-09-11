@@ -407,6 +407,7 @@ DLLEXPORT void UVLM_check_incidence_angle
     double** p_uext,
     double** p_zeta,
     double** p_zeta_dot,
+    double** p_normals,
     double*  p_rbm_vel,
     double** p_incidence_angle
 )
@@ -435,6 +436,12 @@ DLLEXPORT void UVLM_check_incidence_angle
                                       zeta_dot,
                                       1);
 
+    UVLM::Types::VecVecMapX normals;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_normals,
+                                      normals,
+                                      0);
+
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX incidence_angle;
@@ -448,6 +455,7 @@ DLLEXPORT void UVLM_check_incidence_angle
         u_ext,
         zeta,
         zeta_dot,
+        normals,
         rbm_velocity,
         incidence_angle
     );
