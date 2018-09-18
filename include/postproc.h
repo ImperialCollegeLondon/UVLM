@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include "EigenInclude.h"
 #include "types.h"
 #include "unsteady_utils.h"
@@ -383,6 +384,114 @@ namespace UVLM
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Forces is not set to 0, forces are added
+        template <typename t_u_ext,
+                  typename t_zeta,
+                  typename t_zeta_dot,
+                  typename t_normals,
+                  typename t_rbm_velocity,
+                  typename t_incidence_angle>
+        void calculate_incidence_angle
+        (
+            const t_u_ext& u_ext,
+            const t_zeta& zeta,
+            const t_zeta_dot& zeta_dot,
+            const t_normals& normals,
+            const t_rbm_velocity& rbm_velocity,
+            t_incidence_angle& incidence_angle
+        )
+        {
+            // compute instantaneous velocity for every panel
+            UVLM::Types::VecVecMatrixX velocities;
+            UVLM::Types::allocate_VecVecMat(velocities, zeta);
+            // free stream contribution
+            UVLM::Types::copy_VecVecMat(u_ext, velocities);
+
+            // u_ext taking into account unsteady contributions
+            UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+            (
+                zeta,
+                zeta_dot,
+                u_ext,
+                rbm_velocity,
+                velocities
+            );
+
+            // stall angle will be computed as the angle between
+            // the velocity at the leading edge and the chord line
+            const uint n_surf = zeta.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                const uint M = zeta[i_surf][0].rows() - 1;
+                const uint N = zeta[i_surf][0].cols() - 1;
+
+                // loop through spanwise panels
+                for (uint i_N=0; i_N<N; ++i_N)
+                {
+                    UVLM::Types::Vector3 chord_line_g;
+                    UVLM::Types::Vector3 local_vel;
+
+                    // chord line
+                    // trailing edge
+                    chord_line_g(0) = 0.5*(zeta[i_surf][0](M, i_N) +
+                                           zeta[i_surf][0](M, i_N + 1));
+                    chord_line_g(1) = 0.5*(zeta[i_surf][1](M, i_N) +
+                                           zeta[i_surf][1](M, i_N + 1));
+                    chord_line_g(2) = 0.5*(zeta[i_surf][2](M, i_N) +
+                                           zeta[i_surf][2](M, i_N + 1));
+
+                    chord_line_g(0) -= 0.5*(zeta[i_surf][0](0, i_N) +
+                                            zeta[i_surf][0](0, i_N + 1));
+                    chord_line_g(1) -= 0.5*(zeta[i_surf][1](0, i_N) +
+                                            zeta[i_surf][1](0, i_N + 1));
+                    chord_line_g(2) -= 0.5*(zeta[i_surf][2](0, i_N) +
+                                            zeta[i_surf][2](0, i_N + 1));
+
+                    // velocity at the center of the vortex segment
+                    // is avg of both vertices
+                    local_vel(0) = 0.5*(velocities[i_surf][0](0, i_N) +
+                                        velocities[i_surf][0](0, i_N + 1));
+                    local_vel(1) = 0.5*(velocities[i_surf][1](0, i_N) +
+                                        velocities[i_surf][1](0, i_N + 1));
+                    local_vel(2) = 0.5*(velocities[i_surf][2](0, i_N) +
+                                        velocities[i_surf][2](0, i_N + 1));
+
+                    // we consider angle of attack the angle
+                    // between these two vectors projected in the
+                    // vertical plane containing the chord line
+
+                    UVLM::Types::Vector3 plane_normal;
+                    UVLM::Types::Vector3 vertical;
+                    vertical << normals[i_surf][0](0, i_N),
+                                normals[i_surf][1](0, i_N),
+                                normals[i_surf][2](0, i_N);
+
+                    // check that normal is up, if not, change the sign
+                    UVLM::Types::Real sign = 1;
+                    if (vertical(2) < 0)
+                    {
+                        sign = -1;
+                    }
+
+                    plane_normal = vertical.cross(chord_line_g).normalized();
+
+                    UVLM::Types::Vector3 local_vel_projected;
+                    local_vel_projected = local_vel -
+                        (local_vel.dot(plane_normal))*plane_normal;
+
+                    UVLM::Types::Real angle;
+                    angle = std::atan2(
+                        plane_normal.dot(chord_line_g.cross(local_vel_projected)),
+                        chord_line_g.dot(local_vel_projected)
+                    );
+                    for (uint i_M=0; i_M<M; ++i_M)
+                    {
+                        incidence_angle[i_surf](i_M, i_N) = -angle*sign;
                     }
                 }
             }
