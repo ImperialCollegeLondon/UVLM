@@ -465,9 +465,6 @@ namespace UVLM
                     // between these two vectors projected in the
                     // vertical plane containing the chord line
 
-                    // the normal of this plane is [0, 0, 1]_G x chord line
-                    // TODO I think it should be the panel normal, not the
-                    // [0 0 1]_G vector
                     UVLM::Types::Vector3 plane_normal;
                     UVLM::Types::Vector3 vertical;
                     vertical << normals[i_surf][0](0, i_N),
