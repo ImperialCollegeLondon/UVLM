@@ -270,10 +270,10 @@ namespace UVLM
                                     0.5*f(i_dim);
                                 forces[i_surf][i_dim](i_end, j_end) +=
                                     0.5*f(i_dim);
-                                forces[i_surf][i_dim + 3](i_start, j_start) +=
-                                    0.5*r_cross_f1(i_dim);
-                                forces[i_surf][i_dim + 3](i_end, j_end) +=
-                                    0.5*r_cross_f2(i_dim);
+                                // forces[i_surf][i_dim + 3](i_start, j_start) +=
+                                //     0.5*r_cross_f1(i_dim);
+                                // forces[i_surf][i_dim + 3](i_end, j_end) +=
+                                //     0.5*r_cross_f2(i_dim);
                             }
                         }
                     }
