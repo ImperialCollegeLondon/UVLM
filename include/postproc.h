@@ -259,10 +259,10 @@ namespace UVLM
 
                             f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
 
-                            UVLM::Types::Vector3 r_cross_f1;
-                            r_cross_f1 = (r1 - rp).cross(f);
-                            UVLM::Types::Vector3 r_cross_f2;
-                            r_cross_f2 = (r2 - rp).cross(f);
+                            // UVLM::Types::Vector3 r_cross_f1;
+                            // r_cross_f1 = (r1 - rp).cross(f);
+                            // UVLM::Types::Vector3 r_cross_f2;
+                            // r_cross_f2 = (r2 - rp).cross(f);
                             // transfer forces to matrix
                             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                             {
