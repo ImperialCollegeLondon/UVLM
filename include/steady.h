@@ -11,6 +11,8 @@
 #include "postproc.h"
 #include "linear_solver.h"
 
+#include "debugutils.h"
+
 #include <iostream>
 
 // DECLARATIONS
@@ -144,6 +146,9 @@ void UVLM::Steady::solver
             options,
             flightconditions
         );
+        UVLM::Wake::Horseshoe::to_discretised(zeta_star,
+                                              gamma_star,
+                                              delta_x);
         return;
     }
 
