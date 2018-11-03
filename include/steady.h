@@ -132,6 +132,12 @@ void UVLM::Steady::solver
         flightconditions
     );
 
+    UVLM::Types::Vector3 u_steady;
+    u_steady << uext[0][0](0,0),
+                uext[0][1](0,0),
+                uext[0][2](0,0);
+    double delta_x = u_steady.norm()*options.dt;
+
     // if options.horseshoe, it is finished.
     if (options.horseshoe)
     {
@@ -154,12 +160,6 @@ void UVLM::Steady::solver
 
     // if not, the wake has to be transformed into a discretised, non-horseshoe
     // one:
-    UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0),
-                uext[0][1](0,0),
-                uext[0][2](0,0);
-    double delta_x = u_steady.norm()*options.dt;
-
     UVLM::Wake::Horseshoe::to_discretised(zeta_star,
                                           gamma_star,
                                           delta_x);
