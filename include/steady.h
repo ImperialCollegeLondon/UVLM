@@ -124,12 +124,6 @@ void UVLM::Steady::solver
                 uext[0][2](0,0);
     double delta_x = u_steady.norm()*options.dt;
 
-    UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0),
-                uext[0][1](0,0),
-                uext[0][2](0,0);
-    double delta_x = u_steady.norm()*options.dt;
-
     // if options.horseshoe, it is finished.
     if (options.horseshoe)
     {
