@@ -11,6 +11,7 @@
 #include <iostream>
 
 #define DLLEXPORT extern "C"
+#pragma warning disable 1017
 
 namespace UVLM
 {
