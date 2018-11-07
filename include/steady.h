@@ -118,19 +118,11 @@ void UVLM::Steady::solver
     UVLM::Types::allocate_VecVecMat(normals, zeta_col);
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
-    // solve the steady horseshoe problem
-    UVLM::Steady::solve_horseshoe
-    (
-        zeta,
-        zeta_col,
-        uext_col,
-        zeta_star,
-        gamma,
-        gamma_star,
-        normals,
-        options,
-        flightconditions
-    );
+    UVLM::Types::Vector3 u_steady;
+    u_steady << uext[0][0](0,0),
+                uext[0][1](0,0),
+                uext[0][2](0,0);
+    double delta_x = u_steady.norm()*options.dt;
 
     UVLM::Types::Vector3 u_steady;
     u_steady << uext[0][0](0,0),
@@ -141,6 +133,20 @@ void UVLM::Steady::solver
     // if options.horseshoe, it is finished.
     if (options.horseshoe)
     {
+        // solve the steady horseshoe problem
+        UVLM::Steady::solve_horseshoe
+        (
+            zeta,
+            zeta_col,
+            uext_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            normals,
+            options,
+            flightconditions
+        );
+
         UVLM::PostProc::calculate_static_forces
         (
             zeta,
@@ -158,11 +164,25 @@ void UVLM::Steady::solver
         return;
     }
 
-    // if not, the wake has to be transformed into a discretised, non-horseshoe
-    // one:
+
+    // create Wake
+    UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
     UVLM::Wake::Horseshoe::to_discretised(zeta_star,
                                           gamma_star,
                                           delta_x);
+
+    UVLM::Steady::solve_discretised
+    (
+        zeta,
+        zeta_col,
+        uext_col,
+        zeta_star,
+        gamma,
+        gamma_star,
+        normals,
+        options,
+        flightconditions
+    );
 
     double zeta_star_norm_first = 0.0;
     double zeta_star_norm_previous = 0.0;
@@ -346,7 +366,7 @@ void UVLM::Steady::solve_horseshoe
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     gamma,
                                     zeta_col,
-                                    zeta_star,
+                                    //zeta_star,
                                     options);
 
     // copy gamma from trailing edge to wake if steady solution
@@ -394,37 +414,29 @@ void UVLM::Steady::solve_discretised
 
     UVLM::Types::VectorX rhs;
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    // #pragma omp parallel sections
-    {
-        // #pragma omp section
-        {
-            // RHS generation
-            UVLM::Matrix::RHS(zeta_col,
-                              zeta_star,
-                              uext_col,
-                              gamma_star,
-                              normals,
-                              options,
-                              rhs,
-                              Ktotal);
-        }
-        // #pragma omp section
-        {
-            // AIC generation
-            UVLM::Matrix::AIC(Ktotal,
-                              zeta,
-                              zeta_col,
-                              zeta_star,
-                              uext_col,
-                              normals,
-                              options,
-                              false,
-                              aic);
-        }
-    }
+    // RHS generation
+    UVLM::Matrix::RHS(zeta_col,
+                      zeta_star,
+                      uext_col,
+                      gamma_star,
+                      normals,
+                      options,
+                      rhs,
+                      Ktotal);
+
+    // AIC generation
+    UVLM::Matrix::AIC(Ktotal,
+                      zeta,
+                      zeta_col,
+                      zeta_star,
+                      uext_col,
+                      normals,
+                      options,
+                      false,
+                      aic);
+
+    // linear system solution
     UVLM::Types::VectorX gamma_flat;
-    // std::cout << aic << std::endl;
-    // gamma_flat = aic.partialPivLu().solve(rhs);
     UVLM::LinearSolver::solve_system
     (
         aic,
@@ -433,11 +445,12 @@ void UVLM::Steady::solve_discretised
         gamma_flat
     );
 
+    // gamma flat to gamma
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     gamma,
                                     zeta_col,
-                                    zeta_star,
+                                    //zeta_star,
                                     options);
 
     // copy gamma from trailing edge to wake

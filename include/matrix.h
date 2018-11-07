@@ -63,14 +63,14 @@ namespace UVLM
 
 
         template <typename t_gamma,
-                  typename t_zeta_col,
-                  typename t_zeta_star>
+                  typename t_zeta_col>
+                  //typename t_zeta_star>
         void reconstruct_gamma
         (
             const UVLM::Types::VectorX& gamma_flat,
             t_gamma& gamma,
             const t_zeta_col& zeta_col,
-            const t_zeta_star& zeta_star,
+            //const t_zeta_star& zeta_star,
             const UVLM::Types::VMopts& options
         );
     }
@@ -106,7 +106,6 @@ void UVLM::Matrix::AIC
 
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
-
 
     // build the offsets beforehand
     // (parallel variation)
@@ -162,11 +161,12 @@ void UVLM::Matrix::AIC
                     zeta[ii_surf],
                     zeta_star[ii_surf],
                     dummy_gamma,
-                    dummy_gamma_star.topRows<1>(),
+                    dummy_gamma_star,
                     zeta_col[icol_surf],
                     block,
                     options.ImageMethod,
-                    normals[icol_surf]
+                    normals[icol_surf],
+                    1
                 );
             }
         }
@@ -242,9 +242,9 @@ void UVLM::Matrix::RHS
                 // dot product of uinc and panel normal
                 rhs(++ii) =
                 -(
-                    u_col[i_surf][0](i,j) * normal[i_surf][0](i,j) +
-                    u_col[i_surf][1](i,j) * normal[i_surf][1](i,j) +
-                    u_col[i_surf][2](i,j) * normal[i_surf][2](i,j)
+                    u_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                    u_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                    u_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                 );
             }
         }
@@ -260,6 +260,7 @@ void UVLM::Matrix::generate_assembly_offset
     const bool steady
 )
 {
+    std::cerr << "Not sure this is correct, dont use (or debug)!!!" << std::endl;
     uint n_surf = dimensions.size();
     offset.setZero(n_surf, 2);
 
@@ -280,18 +281,18 @@ void UVLM::Matrix::generate_assembly_offset
 }
 
 template <typename t_gamma,
-          typename t_zeta_col,
-          typename t_zeta_star>
+          typename t_zeta_col>
+          //typename t_zeta_star>
 void UVLM::Matrix::reconstruct_gamma
 (
     const UVLM::Types::VectorX& gamma_flat,
     t_gamma& gamma,
     const t_zeta_col& zeta_col,
-    const t_zeta_star& zeta_star,
+    //const t_zeta_star& zeta_star,
     const UVLM::Types::VMopts& options
 )
 {
-    const uint n_surf = zeta_col.size();
+    const uint n_surf = gamma.size();
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
 
