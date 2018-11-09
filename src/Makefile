@@ -1,20 +1,20 @@
 ## LINUX G++ SUPPORT
-# FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
-# LINKER_FLAGS = -shared -fPIC -fopenmp
+FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
+LINKER_FLAGS = -shared -fPIC -fopenmp
 
 ## MACOS G++ SUPPORT
 # FLAGS = -fPIC -g -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer
 # LINKER_FLAGS = -shared -fPIC
 
 ## INTEL C++ MKL SUPPORT
-FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel
-LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -lm -ldl
+# FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel
+# LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -lm -ldl
 
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-CPP = icc
-# CPP = g++
+# CPP = icc
+CPP = g++
 endif
 ifeq ($(UNAME), Darwin)
 CPP = g++
