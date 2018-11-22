@@ -60,7 +60,10 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
 )
 {
     const uint n_surf = zeta.size();
+    UVLM::Types::Vector3 w_cross_zeta;
+    UVLM::Types::Vector3 zeta_temp;
     UVLM::Types::initialise_VecVecMat(uext_out);
+
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         const uint n_col = zeta[i_surf][0].cols();
@@ -69,11 +72,9 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         {
             for (uint i_row=0; i_row<n_row; ++i_row)
             {
-                UVLM::Types::Vector3 zeta_temp;
                 zeta_temp << zeta[i_surf][0](i_row, i_col),
                              zeta[i_surf][1](i_row, i_col),
                              zeta[i_surf][2](i_row, i_col);
-                UVLM::Types::Vector3 w_cross_zeta;
                 w_cross_zeta =
                     rbm_velocity.template block<3,1> (3, 0).cross(zeta_temp);
                 for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)

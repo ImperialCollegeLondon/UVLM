@@ -230,14 +230,14 @@ namespace UVLM
                                 UVLM::Types::allocate_VecMat(temp_uout,
                                                              zeta[ii_surf],
                                                              -1);
-                                UVLM::BiotSavart::surface_with_steady_wake
+                                UVLM::BiotSavart::surface_with_unsteady_wake
                                 (
                                     zeta[ii_surf],
                                     zeta_star[ii_surf],
                                     gamma[ii_surf],
                                     gamma_star[ii_surf],
                                     rp,
-                                    options.horseshoe,
+                                    // options.horseshoe,
                                     temp_uout,
                                     options.ImageMethod
                                 );
@@ -259,10 +259,6 @@ namespace UVLM
 
                             f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
 
-                            UVLM::Types::Vector3 r_cross_f1;
-                            r_cross_f1 = (r1 - rp).cross(f);
-                            UVLM::Types::Vector3 r_cross_f2;
-                            r_cross_f2 = (r2 - rp).cross(f);
                             // transfer forces to matrix
                             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                             {
@@ -270,10 +266,6 @@ namespace UVLM
                                     0.5*f(i_dim);
                                 forces[i_surf][i_dim](i_end, j_end) +=
                                     0.5*f(i_dim);
-                                forces[i_surf][i_dim + 3](i_start, j_start) +=
-                                    0.5*r_cross_f1(i_dim);
-                                forces[i_surf][i_dim + 3](i_end, j_end) +=
-                                    0.5*r_cross_f2(i_dim);
                             }
                         }
                     }

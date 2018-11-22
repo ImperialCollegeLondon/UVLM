@@ -111,7 +111,6 @@ namespace UVLM
 
         }
         namespace Horseshoe
-
         {
             template <typename t_zeta,
                       typename t_zeta_star>

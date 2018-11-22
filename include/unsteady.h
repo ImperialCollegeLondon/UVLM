@@ -195,8 +195,6 @@ void UVLM::Unsteady::solver
     UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
 
     // panel normals
-    // UVLM::Types::VecVecMatrixX normals;
-    // UVLM::Types::allocate_VecVecMat(normals, zeta_col);
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     // std::cout << options.convect_wake << std::endl;
