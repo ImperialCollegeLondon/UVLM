@@ -132,7 +132,8 @@ namespace UVLM
         );
 
         template <typename t_triad,
-                  typename t_block>
+                  typename t_block,
+                  typename t_uind>
         void vortex_ring
         (
             const t_triad& target_triad,
@@ -140,7 +141,7 @@ namespace UVLM
             const t_block& y,
             const t_block& z,
             const UVLM::Types::Real& gamma_star,
-            UVLM::Types::Vector3& uind,
+            t_uind& uind,
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
@@ -157,14 +158,15 @@ namespace UVLM
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
-        template <typename t_triad>
+        template <typename t_triad,
+                  typename t_uind>
         void segment
         (
             const t_triad& target_triad,
             const UVLM::Types::Vector3& v1,
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
-            UVLM::Types::Vector3& uind,
+            t_uind& uind,
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
 
@@ -219,20 +221,39 @@ namespace UVLM
             const bool&         image_method = false,
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
+
+        template <typename t_ttriad,
+                  typename t_zeta,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_uout>
+        void total_induced_velocity_on_point
+        (
+            const t_ttriad&     target_triad,
+            const t_zeta&       zeta,
+            const t_zeta_star&  zeta_star,
+            const t_gamma&      gamma,
+            const t_gamma_star& gamma_star,
+            t_uout&             uout,
+            const bool&         image_method,
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+        );
     }
 }
 
 
 
 // SOURCE CODE
-template <typename t_triad>
+template <typename t_triad,
+          typename t_uind>
 void UVLM::BiotSavart::segment
         (
             const t_triad& rp,
             const UVLM::Types::Vector3& v1,
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
-            UVLM::Types::Vector3& uind,
+            t_uind& uind,
             const UVLM::Types::Real vortex_radius
         )
 {
@@ -400,7 +421,8 @@ void UVLM::BiotSavart::horseshoe
 
 
 template <typename t_triad,
-          typename t_block>
+          typename t_block,
+          typename t_uind>
 void UVLM::BiotSavart::vortex_ring
 (
     const t_triad& target_triad,
@@ -408,7 +430,7 @@ void UVLM::BiotSavart::vortex_ring
     const t_block& y,
     const t_block& z,
     const UVLM::Types::Real& gamma,
-    UVLM::Types::Vector3& uind,
+    t_uind& uind,
     const UVLM::Types::Real vortex_radius
 )
 {
@@ -965,5 +987,58 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
                 image_method
             );
         }
+    }
+}
+
+template <typename t_ttriad,
+          typename t_zeta,
+          typename t_zeta_star,
+          typename t_gamma,
+          typename t_gamma_star,
+          typename t_uout>
+void UVLM::BiotSavart::total_induced_velocity_on_point
+(
+    const t_ttriad&     target_triad,
+    const t_zeta&       zeta,
+    const t_zeta_star&  zeta_star,
+    const t_gamma&      gamma,
+    const t_gamma_star& gamma_star,
+    t_uout&             uout,
+    const bool&         image_method,
+    const UVLM::Types::Real vortex_radius
+)
+{
+    uout.setZero();
+    const uint n_surf = zeta.size();
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        // wake on point
+        UVLM::BiotSavart::whole_surface
+        (
+            zeta_star[i_surf],
+            gamma_star[i_surf],
+            target_triad,
+            uout,
+            0,
+            0,
+            -1,
+            -1,
+            image_method,
+            vortex_radius
+        );
+        // surface on point
+        UVLM::BiotSavart::whole_surface
+        (
+            zeta[i_surf],
+            gamma[i_surf],
+            target_triad,
+            uout,
+            0,
+            0,
+            -1,
+            -1,
+            image_method,
+            vortex_radius
+        );
     }
 }

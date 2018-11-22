@@ -460,3 +460,68 @@ DLLEXPORT void UVLM_check_incidence_angle
         incidence_angle
     );
 }
+
+DLLEXPORT void total_induced_velocity_at_point
+(
+    const UVLM::Types::UVMopts& options,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_gamma,
+    double** p_gamma_star,
+    double* p_target_triad,
+    double* p_uout
+)
+{
+    uint n_surf = options.NumSurfaces;
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+    UVLM::Types::VecDimensions dimensions_star;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions_star,
+                                             dimensions_star);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star,
+                                      zeta_star,
+                                      1);
+
+    UVLM::Types::MapVectorX uout (p_uout, UVLM::Constants::NDIM);
+    // UVLM::Types::MapVectorX target_triad (p_target_triad, UVLM::Constants::NDIM);
+
+    // UVLM::Types::Vector3 uout(p_uout);
+    UVLM::Types::Vector3 target_triad(p_target_triad);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
+    UVLM::BiotSavart::total_induced_velocity_on_point
+    (
+        target_triad,
+        zeta,
+        zeta_star,
+        gamma,
+        gamma_star,
+        uout,
+        options.ImageMethod
+    );
+}
