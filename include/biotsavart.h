@@ -1009,6 +1009,8 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
 )
 {
     uout.setZero();
+    UVLM::Types::Vector3 sum_uout;
+    sum_uout.setZero();
     const uint n_surf = zeta.size();
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
@@ -1018,7 +1020,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             zeta_star[i_surf],
             gamma_star[i_surf],
             target_triad,
-            uout,
+            sum_uout,
             0,
             0,
             -1,
@@ -1026,13 +1028,14 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             image_method,
             vortex_radius
         );
+        uout += sum_uout;
         // surface on point
         UVLM::BiotSavart::whole_surface
         (
             zeta[i_surf],
             gamma[i_surf],
             target_triad,
-            uout,
+            sum_uout,
             0,
             0,
             -1,
@@ -1040,5 +1043,6 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             image_method,
             vortex_radius
         );
+        uout += sum_uout;
     }
 }
