@@ -14,6 +14,7 @@ LINKER_FLAGS = -shared -fPIC -fopenmp
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
 # CPP = icc
+CPP = g++-5
 CPP = g++
 endif
 ifeq ($(UNAME), Darwin)
