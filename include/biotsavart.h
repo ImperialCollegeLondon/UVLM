@@ -10,7 +10,7 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1e-5
+#define VORTEX_RADIUS 1e-2
 #define VORTEX_RADIUS_SQ 1e-4
 #define Nvert 4
 
@@ -1094,6 +1094,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             vortex_radius
         );
         uout += sum_uout;
+        sum_uout.setZero();
         // surface on point
         UVLM::BiotSavart::whole_surface
         (
@@ -1109,6 +1110,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             vortex_radius
         );
         uout += sum_uout;
+        sum_uout.setZero();
     }
 }
 
