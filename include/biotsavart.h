@@ -556,11 +556,13 @@ void UVLM::BiotSavart::surface
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2, 2>(i,j),
@@ -600,11 +602,13 @@ void UVLM::BiotSavart::surface_with_steady_wake
     const uint Mend = gamma.rows();
     const uint Nend = gamma.cols();
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2,2>(i,j),
@@ -620,8 +624,10 @@ void UVLM::BiotSavart::surface_with_steady_wake
 
     const uint i0 = 0;
     const uint i = Mend - 1;
+    #pragma omp parallel for collapse(1)
     for (unsigned int j=Nstart; j<Nend; ++j)
     {
+        UVLM::Types::Vector3 temp_uout;
         if (horseshoe)
         {
             temp_uout.setZero();
@@ -678,13 +684,15 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     const uint Mend = gamma.rows();
     const uint Nend = gamma.cols();
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
     const uint ii = 0;
     // surface contribution
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2,2>(i,j),
@@ -704,8 +712,10 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     // unless if gamma_star is a dummy one, just a row with ones.
     const uint mstar = (n_rows == -1) ? gamma_star.rows():n_rows;
     const uint i = Mend - 1;
+    #pragma omp parallel for collapse(1)
     for (uint j=Nstart; j<Nend; ++j)
     {
+        UVLM::Types::Vector3 temp_uout;
         for (uint i_star=0; i_star<mstar; ++i_star)
         {
             temp_uout.setZero();
@@ -1373,7 +1383,7 @@ namespace UVLMlin{
     Der(0,2)=     minus_rinv3*rv(0)*rv(2);
     Der(1,1)=rinv+minus_rinv3*rv(1)*rv(1);
     Der(1,2)=     minus_rinv3*rv(1)*rv(2);
-    Der(2,2)=rinv+minus_rinv3*rv(2)*rv(2);                              
+    Der(2,2)=rinv+minus_rinv3*rv(2)*rv(2);
     // alloc lower diag
     Der(1,0)=Der(0,1);
     Der(2,0)=Der(0,2);
@@ -1383,9 +1393,9 @@ namespace UVLMlin{
 
 
   Matrix3d Dvcross_by_skew3d(const Matrix3d& Dvcross, const RowVector3d& rv){
-    /*Warning: 
+    /*Warning:
     1. RowVector3d needs to defined as constant if in main code RowVector
-    is a row of a matrix. 
+    is a row of a matrix.
      */
 
     Matrix3d P;
@@ -1411,9 +1421,9 @@ namespace UVLMlin{
   // -----------------------------------------------------------------------------
 
 
-  void dvinddzeta(map_Mat3by3 DerC, 
+  void dvinddzeta(map_Mat3by3 DerC,
           map_Mat DerV,
-          const map_RowVec3 zetaC, 
+          const map_RowVec3 zetaC,
           Vec_map_Mat ZetaIn,
           map_Mat GammaIn,
           int& M_in,
@@ -1462,7 +1472,7 @@ namespace UVLMlin{
 
           // init. local derivatives
           for(vv=0; vv<Nvert; vv++) derv[vv].setZero();
-          
+
           // get local deriv
           der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
           //for(vv=0; vv<Nvert; vv++) cout << derv[vv] << endl;
@@ -1496,7 +1506,7 @@ namespace UVLMlin{
 
         // init. local derivatives. only vertices 0 and 3 are on TE
         derv[0].setZero();
-        derv[3].setZero();      
+        derv[3].setZero();
 
         // get local deriv
         der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
@@ -1510,7 +1520,7 @@ namespace UVLMlin{
             jj= cc_in*Kzeta_in_bound + M_in_bound*(N_in+1) + (nn+1);
             DerV(cc,jj)+=derv[3](cc,cc_in);
           }
-          
+
         }
       }
 
@@ -1536,7 +1546,7 @@ namespace UVLMlin{
 
 
   void aic3(  map_Mat AIC3,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         int& M_in,
         int& N_in)
@@ -1573,7 +1583,7 @@ namespace UVLMlin{
 
 
   void ind_vel(map_RowVec3 velC,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         map_Mat GammaIn,
         int& M_in,
