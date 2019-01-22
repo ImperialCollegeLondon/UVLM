@@ -2,6 +2,7 @@
 
 #include "EigenInclude.h"
 #include "types.h"
+#include <math.h>
 // #include "unsteady.h"
 // #include "steady.h"
 
@@ -220,6 +221,115 @@ namespace UVLM
                     }
                 }
             }
-        }
+        }// End namespace horseshoe
+        namespace SHW
+        {
+            template <typename t_zeta_star,
+                      typename t_gamma_star>
+            void to_discretised
+            (
+                t_zeta_star& zeta_star,
+                t_gamma_star& gamma_star,
+                const UVLM::Types::FlightConditions& flightconditions,
+                const UVLM::Types::SHWOptions& shwoptions
+            )
+            {
+              UVLM::Types::Vector3 dir_stream(
+                            flightconditions.uinf_direction);
+              double wsp(flightconditions.uinf);
+              double dt(shwoptions.dt);
+              UVLM::Types::Vector3 rot_center(
+                            shwoptions.rot_center);
+              UVLM::Types::Vector3 rot_axis(
+                            shwoptions.rot_axis);
+              double rot_vel(shwoptions.rot_vel);
+
+              double dphi = -1.*rot_vel*dt;
+              UVLM::Types::Vector3 delta_x_vec = dir_stream*dt*wsp;
+
+              UVLM::Types::Vector3 Rrotation;
+              UVLM::Types::Vector3 Rrotated;
+              UVLM::Types::Vector3 comp1;
+
+
+              double dphi_cos = cos(dphi);
+              double dphi_sin = sin(dphi);
+
+              const uint n_surf = zeta_star.size();
+              for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+              {
+                  const uint n_spanwise_panels =
+                      zeta_star[i_surf][0].cols() - 1;
+                  const uint mstar =
+                      zeta_star[i_surf][0].rows() - 1;
+
+                  // Define vortices position
+                  for (uint i=1; i<mstar + 1; ++i)
+                  {
+                    for (uint j=0; j<n_spanwise_panels + 1; ++j)
+                    {
+                      Rrotation << zeta_star[i_surf][0](i - 1, j) - rot_center(0),
+                                   zeta_star[i_surf][1](i - 1, j) - rot_center(1),
+                                   zeta_star[i_surf][2](i - 1, j) - rot_center(2);
+
+                      Rrotated = Rrotation*dphi_cos + \
+                                rot_axis.cross(Rrotation)*dphi_sin + \
+                                rot_axis*rot_axis.dot(Rrotation)*(1.0-dphi_cos);
+
+                      zeta_star[i_surf][0](i, j)  = Rrotated(0) + rot_center(0) + delta_x_vec(0);
+                      zeta_star[i_surf][1](i, j)  = Rrotated(1) + rot_center(1) + delta_x_vec(1);
+                      zeta_star[i_surf][2](i, j)  = Rrotated(2) + rot_center(2) + delta_x_vec(2);
+                    }
+                  }
+
+                  // Transfer the circulation
+                  for (uint j=0; j<n_spanwise_panels; ++j)
+                  {
+                      for (uint i=1; i<mstar; ++i)
+                      {
+                          gamma_star[i_surf](i, j) = \
+                              gamma_star[i_surf](i-1, j);
+                      }
+                  }
+              }
+
+                // UVLM::Types::Vector3 dir_stream;
+                // dir_stream << zeta_star[0][0](1, 0) - zeta_star[0][0](0, 0),
+                //               zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
+                //               zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
+                // dir_stream.normalize();
+                // UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;
+                //
+                // const uint n_surf = zeta_star.size();
+                // for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                // {
+                //     const uint n_spanwise_panels =
+                //         zeta_star[i_surf][0].cols() - 1;
+                //     const uint mstar =
+                //         zeta_star[i_surf][0].rows() - 1;
+                //
+                //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                //     {
+                //         for (uint j=0; j<n_spanwise_panels + 1; ++j)
+                //         {
+                //             for (uint i=1; i<mstar + 1; ++i)
+                //             {
+                //                 zeta_star[i_surf][i_dim](i, j) =
+                //                     zeta_star[i_surf][i_dim](i - 1, j)\
+                //                         + delta_x_vec(i_dim);
+                //             }
+                //         }
+                //     }
+                //     for (uint j=0; j<n_spanwise_panels; ++j)
+                //     {
+                //         for (uint i=1; i<mstar; ++i)
+                //         {
+                //             gamma_star[i_surf](i, j) = \
+                //                 gamma_star[i_surf](i-1, j);
+                //         }
+                //     }
+                // }
+            }
+        } // End namespace::SHW
     }
 }
