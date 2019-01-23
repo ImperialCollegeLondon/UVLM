@@ -251,9 +251,8 @@ namespace UVLM
               UVLM::Types::Vector3 Rrotated;
               UVLM::Types::Vector3 comp1;
 
-
-              double dphi_cos = cos(dphi);
-              double dphi_sin = sin(dphi);
+              double dphi_cos;
+              double dphi_sin;
 
               const uint n_surf = zeta_star.size();
               for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -266,19 +265,23 @@ namespace UVLM
                   // Define vortices position
                   for (uint i=1; i<mstar + 1; ++i)
                   {
+
+                    dphi_cos = cos(dphi*i);
+                    dphi_sin = sin(dphi*i);
+
                     for (uint j=0; j<n_spanwise_panels + 1; ++j)
                     {
-                      Rrotation << zeta_star[i_surf][0](i - 1, j) - rot_center(0),
-                                   zeta_star[i_surf][1](i - 1, j) - rot_center(1),
-                                   zeta_star[i_surf][2](i - 1, j) - rot_center(2);
+                      Rrotation << zeta_star[i_surf][0](0, j) - rot_center(0),
+                                   zeta_star[i_surf][1](0, j) - rot_center(1),
+                                   zeta_star[i_surf][2](0, j) - rot_center(2);
 
                       Rrotated = Rrotation*dphi_cos + \
                                 rot_axis.cross(Rrotation)*dphi_sin + \
                                 rot_axis*rot_axis.dot(Rrotation)*(1.0-dphi_cos);
 
-                      zeta_star[i_surf][0](i, j)  = Rrotated(0) + rot_center(0) + delta_x_vec(0);
-                      zeta_star[i_surf][1](i, j)  = Rrotated(1) + rot_center(1) + delta_x_vec(1);
-                      zeta_star[i_surf][2](i, j)  = Rrotated(2) + rot_center(2) + delta_x_vec(2);
+                      zeta_star[i_surf][0](i, j)  = Rrotated(0) + rot_center(0) + delta_x_vec(0)*i;
+                      zeta_star[i_surf][1](i, j)  = Rrotated(1) + rot_center(1) + delta_x_vec(1)*i;
+                      zeta_star[i_surf][2](i, j)  = Rrotated(2) + rot_center(2) + delta_x_vec(2)*i;
                     }
                   }
 
