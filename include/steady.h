@@ -257,10 +257,8 @@ void UVLM::Steady::solver
             // double eps = std::abs((zeta_star_norm - zeta_star_norm_previous)
             //                       /zeta_star_norm_first);
             double eps = std::abs(UVLM::Types::norm_VecVec_mat(zeta_star - zeta_star_previous))/zeta_star_norm_first;
-            // std::cout << i_rollup << ", " << eps << std::endl;
             if (eps < options.rollup_tolerance)
             {
-                // std::cout << "converged" << std::endl;
                 break;
             }
             zeta_star_norm_previous = zeta_star_norm;
@@ -347,7 +345,10 @@ void UVLM::Steady::solve_horseshoe
                       aic);
 
     UVLM::Types::VectorX gamma_flat;
-    // gamma_flat = aic.partialPivLu().solve(rhs);
+    UVLM::Matrix::deconstruct_gamma(gamma,
+                                    gamma_flat,
+                                    zeta_col);
+
     UVLM::LinearSolver::solve_system
     (
         aic,
@@ -359,9 +360,7 @@ void UVLM::Steady::solve_horseshoe
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     gamma,
-                                    zeta_col,
-                                    //zeta_star,
-                                    options);
+                                    zeta_col);
 
     // copy gamma from trailing edge to wake if steady solution
     UVLM::Wake::Horseshoe::circulation_transfer(gamma,
@@ -431,6 +430,11 @@ void UVLM::Steady::solve_discretised
 
     // linear system solution
     UVLM::Types::VectorX gamma_flat;
+    UVLM::Matrix::deconstruct_gamma(gamma,
+                                    gamma_flat,
+                                    zeta_col);
+
+
     UVLM::LinearSolver::solve_system
     (
         aic,
@@ -443,9 +447,7 @@ void UVLM::Steady::solve_discretised
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     gamma,
-                                    zeta_col,
-                                    //zeta_star,
-                                    options);
+                                    zeta_col);
 
     // copy gamma from trailing edge to wake
     int in_n_rows = -1;
