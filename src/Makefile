@@ -7,15 +7,15 @@ LINKER_FLAGS = -shared -fPIC -fopenmp
 # LINKER_FLAGS = -shared -fPIC
 
 ## INTEL C++ MKL SUPPORT
-FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel
-LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -ldl -lm 
+# FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel
+# LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -ldl -lm 
 
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-CPP = icc
+# CPP = icc
 #CPP = g++-5
-#CPP = g++
+CPP = g++
 endif
 ifeq ($(UNAME), Darwin)
 CPP = g++
