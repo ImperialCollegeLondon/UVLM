@@ -197,10 +197,8 @@ void UVLM::Unsteady::solver
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
-    // std::cout << options.convect_wake << std::endl;
     if (options.convect_wake)
     {
-        // std::cout << "Convecting wake" << std::endl;
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
@@ -233,7 +231,6 @@ void UVLM::Unsteady::solver
     // forces calculation
     // set forces to 0 just in case
     UVLM::Types::initialise_VecVecMat(forces);
-    // UVLM::Types::
     // static:
     UVLM::PostProc::calculate_static_forces_unsteady
     (
