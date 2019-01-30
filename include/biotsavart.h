@@ -332,10 +332,12 @@ void UVLM::BiotSavart::segment
     UVLM::Types::Real r2_mod = r2.norm();
 
     UVLM::Types::Real relative_vortex_radius = r0.norm()*vortex_radius;
+    UVLM::Types::Real d = r1_cross_r2.norm()/(v2 - v1).norm();
 
-    if (r1_mod < relative_vortex_radius ||
-        r2_mod < relative_vortex_radius ||
-        r1_cross_r2_mod_sq < relative_vortex_radius*relative_vortex_radius)
+    if (d < relative_vortex_radius)
+    //if (r1_mod < relative_vortex_radius ||
+        //r2_mod < relative_vortex_radius ||
+        //r1_cross_r2_mod_sq < relative_vortex_radius*relative_vortex_radius)
     {
         return;
     }

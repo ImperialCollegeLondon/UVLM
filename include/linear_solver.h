@@ -23,24 +23,11 @@ namespace UVLM
             if (options.iterative_solver)
             {
                 // we use iterative solver
-                // if (options.iterative_precond)
-                // {
-                //     Eigen::BiCGSTAB<t_a, Eigen::IncompleteLUT<UVLM::Types::Real, int>> solver;
-                //     // Eigen::ConjugateGradient<t_a, Eigen::IncompleteLUT<UVLM::Types::Real>> solver;
-                //     solver.preconditioner().setDroptol(options.iterative_tol);
-                //     solver.compute(a);
-                //     x = solver.solve(b);
-                // } else
-                // {
-                    // std::cout << "iterative " << std::endl;
-                    Eigen::ConjugateGradient<t_a, Eigen::Lower|Eigen::Upper> solver;
-                    // Eigen::BiCGSTAB<t_a> solver;
+                    Eigen::BiCGSTAB<t_a> solver;
                     solver.compute(a);
-                    x = solver.solve(b);
-                // }
+                    x = solver.solveWithGuess(b, x);
             } else
             {
-                //  std::cout << "direct" << std::endl;
                 x = a.partialPivLu().solve(b);
             }
         }

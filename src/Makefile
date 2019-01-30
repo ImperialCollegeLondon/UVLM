@@ -18,7 +18,7 @@ LINKER_FLAGS = -shared -fPIC -fopenmp  -L$(MKLROOT)/lib/intel64 -Wl,--no-as-need
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-#CPP = icc
+# CPP = icc
 #CPP = g++-5
 CPP = g++
 endif
