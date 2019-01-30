@@ -249,38 +249,38 @@ namespace UVLM
 namespace UVLMlin{
 
   void biot_panel_map( map_RowVec3& velP,
-             const map_RowVec3 zetaP, 
-             const map_Mat4by3 ZetaPanel, 
+             const map_RowVec3 zetaP,
+             const map_Mat4by3 ZetaPanel,
              const double gamma );
 
 
-  void der_biot_panel(Matrix3d& DerP, 
-          Matrix3d DerVertices[Nvert], 
+  void der_biot_panel(Matrix3d& DerP,
+          Matrix3d DerVertices[Nvert],
           const RowVector3d zetaP,
-          const Matrix4by3d ZetaPanel, 
+          const Matrix4by3d ZetaPanel,
           const double gamma );
 
 
-  void der_biot_panel_map( map_Mat3by3& DerP, 
+  void der_biot_panel_map( map_Mat3by3& DerP,
              Vec_map_Mat3by3& DerVertices,
-             const map_RowVec3 zetaP, 
-             const map_Mat4by3 ZetaPanel, 
+             const map_RowVec3 zetaP,
+             const map_Mat4by3 ZetaPanel,
              const double gamma );
 
 
   void der_runit( Matrix3d& Der,
-          const RowVector3d& rv, 
+          const RowVector3d& rv,
           double rinv,
           double minus_rinv3);
 
 
-  Matrix3d Dvcross_by_skew3d(const Matrix3d& Dvcross, 
+  Matrix3d Dvcross_by_skew3d(const Matrix3d& Dvcross,
                  const RowVector3d& rv);
 
 
-  void dvinddzeta(map_Mat3by3 DerC, 
+  void dvinddzeta(map_Mat3by3 DerC,
           map_Mat DerV,
-          const map_RowVec3 zetaC, 
+          const map_RowVec3 zetaC,
           Vec_map_Mat ZetaIn,
           map_Mat GammaIn,
           int& M_in,
@@ -293,13 +293,13 @@ namespace UVLMlin{
 
 
   void aic3(  map_Mat AIC3,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         int& M_in,
         int& N_in);
 
   void ind_vel(map_RowVec3 velC,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         map_Mat GammaIn,
         int& M_in,
@@ -558,11 +558,13 @@ void UVLM::BiotSavart::surface
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2, 2>(i,j),
@@ -602,11 +604,13 @@ void UVLM::BiotSavart::surface_with_steady_wake
     const uint Mend = gamma.rows();
     const uint Nend = gamma.cols();
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2,2>(i,j),
@@ -622,8 +626,10 @@ void UVLM::BiotSavart::surface_with_steady_wake
 
     const uint i0 = 0;
     const uint i = Mend - 1;
+    #pragma omp parallel for collapse(1)
     for (unsigned int j=Nstart; j<Nend; ++j)
     {
+        UVLM::Types::Vector3 temp_uout;
         if (horseshoe)
         {
             temp_uout.setZero();
@@ -680,13 +686,15 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     const uint Mend = gamma.rows();
     const uint Nend = gamma.cols();
 
-    UVLM::Types::Vector3 temp_uout;
+    // UVLM::Types::Vector3 temp_uout;
     const uint ii = 0;
     // surface contribution
+    #pragma omp parallel for collapse(2)
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
+            UVLM::Types::Vector3 temp_uout;
             temp_uout.setZero();
             UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta[0].template block<2,2>(i,j),
@@ -706,8 +714,10 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     // unless if gamma_star is a dummy one, just a row with ones.
     const uint mstar = (n_rows == -1) ? gamma_star.rows():n_rows;
     const uint i = Mend - 1;
+    #pragma omp parallel for collapse(1)
     for (uint j=Nstart; j<Nend; ++j)
     {
+        UVLM::Types::Vector3 temp_uout;
         for (uint i_star=0; i_star<mstar; ++i_star)
         {
             temp_uout.setZero();
@@ -951,16 +961,19 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const uint col_n_N = zeta_col[0].cols();
     const uint n_M = zeta[0].rows();
     const uint n_N = zeta[0].cols();
-    UVLM::Types::Vector3 target_triad;
-    UVLM::Types::Vector3 uout;
+
+    #pragma omp parallel for collapse(2)
     for (uint col_i_M=0; col_i_M<col_n_M; ++col_i_M)
     {
         for (uint col_j_N=0; col_j_N<col_n_N; ++col_j_N)
         {
+            UVLM::Types::Vector3 target_triad;
+            UVLM::Types::Vector3 uout;
+
             target_triad << zeta_col[0](col_i_M, col_j_N),
                             zeta_col[1](col_i_M, col_j_N),
                             zeta_col[2](col_i_M, col_j_N);
-            uout.setZero();
+            // uout.setZero(); // Already set inside whole_surface
             UVLM::BiotSavart::whole_surface
             (
                 zeta,
@@ -1130,18 +1143,18 @@ namespace UVLMlin{
   const int dn[Nvert]={0,0,1,1};
 
   void biot_panel_map( map_RowVec3& velP,
-             const map_RowVec3 zetaP, 
-             const map_Mat4by3 ZetaPanel, 
+             const map_RowVec3 zetaP,
+             const map_Mat4by3 ZetaPanel,
              const double gamma ){
-    /* 
-    This implementation works with mapping objects. 
+    /*
+    This implementation works with mapping objects.
     */
 
 
     // declarations
     int ii,aa,bb;
     const double Cbiot=PIquart*gamma;
-    double vcr2;  
+    double vcr2;
 
     RowVector3d RAB, Vcr;
     Vector3d Vsc;
@@ -1179,7 +1192,7 @@ namespace UVLMlin{
   // -----------------------------------------------------------------------------
 
 
-  void der_biot_panel( Matrix3d& DerP, Matrix3d DerVertices[Nvert], 
+  void der_biot_panel( Matrix3d& DerP, Matrix3d DerVertices[Nvert],
     const RowVector3d zetaP, const Matrix4by3d ZetaPanel, const double gamma ){
     /* This implementation is no suitable for python interface */
 
@@ -1187,7 +1200,7 @@ namespace UVLMlin{
     // declarations
     int ii,aa,bb;
     const double Cbiot=PIquart*gamma;
-    double r1inv, vcr2, vcr2inv, vcr4inv, dotprod, diag_fact, off_fact; 
+    double r1inv, vcr2, vcr2inv, vcr4inv, dotprod, diag_fact, off_fact;
 
     RowVector3d RAB, Vcr, Tv;
     Vector3d Vsc;
@@ -1224,7 +1237,7 @@ namespace UVLMlin{
       RAB=ZetaPanel.row(bb)-ZetaPanel.row(aa);  // segment vector
       Vcr=R.row(aa).cross(R.row(bb));
       vcr2=Vcr.dot(Vcr);
-      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){ 
+      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){
         //cout << endl << "Skipping seg. " << ii << endl;
         continue;}
       Tv=Runit.row(aa)-Runit.row(bb);
@@ -1240,7 +1253,7 @@ namespace UVLMlin{
 
       Dvcross(0,0)=diag_fact+off_fact*Vcr[0]*Vcr[0];
       Dvcross(1,0)=off_fact*Vcr[0]*Vcr[1];
-      Dvcross(1,1)=diag_fact+off_fact*Vcr[1]*Vcr[1]; 
+      Dvcross(1,1)=diag_fact+off_fact*Vcr[1]*Vcr[1];
       Dvcross(2,0)=off_fact*Vcr[0]*Vcr[2];
       Dvcross(2,1)=off_fact*Vcr[1]*Vcr[2];
       Dvcross(2,2)= diag_fact+off_fact*Vcr[2]*Vcr[2];
@@ -1264,20 +1277,20 @@ namespace UVLMlin{
 
 
 
-  void der_biot_panel_map( map_Mat3by3& DerP, 
+  void der_biot_panel_map( map_Mat3by3& DerP,
              Vec_map_Mat3by3& DerVertices,
-             const map_RowVec3 zetaP, 
-             const map_Mat4by3 ZetaPanel, 
+             const map_RowVec3 zetaP,
+             const map_Mat4by3 ZetaPanel,
              const double gamma ){
-    /* 
-    This implementation works with mapping objects. 
+    /*
+    This implementation works with mapping objects.
     */
 
 
     // declarations
     int ii,aa,bb;
     const double Cbiot=PIquart*gamma;
-    double r1inv, vcr2, vcr2inv, vcr4inv, dotprod, diag_fact, off_fact; 
+    double r1inv, vcr2, vcr2inv, vcr4inv, dotprod, diag_fact, off_fact;
 
     RowVector3d RAB, Vcr, Tv;
     Vector3d Vsc;
@@ -1314,7 +1327,7 @@ namespace UVLMlin{
       RAB=ZetaPanel.row(bb)-ZetaPanel.row(aa);  // segment vector
       Vcr=R.row(aa).cross(R.row(bb));
       vcr2=Vcr.dot(Vcr);
-      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){ 
+      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){
         //cout << endl << "Skipping seg. " << ii << endl;
         continue;}
       Tv=Runit.row(aa)-Runit.row(bb);
@@ -1330,7 +1343,7 @@ namespace UVLMlin{
 
       Dvcross(0,0)=diag_fact+off_fact*Vcr[0]*Vcr[0];
       Dvcross(1,0)=off_fact*Vcr[0]*Vcr[1];
-      Dvcross(1,1)=diag_fact+off_fact*Vcr[1]*Vcr[1]; 
+      Dvcross(1,1)=diag_fact+off_fact*Vcr[1]*Vcr[1];
       Dvcross(2,0)=off_fact*Vcr[0]*Vcr[2];
       Dvcross(2,1)=off_fact*Vcr[1]*Vcr[2];
       Dvcross(2,2)= diag_fact+off_fact*Vcr[2]*Vcr[2];
@@ -1363,9 +1376,9 @@ namespace UVLMlin{
   // Sub-functions
 
   void der_runit(Matrix3d& Der,const RowVector3d& rv, double rinv,double minus_rinv3){
-    /*Warning: 
+    /*Warning:
     1. RowVector3d needs to defined as constant if in main code RowVector
-    is a row of a matrix. 
+    is a row of a matrix.
     2. The function will fail is Matrix3d is a sub-block of a matrix.
      */
 
@@ -1375,7 +1388,7 @@ namespace UVLMlin{
     Der(0,2)=     minus_rinv3*rv(0)*rv(2);
     Der(1,1)=rinv+minus_rinv3*rv(1)*rv(1);
     Der(1,2)=     minus_rinv3*rv(1)*rv(2);
-    Der(2,2)=rinv+minus_rinv3*rv(2)*rv(2);                              
+    Der(2,2)=rinv+minus_rinv3*rv(2)*rv(2);
     // alloc lower diag
     Der(1,0)=Der(0,1);
     Der(2,0)=Der(0,2);
@@ -1385,9 +1398,9 @@ namespace UVLMlin{
 
 
   Matrix3d Dvcross_by_skew3d(const Matrix3d& Dvcross, const RowVector3d& rv){
-    /*Warning: 
+    /*Warning:
     1. RowVector3d needs to defined as constant if in main code RowVector
-    is a row of a matrix. 
+    is a row of a matrix.
      */
 
     Matrix3d P;
@@ -1413,9 +1426,9 @@ namespace UVLMlin{
   // -----------------------------------------------------------------------------
 
 
-  void dvinddzeta(map_Mat3by3 DerC, 
+  void dvinddzeta(map_Mat3by3 DerC,
           map_Mat DerV,
-          const map_RowVec3 zetaC, 
+          const map_RowVec3 zetaC,
           Vec_map_Mat ZetaIn,
           map_Mat GammaIn,
           int& M_in,
@@ -1464,7 +1477,7 @@ namespace UVLMlin{
 
           // init. local derivatives
           for(vv=0; vv<Nvert; vv++) derv[vv].setZero();
-          
+
           // get local deriv
           der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
           //for(vv=0; vv<Nvert; vv++) cout << derv[vv] << endl;
@@ -1498,7 +1511,7 @@ namespace UVLMlin{
 
         // init. local derivatives. only vertices 0 and 3 are on TE
         derv[0].setZero();
-        derv[3].setZero();      
+        derv[3].setZero();
 
         // get local deriv
         der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
@@ -1512,7 +1525,7 @@ namespace UVLMlin{
             jj= cc_in*Kzeta_in_bound + M_in_bound*(N_in+1) + (nn+1);
             DerV(cc,jj)+=derv[3](cc,cc_in);
           }
-          
+
         }
       }
 
@@ -1538,7 +1551,7 @@ namespace UVLMlin{
 
 
   void aic3(  map_Mat AIC3,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         int& M_in,
         int& N_in)
@@ -1575,7 +1588,7 @@ namespace UVLMlin{
 
 
   void ind_vel(map_RowVec3 velC,
-        const map_RowVec3 zetaC, 
+        const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         map_Mat GammaIn,
         int& M_in,
