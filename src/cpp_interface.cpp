@@ -19,7 +19,7 @@ DLLEXPORT void run_VLM
     // std::cout << options.n_rollup << std::endl;
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
     // omp_set_nested(1);
-    // omp_set_num_threads(options.NumCores);
+    omp_set_num_threads(options.NumCores);
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
@@ -103,8 +103,7 @@ DLLEXPORT void init_UVLM
     double** p_forces
 )
 {
-    // feenableexcept(FE_INVALID | FE_OVERFLOW);
-    Eigen::setNbThreads(options.NumCores);
+    omp_set_num_threads(options.NumCores);
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -206,7 +205,7 @@ DLLEXPORT void run_UVLM
     double** p_dynamic_forces
 )
 {
-    Eigen::setNbThreads(options.NumCores);
+    omp_set_num_threads(options.NumCores);
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -324,7 +323,7 @@ DLLEXPORT void calculate_unsteady_forces
     double** p_dynamic_forces
 )
 {
-    // feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+    omp_set_num_threads(options.NumCores);
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -412,7 +411,6 @@ DLLEXPORT void UVLM_check_incidence_angle
     double** p_incidence_angle
 )
 {
-
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
                                              p_dimensions,
@@ -474,6 +472,7 @@ DLLEXPORT void total_induced_velocity_at_point
     double* p_uout
 )
 {
+    omp_set_num_threads(options.NumCores);
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -548,7 +547,7 @@ DLLEXPORT void run_SHW
     double** p_dynamic_forces
 )
 {
-    Eigen::setNbThreads(options.NumCores);
+    omp_set_num_threads(options.NumCores);
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
