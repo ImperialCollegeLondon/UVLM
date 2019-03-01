@@ -11,8 +11,8 @@ LINKER_FLAGS = -shared -fPIC -fopenmp -L$(MKL_ROOT)/lib -Wl,--no-as-needed -lmkl
 # LINKER_FLAGS = -shared -fPIC
 
 ## INTEL C++ MKL SUPPORT
-# FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel
-# LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -ldl -lm
+# FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -mkl=parallel -qopenmp
+# LINKER_FLAGS = -shared -fPIC -liomp5 -lpthread -ldl -lm -qopenmp
 
 
 UNAME := $(shell uname)
