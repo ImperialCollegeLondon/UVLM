@@ -753,10 +753,9 @@ namespace UVLMlin{
 
     aic3(AIC3, zetaC, ZetaIn, M_in, N_in);
   }
+}
 
-
-
-  extern "C" void call_ind_vel(
+ DLLEXPORT void call_ind_vel(
                 double p_vel[3],
                 double p_zetaC[3],
                 double p_ZetaIn[],
@@ -766,18 +765,17 @@ namespace UVLMlin{
   {
     int cc;
 
-    map_RowVec3 velC(p_vel);
-    const map_RowVec3 zetaC(p_zetaC);
+    UVLMlin::map_RowVec3 velC(p_vel);
+    const UVLMlin::map_RowVec3 zetaC(p_zetaC);
 
-    map_Mat GammaIn(p_GammaIn,M_in,N_in);
+    UVLMlin::map_Mat GammaIn(p_GammaIn,M_in,N_in);
 
     int Kzeta_in=(M_in+1)*(N_in+1);
-    Vec_map_Mat ZetaIn;
+    UVLMlin::Vec_map_Mat ZetaIn;
     for(cc=0;cc<3;cc++){
-      ZetaIn.push_back( map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
+      ZetaIn.push_back( UVLMlin::map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
     }
 
-    ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in);
+    UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in);
   }
 
-}
