@@ -3,8 +3,8 @@
 # LINKER_FLAGS = -shared -fPIC -fopenmp -lblas -llapacke -Wl,-z,defs
 
 ## LINUX G++ + MKL
-#FLAGS = -fPIC -O3 -march=native -std=c++14 -DEIGEN_USE_MKL_ALL -I$(MKL_ROOT)/include -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
-#LINKER_FLAGS = -shared -fPIC -fopenmp -L$(MKL_ROOT)/lib -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl #-Wl,-z,defs
+FLAGS = -fPIC -O3 -march=native -std=c++14 -DEIGEN_USE_MKL_ALL -I$(MKL_ROOT)/include -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
+LINKER_FLAGS = -shared -fPIC -fopenmp -L$(MKL_ROOT)/lib -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl #-Wl,-z,defs
 
 ## MACOS G++ SUPPORT
 # FLAGS = -fPIC -g -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer
