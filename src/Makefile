@@ -17,9 +17,9 @@ LINKER_FLAGS = -shared -fPIC -fopenmp -L$(MKL_ROOT)/lib -Wl,--no-as-needed -lmkl
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-CPP = icc
+# CPP = icc
 # CPP = g++-5
-#CPP = g++
+CPP = g++
 endif
 ifeq ($(UNAME), Darwin)
 CPP = g++
