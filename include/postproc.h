@@ -358,22 +358,22 @@ namespace UVLM
                                 }
                                 // moments
                                 // moment = r cross F
-                                UVLM::Types::Vector3 zeta_corner;
-                                zeta_corner << zeta[i_surf][0](i + ii, j + jj),
-                                               zeta[i_surf][1](i + ii, j + jj),
-                                               zeta[i_surf][2](i + ii, j + jj);
+                                // UVLM::Types::Vector3 zeta_corner;
+                                // zeta_corner << zeta[i_surf][0](i + ii, j + jj),
+                                //                zeta[i_surf][1](i + ii, j + jj),
+                                //                zeta[i_surf][2](i + ii, j + jj);
 
-                                UVLM::Types::Vector3 r;
-                                r = zeta_corner - zeta_col_panel;
-                                UVLM::Types::Vector3 moment;
-                                moment = 0.25*r.cross(panel_force);
-
-                                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                                {
-                                    uint i_moment = i_dim + 3;
-                                    forces[i_surf][i_moment](i + ii, j + jj) +=
-                                        moment(i_dim);
-                                }
+                                // UVLM::Types::Vector3 r;
+                                // r = zeta_corner - zeta_col_panel;
+                                // UVLM::Types::Vector3 moment;
+                                // moment = 0.25*r.cross(panel_force);
+                                //
+                                // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                                // {
+                                //     uint i_moment = i_dim + 3;
+                                //     forces[i_surf][i_moment](i + ii, j + jj) +=
+                                //         moment(i_dim);
+                                // }
                             }
                         }
                     }
