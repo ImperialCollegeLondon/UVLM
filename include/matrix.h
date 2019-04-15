@@ -173,7 +173,7 @@ void UVLM::Matrix::AIC
                     block,
                     options.ImageMethod,
                     normals[icol_surf],
-                    1
+                    0
                 );
             }
         }
@@ -238,8 +238,8 @@ void UVLM::Matrix::RHS
                             zeta_star[ii_surf],
                             gamma_star[ii_surf],
                             collocation_coords,
-                            induced_vel,
-                            1
+                            induced_vel
+                            // 1
                         );
                         u_col[i_surf][0](i, j) += induced_vel[0].sum();
                         u_col[i_surf][1](i, j) += induced_vel[1].sum();

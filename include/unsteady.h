@@ -243,6 +243,10 @@ void UVLM::Unsteady::solver
         );
     }
 
+    UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+                                               gamma_star,
+                                               1);
+
     // we can use UVLM::Steady::solve_discretised if uext_col
     // is the total velocity including non-steady contributions.
     UVLM::Steady::solve_discretised
