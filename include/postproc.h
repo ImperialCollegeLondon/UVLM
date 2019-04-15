@@ -348,6 +348,11 @@ namespace UVLM
 
                         for (uint ii=0; ii<2; ++ii)
                         {
+                            if ((ii == 1) && (i == n_rows - 1))
+                            {
+                                // trailing edge
+                                continue;
+                            }
                             for (uint jj=0; jj<2; ++jj)
                             {
                                 // forces
