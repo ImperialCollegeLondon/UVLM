@@ -199,6 +199,11 @@ namespace UVLM
                         const unsigned int n_segment = 4;
                         for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
                         {
+                            if ((i_segment == 1) && (i_M == M - 1))
+                            {
+                                // trailing edge
+                                continue;
+                            }
                             unsigned int start = i_segment;
                             unsigned int end = (start + 1)%n_segment;
                             uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
@@ -252,15 +257,7 @@ namespace UVLM
 
                             v = (v + v_ind).eval();
 
-                            if ((i_segment == 1) && (i_M == M - 1))
-                            {
-                                // trailing edge
-                                f = flightconditions.rho*(gamma[i_surf](i_M, i_N) - gamma_star[i_surf](0, i_N))*v.cross(dl);
-                            }
-                            else
-                            {
-                                f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
-                            }
+                            f = flightconditions.rho*gamma[i_surf](i_M, i_N)*v.cross(dl);
 
                             // transfer forces to matrix
                             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
@@ -351,11 +348,11 @@ namespace UVLM
 
                         for (uint ii=0; ii<2; ++ii)
                         {
-                            // if ((ii == 1) && (i == n_rows - 1))
-                            // {
-                            //     // trailing edge
-                            //     continue;
-                            // }
+                            if ((ii == 1) && (i == n_rows - 1))
+                            {
+                                // trailing edge
+                                continue;
+                            }
                             for (uint jj=0; jj<2; ++jj)
                             {
                                 // forces
