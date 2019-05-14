@@ -10,8 +10,9 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1e-2
+#define VORTEX_RADIUS 1.e-6
 #define VORTEX_RADIUS_SQ 1e-4
+#define EPSILON_VORTEX 1e-10
 #define Nvert 4
 
 namespace UVLM
@@ -325,42 +326,35 @@ void UVLM::BiotSavart::segment
     UVLM::Types::Vector3 r0 = v2 - v1;
     UVLM::Types::Vector3 r1 = rp - v1;
     UVLM::Types::Vector3 r2 = rp - v2;
-    UVLM::Types::Vector3 r1_cross_r2 = r1.cross(r2);
-    UVLM::Types::Real r1_cross_r2_mod_sq = r1_cross_r2.squaredNorm();
-
+    UVLM::Types::Real r0_mod = r0.norm();
     UVLM::Types::Real r1_mod = r1.norm();
     UVLM::Types::Real r2_mod = r2.norm();
 
-    UVLM::Types::Real relative_vortex_radius = r0.norm()*vortex_radius;
-    UVLM::Types::Real d = r1_cross_r2.norm()/(v2 - v1).norm();
+    UVLM::Types::Real relative_vortex_radius = r0_mod*vortex_radius;
 
-    if (d < relative_vortex_radius)
-    //if (r1_mod < relative_vortex_radius ||
-        //r2_mod < relative_vortex_radius ||
-        //r1_cross_r2_mod_sq < relative_vortex_radius*relative_vortex_radius)
+    UVLM::Types::Real s_v = 0.5*(r1_mod + r2_mod + r0_mod);
+    UVLM::Types::Real a_v;
+
+    a_v = 2.0/(EPSILON_VORTEX + r0_mod);
+    a_v *= sqrt(s_v*(s_v - r1_mod)*
+                    (s_v - r2_mod)*
+                    (s_v - r0_mod));
+
+    if (std::isnan(a_v) || (a_v < relative_vortex_radius))
     {
         return;
     }
 
+    UVLM::Types::Vector3 r1_cross_r2 = r1.cross(r2);
     UVLM::Types::Real r0_dot_r1 = r0.dot(r1);
     UVLM::Types::Real r0_dot_r2 = r0.dot(r2);
+    UVLM::Types::Real r1_cross_r2_mod_sq = r1_cross_r2.squaredNorm();
 
     UVLM::Types::Real K;
-    K = (gamma/(UVLM::Constants::PI4*r1_cross_r2_mod_sq))*
-        (r0_dot_r1/r1_mod - r0_dot_r2/r2_mod);
+    K = (gamma/(UVLM::Constants::PI4*r1_cross_r2_mod_sq + EPSILON_VORTEX))*
+        (r0_dot_r1/(r1_mod + EPSILON_VORTEX) - r0_dot_r2/(r2_mod + EPSILON_VORTEX));
+
     uind += K*r1_cross_r2;
-    // if (!uind.array().isFinite().all())
-    // {
-    //     std::cerr << "Trap" << std::endl;
-    //     std::cerr << "r0 = " << r0.transpose() << std::endl;
-    //     std::cerr << "r1 = " << r1.transpose() << std::endl;
-    //     std::cerr << "r2 = " << r2.transpose() << std::endl;
-    //     std::cerr << "gamma = " <<  gamma << std::endl;
-    //     std::cerr << "r1_mod = " << r1_mod << std::endl;
-    //     std::cerr << "r2_mod = " << r2_mod << std::endl;
-    //     std::cerr << "vortex rad= " << relative_vortex_radius<< std::endl;
-    //     exit(-1);
-    // }
 }
 
 
