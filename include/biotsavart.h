@@ -340,7 +340,7 @@ void UVLM::BiotSavart::segment
                     (s_v - r2_mod)*
                     (s_v - r0_mod));
 
-    if (isnan(a_v) || (a_v < relative_vortex_radius))
+    if (std::isnan(a_v) || (a_v < relative_vortex_radius))
     {
         return;
     }
