@@ -64,14 +64,21 @@ namespace UVLM
 
         template <typename t_gamma,
                   typename t_zeta_col>
-                  //typename t_zeta_star>
         void reconstruct_gamma
         (
             const UVLM::Types::VectorX& gamma_flat,
             t_gamma& gamma,
-            const t_zeta_col& zeta_col,
-            //const t_zeta_star& zeta_star,
-            const UVLM::Types::VMopts& options
+            const t_zeta_col& zeta_col
+        );
+
+
+        template <typename t_gamma,
+                  typename t_zeta_col>
+        void deconstruct_gamma
+        (
+            const t_gamma& gamma,
+            UVLM::Types::VectorX& gamma_flat,
+            const t_zeta_col& zeta_col
         );
     }
 }
@@ -166,7 +173,7 @@ void UVLM::Matrix::AIC
                     block,
                     options.ImageMethod,
                     normals[icol_surf],
-                    1
+                    0
                 );
             }
         }
@@ -231,8 +238,8 @@ void UVLM::Matrix::RHS
                             zeta_star[ii_surf],
                             gamma_star[ii_surf],
                             collocation_coords,
-                            induced_vel,
-                            1
+                            induced_vel
+                            // 1
                         );
                         u_col[i_surf][0](i, j) += induced_vel[0].sum();
                         u_col[i_surf][1](i, j) += induced_vel[1].sum();
@@ -282,14 +289,11 @@ void UVLM::Matrix::generate_assembly_offset
 
 template <typename t_gamma,
           typename t_zeta_col>
-          //typename t_zeta_star>
 void UVLM::Matrix::reconstruct_gamma
 (
     const UVLM::Types::VectorX& gamma_flat,
     t_gamma& gamma,
-    const t_zeta_col& zeta_col,
-    //const t_zeta_star& zeta_star,
-    const UVLM::Types::VMopts& options
+    const t_zeta_col& zeta_col
 )
 {
     const uint n_surf = gamma.size();
@@ -304,6 +308,40 @@ void UVLM::Matrix::reconstruct_gamma
             for (uint j=0; j<dimensions[i_surf].second; ++j)
             {
                 gamma[i_surf](i, j) = gamma_flat(i_flat++);
+            }
+        }
+    }
+
+}
+
+template <typename t_gamma,
+          typename t_zeta_col>
+void UVLM::Matrix::deconstruct_gamma
+(
+    const t_gamma& gamma,
+    UVLM::Types::VectorX& gamma_flat,
+    const t_zeta_col& zeta_col
+)
+{
+    const uint n_surf = gamma.size();
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::Types::generate_dimensions(zeta_col, dimensions);
+
+    uint n_total = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        n_total += dimensions[i_surf].first*dimensions[i_surf].second;
+    }
+    gamma_flat.resize(n_total);
+
+    uint i_flat = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        for (uint i=0; i<dimensions[i_surf].first; ++i)
+        {
+            for (uint j=0; j<dimensions[i_surf].second; ++j)
+            {
+                gamma_flat(i_flat++) = gamma[i_surf](i, j);
             }
         }
     }
