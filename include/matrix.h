@@ -211,6 +211,7 @@ void UVLM::Matrix::RHS
 
     // filling up RHS
     int ii = -1;
+    UVLM::Types::Vector3 v_ind;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         uint M = uinc_col[i_surf][0].rows();
@@ -228,23 +229,40 @@ void UVLM::Matrix::RHS
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
                                           zeta_col[i_surf][2](i,j);
+                    // for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                    // {
+                    //     UVLM::Types::VecMatrixX induced_vel;
+                    //     UVLM::Types::allocate_VecMat(induced_vel, zeta_star[ii_surf], -1);
+                    //
+                    //     UVLM::BiotSavart::surface
+                    //     (
+                    //         zeta_star[ii_surf],
+                    //         gamma_star[ii_surf],
+                    //         collocation_coords,
+                    //         induced_vel
+                    //         // 1
+                    //     );
+                    //     u_col[i_surf][0](i, j) += induced_vel[0].sum();
+                    //     u_col[i_surf][1](i, j) += induced_vel[1].sum();
+                    //     u_col[i_surf][2](i, j) += induced_vel[2].sum();
+                    // }
+
+                    v_ind.setZero();
                     for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                     {
-                        UVLM::Types::VecMatrixX induced_vel;
-                        UVLM::Types::allocate_VecMat(induced_vel, zeta_star[ii_surf], -1);
-
-                        UVLM::BiotSavart::surface
-                        (
-                            zeta_star[ii_surf],
-                            gamma_star[ii_surf],
-                            collocation_coords,
-                            induced_vel
-                            // 1
-                        );
-                        u_col[i_surf][0](i, j) += induced_vel[0].sum();
-                        u_col[i_surf][1](i, j) += induced_vel[1].sum();
-                        u_col[i_surf][2](i, j) += induced_vel[2].sum();
+                        v_ind += UVLM::BiotSavart::whole_surface_parallel(zeta_star[ii_surf],
+                                                                      gamma_star[ii_surf],
+                                                                      collocation_coords,
+                                                                      0,
+                                                                      0,
+                                                                      -1,
+                                                                      -1,
+                                                                      false);
                     }
+                    u_col[i_surf][0](i, j) += v_ind(0);
+                    u_col[i_surf][1](i, j) += v_ind(1);
+                    u_col[i_surf][2](i, j) += v_ind(2);
+
                 }
                 // dot product of uinc and panel normal
                 rhs(++ii) =

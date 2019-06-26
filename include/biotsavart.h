@@ -230,14 +230,14 @@ namespace UVLM
 
         template <typename t_zeta,
                   typename t_gamma,
-                  typename t_ttriad,
-                  typename t_uout>
-        void whole_surface_parallel
+                  typename t_ttriad>
+                  // typename t_uout>
+        UVLM::Types::Vector3 whole_surface_parallel
         (
             const t_zeta&       zeta,
             const t_gamma&      gamma,
             const t_ttriad&     target_triad,
-            t_uout&             uout,
+            // t_uout&             uout,
             unsigned int        Mstart = 0,
             unsigned int        Nstart = 0,
             unsigned int        Mend = -1,
@@ -1039,14 +1039,14 @@ void UVLM::BiotSavart::whole_surface
 
 template <typename t_zeta,
           typename t_gamma,
-          typename t_ttriad,
-          typename t_uout>
-void UVLM::BiotSavart::whole_surface_parallel
+          typename t_ttriad>
+          // typename t_uout>
+UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface_parallel
 (
     const t_zeta&       zeta,
     const t_gamma&      gamma,
     const t_ttriad&     target_triad,
-    t_uout&             uout,
+    // t_uout&             uout,
     unsigned int        Mstart,
     unsigned int        Nstart,
     unsigned int        Mend,
@@ -1059,6 +1059,7 @@ void UVLM::BiotSavart::whole_surface_parallel
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
+    UVLM::Types::Vector3 uout;
     uout.setZero();
     #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
     for (unsigned int i=Mstart; i<Mend; ++i)
@@ -1073,6 +1074,7 @@ void UVLM::BiotSavart::whole_surface_parallel
                                                   // uout);
         }
     }
+    return uout;
 }
 
 template <typename t_zeta,
@@ -1137,18 +1139,18 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
 )
 {
     uout.setZero();
-    UVLM::Types::Vector3 sum_uout;
-    sum_uout.setZero();
+    // UVLM::Types::Vector3 sum_uout;
+    // sum_uout.setZero();
     const uint n_surf = zeta.size();
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         // wake on point
-        UVLM::BiotSavart::whole_surface_parallel
+        uout += UVLM::BiotSavart::whole_surface_parallel
         (
             zeta_star[i_surf],
             gamma_star[i_surf],
             target_triad,
-            sum_uout,
+            // sum_uout,
             0,
             0,
             -1,
@@ -1156,15 +1158,15 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             image_method,
             vortex_radius
         );
-        uout += sum_uout;
-        sum_uout.setZero();
+        // uout += sum_uout;
+        // sum_uout.setZero();
         // surface on point
-        UVLM::BiotSavart::whole_surface_parallel
+        uout += UVLM::BiotSavart::whole_surface_parallel
         (
             zeta[i_surf],
             gamma[i_surf],
             target_triad,
-            sum_uout,
+            // sum_uout,
             0,
             0,
             -1,
@@ -1172,8 +1174,8 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             image_method,
             vortex_radius
         );
-        uout += sum_uout;
-        sum_uout.setZero();
+        // uout += sum_uout;
+        // sum_uout.setZero();
     }
 }
 
