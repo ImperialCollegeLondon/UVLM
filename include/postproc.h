@@ -221,69 +221,23 @@ namespace UVLM
                             v_ind.setZero();
                             for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                             {
-                                // UVLM::Types::VecMatrixX temp_uout;
-                                // UVLM::Types::allocate_VecMat(temp_uout,
-                                //                              zeta[ii_surf],
-                                //                              -1);
-                                // UVLM::BiotSavart::surface_with_unsteady_wake
-                                // (
-                                //     zeta[ii_surf],
-                                //     zeta_star[ii_surf],
-                                //     gamma[ii_surf],
-                                //     gamma_star[ii_surf],
-                                //     rp,
-                                //     // options.horseshoe,
-                                //     temp_uout,
-                                //     options.ImageMethod
-                                // );
-                                // v_ind(0) += temp_uout[0].sum();
-                                // v_ind(1) += temp_uout[1].sum();
-                                // v_ind(2) += temp_uout[2].sum();
-
-                                // // Surface contribution
-                                // UVLM::Types::VecMatrixX temp_uout;
-                                // UVLM::Types::allocate_VecMat(temp_uout, zeta[ii_surf], -1);
-                                // UVLM::BiotSavart::surface
-                                // (
-                                //     zeta[ii_surf],
-                                //     gamma[ii_surf],
-                                //     rp,
-                                //     temp_uout
-                                // );
-                                // v_ind(0) += temp_uout[0].sum();
-                                // v_ind(1) += temp_uout[1].sum();
-                                // v_ind(2) += temp_uout[2].sum();
-                                // // Wake contribution
-                                // UVLM::Types::VecMatrixX temp_uout_star;
-                                // UVLM::Types::allocate_VecMat(temp_uout_star, zeta_star[ii_surf], -1);
-                                // UVLM::BiotSavart::surface
-                                // (
-                                //     zeta_star[ii_surf],
-                                //     gamma_star[ii_surf],
-                                //     rp,
-                                //     temp_uout_star
-                                // );
-                                // v_ind(0) += temp_uout_star[0].sum();
-                                // v_ind(1) += temp_uout_star[1].sum();
-                                // v_ind(2) += temp_uout_star[2].sum();
-
-                                v_ind += UVLM::BiotSavart::whole_surface_parallel(zeta[ii_surf],
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                                   gamma[ii_surf],
                                                                                   rp,
                                                                                   0,
                                                                                   0,
                                                                                   -1,
                                                                                   -1,
-                                                                                  false);
+                                                                                  options.ImageMethod);
 
-                                v_ind += UVLM::BiotSavart::whole_surface_parallel(zeta_star[ii_surf],
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                                   gamma_star[ii_surf],
                                                                                   rp,
                                                                                   0,
                                                                                   0,
                                                                                   -1,
                                                                                   -1,
-                                                                                  false);
+                                                                                  options.ImageMethod);
                             }
 
                             dl = r2-r1;
