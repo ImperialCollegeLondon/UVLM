@@ -650,6 +650,113 @@ DLLEXPORT void run_SHW
     );
 }
 
+DLLEXPORT void multisurface
+(
+    const UVLM::Types::UVMopts& options,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_target,
+    unsigned int** p_dimensions_uout,
+    double** p_zeta,
+    double** p_gamma,
+    double** p_target_surface,
+    double** p_uout
+    // double  vortex_radius
+)
+{
+    omp_set_num_threads(options.NumCores);
+    uint n_surf = options.NumSurfaces;
+    uint n_surf_target = 1;
+
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+
+    // UVLM::Types::VecDimensions dimensions_star;
+    // UVLM::CppInterface::transform_dimensions(n_surf,
+    //                                          p_dimensions_star,
+    //                                          dimensions_star);
+
+    UVLM::Types::VecDimensions dimensions_target;
+    UVLM::CppInterface::transform_dimensions(n_surf_target,
+                                             p_dimensions_target,
+                                             dimensions_target);
+
+    UVLM::Types::VecDimensions dimensions_uout;
+    UVLM::CppInterface::transform_dimensions(n_surf_target,
+                                             p_dimensions_uout,
+                                             dimensions_uout);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    // UVLM::Types::VecMapX gamma;
+    // UVLM::CppInterface::map_VecMat(dimensions,
+    //                               p_gamma,
+    //                               gamma,
+    //                               0);
+    //
+    // UVLM::Types::VecMatrixX target_surface;
+    // UVLM::CppInterface::map_VecMatrixX(dimensions_target,
+    //                                   p_target_surface,
+    //                                   target_surface,
+    //                                   1);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                  p_gamma,
+                                  gamma,
+                                  0);
+
+    // std::cout << dimensions[0].first << std::endl;
+    // std::cout << dimensions[0].second << std::endl;
+    // std::cout << dimensions[1].first << std::endl;
+
+    UVLM::Types::VecMapX uout;
+    UVLM::CppInterface::map_VecMat(dimensions_uout,
+                                  p_uout,
+                                  uout,
+                                  0);
+
+    UVLM::Types::VecVecMapX target_surface;
+    UVLM::CppInterface::map_VecVecMat(dimensions_target,
+                                      p_target_surface,
+                                      target_surface,
+                                      1);
+    // UVLM::Types::VecMatrixX target_surface_col;
+    // UVLM::Geometry::generate_colocationMesh(target_surface, target_surface_col);
+    //
+    // UVLM::Types::VecMatrixX normal;
+    // UVLM::Geometry::generate_surfaceNormal(zeta, normal);
+
+    UVLM::Types::VecVecMatrixX target_surface_col;
+    // UVLM::Types::allocate_VecVecMat
+    //     (
+    //         UVLM::Types::VecVecMatrixX& mat,
+    //         const unsigned int& n_surf,
+    //         const unsigned int& n_dim,
+    //         const unsigned int& M,
+    //         const unsigned int& N
+    //     )
+    UVLM::Geometry::generate_colocationMesh(target_surface, target_surface_col);
+
+    UVLM::Types::VecVecMatrixX normal;
+    UVLM::Types::allocate_VecVecMat(normal, target_surface_col);
+    UVLM::Geometry::generate_surfaceNormal(target_surface, normal);
+
+    UVLM::BiotSavart::multisurface(
+        zeta[0],
+        gamma[0],
+        target_surface_col[0],
+        uout[0],
+        options.ImageMethod,
+        normal[0]
+    );
+}
+
 
 // linear UVLM interface
 
@@ -778,4 +885,3 @@ DLLEXPORT void call_ind_vel(
 
     UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in);
   }
-
