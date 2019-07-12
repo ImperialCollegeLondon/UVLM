@@ -343,7 +343,13 @@ namespace UVLM
             return max;
         }
 
-
+        UVLM::Types::Vector3 zeroVector3()
+        {
+            UVLM::Types::Vector3 vec;
+            vec.setZero();
+            return vec;
+        }
+        
         // inline void allocate_VecVecVecMat
         // (
         //     UVLM::Types::VecVecVecMatrixX& mat,
