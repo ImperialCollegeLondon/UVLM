@@ -1011,13 +1011,80 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
     {
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
-            uout += UVLM::BiotSavart::vortex_ring(target_triad,
-                                                  zeta[0].template block<2, 2>(i,j),
-                                                  zeta[1].template block<2, 2>(i,j),
-                                                  zeta[2].template block<2, 2>(i,j),
-                                                  gamma(i,j));
-                                                  // uout);
+            UVLM::Types::Vector3 temp_uout;
+            UVLM::Types::Vector3 v1;
+            UVLM::Types::Vector3 v2;
+            UVLM::Types::Real delta_gamma;
+
+            // Spanwise vortices
+            v1 << zeta[0](i, j),
+                  zeta[1](i, j),
+                  zeta[2](i, j);
+            v2 << zeta[0](i, j+1),
+                  zeta[1](i, j+1),
+                  zeta[2](i, j+1);
+
+            if (i == Mstart){
+                delta_gamma = gamma(i, j);
+            } else {
+                delta_gamma = gamma(i, j) - gamma(i-1, j);
+            }
+            temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  -delta_gamma);
+
+            // Streamwise/chordwise vortices
+            v2 << zeta[0](i+1, j),
+                  zeta[1](i+1, j),
+                  zeta[2](i+1, j);
+
+            if (j == Nstart){
+                delta_gamma = -gamma(i, j);
+            } else {
+                delta_gamma = gamma(i, j-1) - gamma(i, j);
+            }
+            temp_uout += UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  -delta_gamma);
+
+            uout += temp_uout;
         }
+    }
+    // Compute the last segments
+    UVLM::Types::Vector3 temp_uout;
+    UVLM::Types::Vector3 v1;
+    UVLM::Types::Vector3 v2;
+    for (unsigned int j=Nstart; j<Nend; ++j)
+    {
+        // Spanwise vortices
+        v1 << zeta[0](Mend, j),
+              zeta[1](Mend, j),
+              zeta[2](Mend, j);
+        v2 << zeta[0](Mend, j+1),
+              zeta[1](Mend, j+1),
+              zeta[2](Mend, j+1);
+        uout += UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              gamma(Mend-1,j));
+    }
+
+    for (unsigned int i=Mstart; i<Mend; ++i)
+    {
+        // Streamwise/chordwise vortices
+        v1 << zeta[0](i, Nend),
+              zeta[1](i, Nend),
+              zeta[2](i, Nend);
+        v2 << zeta[0](i+1, Nend),
+              zeta[1](i+1, Nend),
+              zeta[2](i+1, Nend);
+
+        uout += UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              -gamma(i, Nend-1));
     }
     return uout;
 }
