@@ -197,36 +197,30 @@ namespace UVLM
                 uint auxM = 0;
                 uint auxN = 0;
 
+                UVLM::Types::Vector3 dl;
+                UVLM::Types::Vector3 v;
+                UVLM::Types::Vector3 f;
+                UVLM::Types::Vector3 v_ind;
+                UVLM::Types::Vector3 rp;
+                UVLM::Types::Vector3 r1;
+                UVLM::Types::Vector3 r2;
+                UVLM::Types::Real delta_gamma;
+
                 // Computation of induced velocity in each vector
-                #pragma omp parallel for collapse(2)
+                // #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
-                        UVLM::Types::Vector3 dl;
-                        UVLM::Types::Vector3 v;
-                        UVLM::Types::Vector3 f;
-                        UVLM::Types::Vector3 v_ind;
-                        UVLM::Types::Vector3 rp;
-                        UVLM::Types::Vector3 r1;
-                        UVLM::Types::Vector3 r2;
-                        UVLM::Types::Real delta_gamma;
-                        // const unsigned int n_segment = 4;
-                        // for (unsigned int i_segment=0; i_segment<n_segment; ++i_segment)
-                        // {
-                        //     if ((i_segment == 1) && (i_M == M - 1))
-                        //     {
-                        //         // trailing edge
-                        //         continue;
-                        //     }
-                        //     unsigned int start = i_segment;
-                        //     unsigned int end = (start + 1)%n_segment;
-                        //     uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
-                        //     uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
-                        //     uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
-                        //     uint j_end = i_N + UVLM::Mapping::vortex_indices(end, 1);
-                        //
-                        //
+                        // UVLM::Types::Vector3 dl;
+                        // UVLM::Types::Vector3 v;
+                        // UVLM::Types::Vector3 f;
+                        // UVLM::Types::Vector3 v_ind;
+                        // UVLM::Types::Vector3 rp;
+                        // UVLM::Types::Vector3 r1;
+                        // UVLM::Types::Vector3 r2;
+                        // UVLM::Types::Real delta_gamma;
+
                         // Spanwise vortices
                             r1 << zeta[i_surf][0](i_M, i_N),
                                   zeta[i_surf][1](i_M, i_N),
@@ -291,15 +285,6 @@ namespace UVLM
                             span_seg_forces[0][0](i_M, i_N) = f(0);
                             span_seg_forces[0][1](i_M, i_N) = f(1);
                             span_seg_forces[0][2](i_M, i_N) = f(2);
-
-                            // transfer forces to matrix
-                            // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                            // {
-                            //     forces[i_surf][i_dim](i_M, i_N) +=
-                            //         0.5*f(i_dim);
-                            //     forces[i_surf][i_dim](i_M, i_N+1) +=
-                            //         0.5*f(i_dim);
-                            // }
 
                             // Chordwise vortice
                             r2 << zeta[i_surf][0](i_M+1, i_N),
@@ -366,14 +351,14 @@ namespace UVLM
                 }
 
                 // Influence of the last chordwise column of vortices
-                UVLM::Types::Vector3 dl;
-                UVLM::Types::Vector3 v;
-                UVLM::Types::Vector3 f;
-                UVLM::Types::Vector3 v_ind;
-                UVLM::Types::Vector3 rp;
-                UVLM::Types::Vector3 r1;
-                UVLM::Types::Vector3 r2;
-                UVLM::Types::Real delta_gamma;
+                // UVLM::Types::Vector3 dl;
+                // UVLM::Types::Vector3 v;
+                // UVLM::Types::Vector3 f;
+                // UVLM::Types::Vector3 v_ind;
+                // UVLM::Types::Vector3 rp;
+                // UVLM::Types::Vector3 r1;
+                // UVLM::Types::Vector3 r2;
+                // UVLM::Types::Real delta_gamma;
                 for (uint i_M=0; i_M<M; ++i_M){
 
                             r1 << zeta[i_surf][0](i_M, N),
