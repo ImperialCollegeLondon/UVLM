@@ -185,10 +185,19 @@ namespace UVLM
             UVLM::Types::Vector3 rp;
             uint start;
             uint end;
+
+            UVLM::Types::VecVecMatrixX span_seg_forces;
+            // UVLM::Types::allocate_VecVecMat(span_seg_forces, zeta[i_surf], 1);
+            UVLM::Types::VecVecMatrixX chord_seg_forces;
+            // UVLM::Types::allocate_VecVecMat(chord_seg_forces, zeta[i_surf], 1);
+
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 const uint M = gamma[i_surf].rows();
                 const uint N = gamma[i_surf].cols();
+
+                UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
+                UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
 
                 uint auxM = 0;
                 uint auxN = 0;
@@ -263,6 +272,7 @@ namespace UVLM
 
                             v = (v + v_ind).eval();
 
+                            // TODO: check if this is really needed
                             if (i_N == N){
                                 auxN = i_N -1;
                             } else {
@@ -278,16 +288,18 @@ namespace UVLM
                             }
 
                             f = flightconditions.rho*delta_gamma*v.cross(dl);
-
+                            span_seg_forces[0][0](i_M, i_N) = f(0);
+                            span_seg_forces[0][1](i_M, i_N) = f(1);
+                            span_seg_forces[0][2](i_M, i_N) = f(2);
 
                             // transfer forces to matrix
-                            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                            {
-                                forces[i_surf][i_dim](i_M, i_N) +=
-                                    0.5*f(i_dim);
-                                forces[i_surf][i_dim](i_M, i_N+1) +=
-                                    0.5*f(i_dim);
-                            }
+                            // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                            // {
+                            //     forces[i_surf][i_dim](i_M, i_N) +=
+                            //         0.5*f(i_dim);
+                            //     forces[i_surf][i_dim](i_M, i_N+1) +=
+                            //         0.5*f(i_dim);
+                            // }
 
                     }
                 }
@@ -358,17 +370,47 @@ namespace UVLM
                             }
 
                             f = flightconditions.rho*delta_gamma*v.cross(dl);
+                            chord_seg_forces[0][0](i_M, i_N) = f(0);
+                            chord_seg_forces[0][1](i_M, i_N) = f(1);
+                            chord_seg_forces[0][2](i_M, i_N) = f(2);
 
                             // transfer forces to matrix
-                            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                            {
-                                forces[i_surf][i_dim](i_M, i_N) +=
-                                    0.5*f(i_dim);
-                                forces[i_surf][i_dim](i_M+1, i_N) +=
-                                    0.5*f(i_dim);
-                            }
+                            // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                            // {
+                            //     forces[i_surf][i_dim](i_M, i_N) +=
+                            //         0.5*f(i_dim);
+                            //     forces[i_surf][i_dim](i_M+1, i_N) +=
+                            //         0.5*f(i_dim);
+                            // }
                         // }
 
+                    }
+                }
+
+
+            // Transfer forces to nodes
+
+                // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
+                // Computation of induced velocity in each vector
+                for (uint i_M=0; i_M<M; ++i_M)
+                {
+                    for (uint i_N=0; i_N<N; ++i_N)
+                    {
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            // Spanwise segments
+                            if (i_N != 0){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
+                            }
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
+
+                            // Chordwise segments
+                            if (i_M != 0){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
+                            }
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
+
+                        }
                     }
                 }
             }
