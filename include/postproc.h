@@ -178,13 +178,8 @@ namespace UVLM
             // not bothered with effciency.
             // if it is so critical, it could be improved
             const uint n_surf = zeta.size();
-            UVLM::Types::Vector3 dl;
-            UVLM::Types::Vector3 v;
-            UVLM::Types::Vector3 f;
-            UVLM::Types::Vector3 v_ind;
-            UVLM::Types::Vector3 rp;
-            uint start;
-            uint end;
+            // uint start;
+            // uint end;
 
             UVLM::Types::VecVecMatrixX span_seg_forces;
             // UVLM::Types::allocate_VecVecMat(span_seg_forces, zeta[i_surf], 1);
@@ -202,12 +197,17 @@ namespace UVLM
                 uint auxM = 0;
                 uint auxN = 0;
 
-                // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
                 // Computation of induced velocity in each vector
+                #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
+                        UVLM::Types::Vector3 dl;
+                        UVLM::Types::Vector3 v;
+                        UVLM::Types::Vector3 f;
+                        UVLM::Types::Vector3 v_ind;
+                        UVLM::Types::Vector3 rp;
                         UVLM::Types::Vector3 r1;
                         UVLM::Types::Vector3 r2;
                         UVLM::Types::Real delta_gamma;
@@ -301,18 +301,6 @@ namespace UVLM
                             //         0.5*f(i_dim);
                             // }
 
-                    }
-                }
-                for (uint i_M=0; i_M<M; ++i_M)
-                {
-                    for (uint i_N=0; i_N<N+1; ++i_N)
-                    {
-                        UVLM::Types::Vector3 r1;
-                        UVLM::Types::Vector3 r2;
-                        UVLM::Types::Real delta_gamma;
-                            r1 << zeta[i_surf][0](i_M, i_N),
-                                  zeta[i_surf][1](i_M, i_N),
-                                  zeta[i_surf][2](i_M, i_N);
                             // Chordwise vortice
                             r2 << zeta[i_surf][0](i_M+1, i_N),
                                   zeta[i_surf][1](i_M+1, i_N),
@@ -374,19 +362,85 @@ namespace UVLM
                             chord_seg_forces[0][1](i_M, i_N) = f(1);
                             chord_seg_forces[0][2](i_M, i_N) = f(2);
 
-                            // transfer forces to matrix
-                            // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                            // {
-                            //     forces[i_surf][i_dim](i_M, i_N) +=
-                            //         0.5*f(i_dim);
-                            //     forces[i_surf][i_dim](i_M+1, i_N) +=
-                            //         0.5*f(i_dim);
-                            // }
-                        // }
-
                     }
                 }
 
+                // Influence of the last chordwise column of vortices
+                UVLM::Types::Vector3 dl;
+                UVLM::Types::Vector3 v;
+                UVLM::Types::Vector3 f;
+                UVLM::Types::Vector3 v_ind;
+                UVLM::Types::Vector3 rp;
+                UVLM::Types::Vector3 r1;
+                UVLM::Types::Vector3 r2;
+                UVLM::Types::Real delta_gamma;
+                for (uint i_M=0; i_M<M; ++i_M){
+
+                            r1 << zeta[i_surf][0](i_M, N),
+                                  zeta[i_surf][1](i_M, N),
+                                  zeta[i_surf][2](i_M, N);
+                            r2 << zeta[i_surf][0](i_M+1, N),
+                                  zeta[i_surf][1](i_M+1, N),
+                                  zeta[i_surf][2](i_M+1, N);
+
+                            // position of the center point of the vortex filament
+                            rp = 0.5*(r1 + r2);
+
+                            // induced vel by vortices at vp
+                            v_ind.setZero();
+
+                            for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                            {
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
+                                                                                  gamma[ii_surf],
+                                                                                  rp,
+                                                                                  0,
+                                                                                  0,
+                                                                                  -1,
+                                                                                  -1,
+                                                                                  options.ImageMethod);
+
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                                  gamma_star[ii_surf],
+                                                                                  rp,
+                                                                                  0,
+                                                                                  0,
+                                                                                  -1,
+                                                                                  -1,
+                                                                                  options.ImageMethod);
+                            }
+
+                            dl = r2-r1;
+
+                            v << 0.5*(velocities[i_surf][0](i_M, N) +
+                                      velocities[i_surf][0](i_M+1, N)),
+                                 0.5*(velocities[i_surf][1](i_M, N) +
+                                      velocities[i_surf][1](i_M+1, N)),
+                                 0.5*(velocities[i_surf][2](i_M, N) +
+                                      velocities[i_surf][2](i_M+1, N));
+
+                            v = (v + v_ind).eval();
+
+                            if (i_M == M){
+                                auxM = i_M -1;
+                            } else {
+                                auxM = i_M;
+                            }
+
+                            // if (N == 0){
+                            //     delta_gamma = gamma[i_surf](auxM, N);
+                            // } else if (i_N == N){
+                                delta_gamma = -gamma[i_surf](auxM, N-1);
+                            // } else {
+                            //     delta_gamma = gamma[i_surf](auxM, N) - gamma[i_surf](auxM, N-1);
+                            // }
+
+                            f = flightconditions.rho*delta_gamma*v.cross(dl);
+                            chord_seg_forces[0][0](i_M, N) = f(0);
+                            chord_seg_forces[0][1](i_M, N) = f(1);
+                            chord_seg_forces[0][2](i_M, N) = f(2);
+
+                }
 
             // Transfer forces to nodes
 
