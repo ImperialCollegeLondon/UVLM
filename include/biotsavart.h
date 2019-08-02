@@ -1006,12 +1006,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
     if (Nend == -1) {Nend = gamma.cols();}
 
     UVLM::Types::Vector3 uout;
-    // UVLM::Types::Real uout_x=0.;
-    // UVLM::Types::Real uout_y=0.;
-    // UVLM::Types::Real uout_z=0.;
     uout.setZero();
-    // #pragma omp parallel for collapse(1) reduction(sum_Vector3: uout)
-    // #pragma omp parallel for collapse(2) reduction(+: uout_x) reduction(+: uout_y) reduction(+: uout_z)
     UVLM::Types::Vector3 temp_uout;
     UVLM::Types::Vector3 v1;
     UVLM::Types::Vector3 v2;
@@ -1056,18 +1051,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
                                                   -delta_gamma);
 
             uout += temp_uout;
-            // uout_x += temp_uout(0);
-            // uout_y += temp_uout(1);
-            // uout_z += temp_uout(2);
         }
     }
-    // uout << uout_x,
-    //         uout_y,
-    //         uout_z;
-    // Compute the last segments
-    // UVLM::Types::Vector3 temp_uout;
-    // UVLM::Types::Vector3 v1;
-    // UVLM::Types::Vector3 v2;
     for (unsigned int j=Nstart; j<Nend; ++j)
     {
         // Spanwise vortices
