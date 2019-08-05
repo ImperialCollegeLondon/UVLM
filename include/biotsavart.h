@@ -561,30 +561,50 @@ void UVLM::BiotSavart::surface
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
+    UVLM::Types::VecVecMatrixX span_seg_uout;
+    UVLM::Types::VecVecMatrixX chord_seg_uout;
+    UVLM::Types::allocate_VecVecMat(span_seg_uout, 1, 3, (Mend-Mstart)+1, (Nend-Nstart));
+    UVLM::Types::allocate_VecVecMat(chord_seg_uout, 1, 3, (Mend-Mstart), (Nend-Nstart)+1);
+
     UVLM::Types::Vector3 v1;
     UVLM::Types::Vector3 v2;
     UVLM::Types::Vector3 temp_uout;
-    //TODO: substitute M0 by Mstart and Nstart
-    // i=0
-    for (unsigned int j=Nstart; j<Nend; ++j)
+
+    for (uint i=Mstart; i<Mend; ++i)
     {
-        v1 << zeta[0](0, j),
-              zeta[1](0, j),
-              zeta[2](0, j);
-        v2 << zeta[0](0, j+1),
-              zeta[1](0, j+1),
-              zeta[2](0, j+1);
-        temp_uout = UVLM::BiotSavart::segment(target_triad,
-                                              v1,
-                                              v2,
-                                              -gamma(0,j));
-        uout[0](0, j) += temp_uout(0);
-        uout[1](0, j) += temp_uout(1);
-        uout[2](0, j) += temp_uout(2);
+        for (uint j=Nstart; j<Nend; ++j)
+        {
+            // Spanwise vortices
+            v1 << zeta[0](i, j),
+                  zeta[1](i, j),
+                  zeta[2](i, j);
+            v2 << zeta[0](i, j+1),
+                  zeta[1](i, j+1),
+                  zeta[2](i, j+1);
+            temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  1.0);
+            span_seg_uout[0][0](i,j) = temp_uout(0);
+            span_seg_uout[0][1](i,j) = temp_uout(1);
+            span_seg_uout[0][2](i,j) = temp_uout(2);
+
+            // Streamwise/chordwise vortices
+            v2 << zeta[0](i+1, j),
+                  zeta[1](i+1, j),
+                  zeta[2](i+1, j);
+            temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  1.0);
+            chord_seg_uout[0][0](i,j) = temp_uout(0);
+            chord_seg_uout[0][1](i,j) = temp_uout(1);
+            chord_seg_uout[0][2](i,j) = temp_uout(2);
+        }
     }
 
-    // i=M
-    for (unsigned int j=Nstart; j<Nend; ++j)
+    // Influence of the last spanwise vortex
+    for (uint j=Nstart; j<Nend; j++)
     {
         v1 << zeta[0](Mend, j),
               zeta[1](Mend, j),
@@ -595,32 +615,14 @@ void UVLM::BiotSavart::surface
         temp_uout = UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              gamma(Mend - 1,j));
-        uout[0](Mend-1, j) += temp_uout(0);
-        uout[1](Mend-1, j) += temp_uout(1);
-        uout[2](Mend-1, j) += temp_uout(2);
+                                              1.0);
+        span_seg_uout[0][0](Mend,j) = temp_uout(0);
+        span_seg_uout[0][1](Mend,j) = temp_uout(1);
+        span_seg_uout[0][2](Mend,j) = temp_uout(2);
     }
 
-    // j=0
-    for (unsigned int i=Mstart; i<Mend; ++i)
-    {
-        v1 << zeta[0](i, 0),
-              zeta[1](i, 0),
-              zeta[2](i, 0);
-        v2 << zeta[0](i+1, 0),
-              zeta[1](i+1, 0),
-              zeta[2](i+1, 0);
-        temp_uout = UVLM::BiotSavart::segment(target_triad,
-                                              v1,
-                                              v2,
-                                              gamma(i,0));
-        uout[0](i, 0) += temp_uout(0);
-        uout[1](i, 0) += temp_uout(1);
-        uout[2](i, 0) += temp_uout(2);
-    }
-
-    // j=N
-    for (unsigned int i=Mstart; i<Mend; ++i)
+    // Influence of the last chordwise vortex
+    for (uint i=Mstart; i<Mend; i++)
     {
         v1 << zeta[0](i, Nend),
               zeta[1](i, Nend),
@@ -631,68 +633,27 @@ void UVLM::BiotSavart::surface
         temp_uout = UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              -gamma(i, Nend-1));
-        uout[0](i, Nend-1) += temp_uout(0);
-        uout[1](i, Nend-1) += temp_uout(1);
-        uout[2](i, Nend-1) += temp_uout(2);
+                                              1.0);
+        chord_seg_uout[0][0](i,Nend) = temp_uout(0);
+        chord_seg_uout[0][1](i,Nend) = temp_uout(1);
+        chord_seg_uout[0][2](i,Nend) = temp_uout(2);
     }
 
-    // ams: I need to split the loop in two for parallelisation. The influence of each
-    // filament has to be incluede in two memory directions uout[](i,j) and uout[](i,j-1) and
-    // similarly for the spanwise vortice. The two memory directions cannot be accessed in the
-    // same parallel loop. TODO: explain this better
-    for (unsigned int delay=1; delay<3; ++delay)
+    // Transfer influence from segments to vortices
+    for (uint i=Mstart; i<Mend; i++)
     {
-        // #pragma omp parallel for collapse(2)
-        // Spanwise vortices
-        for (unsigned int i=Mstart+delay; i<Mend; i+=2)
+        for (uint j=Nstart; j<Nend; j++)
         {
-            for (unsigned int j=Nstart; j<Nend; ++j)
+            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
             {
-                v1 << zeta[0](i, j),
-                      zeta[1](i, j),
-                      zeta[2](i, j);
-                v2 << zeta[0](i, j+1),
-                      zeta[1](i, j+1),
-                      zeta[2](i, j+1);
-
-                temp_uout = UVLM::BiotSavart::segment(target_triad,
-                                                      v1,
-                                                      v2,
-                                                      -gamma(i,j));
-                uout[0](i, j) += temp_uout(0);
-                uout[1](i, j) += temp_uout(1);
-                uout[2](i, j) += temp_uout(2);
-                uout[0](i-1, j) -= temp_uout(0);
-                uout[1](i-1, j) -= temp_uout(1);
-                uout[2](i-1, j) -= temp_uout(2);
+                uout[i_dim](i,j) -= span_seg_uout[0][i_dim](i,j)*gamma(i,j);
+                uout[i_dim](i,j) += span_seg_uout[0][i_dim](i+1,j)*gamma(i,j);
+                uout[i_dim](i,j) += chord_seg_uout[0][i_dim](i,j)*gamma(i,j);
+                uout[i_dim](i,j) -= chord_seg_uout[0][i_dim](i,j+1)*gamma(i,j);
             }
-        }
-
-        // Streamwise/chordwise vortices
-        for (unsigned int i=Mstart; i<Mend; ++i)
-        {
-            for (unsigned int j=Nstart+delay; j<Nend; j+=2)
-            {
-                v1 << zeta[0](i, j),
-                      zeta[1](i, j),
-                      zeta[2](i, j);
-
-                v2 << zeta[0](i+1, j),
-                      zeta[1](i+1, j),
-                      zeta[2](i+1, j);
-
-                temp_uout = UVLM::BiotSavart::segment(target_triad,
-                                                      v1,
-                                                      v2,
-                                                      gamma(i,j));
-                uout[0](i, j) += temp_uout(0);
-                uout[1](i, j) += temp_uout(1);
-                uout[2](i, j) += temp_uout(2);
-                uout[0](i, j-1) -= temp_uout(0);
-                uout[1](i, j-1) -= temp_uout(1);
-                uout[2](i, j-1) -= temp_uout(2);
-            }
+            // std::cout << i << " " << j  << " "<< span_seg_uout[0][0](i,j)  << " "<< span_seg_uout[0][1](i,j)  << " "<< span_seg_uout[0][2](i,j) << std::endl;
+            // std::cout << i << " " << j  << " "<< chord_seg_uout[0][0](i,j)  << " "<< chord_seg_uout[0][1](i,j)  << " "<< chord_seg_uout[0][2](i,j) << std::endl;
+            // std::cout << i << " " << j  << " "<< uout[0](i,j)  << " "<< uout[1](i,j)  << " "<< uout[2](i,j) << std::endl;
         }
     }
 }
@@ -1073,7 +1034,7 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const uint n_M = zeta[0].rows();
     const uint n_N = zeta[0].cols();
 
-    // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
+    #pragma omp parallel for collapse(2)
     for (uint col_i_M=0; col_i_M<col_n_M; ++col_i_M)
     {
         for (uint col_j_N=0; col_j_N<col_n_N; ++col_j_N)
