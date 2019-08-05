@@ -318,18 +318,12 @@ namespace UVLM
 
                         v = (v + v_ind).eval();
 
-                        if (i_M == M){
-                            auxM = i_M -1;
-                        } else {
-                            auxM = i_M;
-                        }
-
                         if (i_N == 0){
-                            delta_gamma = gamma[i_surf](auxM, i_N);
+                            delta_gamma = gamma[i_surf](i_M, i_N);
                         } else if (i_N == N){
-                            delta_gamma = -gamma[i_surf](auxM, i_N-1);
+                            delta_gamma = -gamma[i_surf](i_M, i_N-1);
                         } else {
-                            delta_gamma = gamma[i_surf](auxM, i_N) - gamma[i_surf](auxM, i_N-1);
+                            delta_gamma = gamma[i_surf](i_M, i_N) - gamma[i_surf](i_M, i_N-1);
                         }
 
                         f = flightconditions.rho*delta_gamma*v.cross(dl);
