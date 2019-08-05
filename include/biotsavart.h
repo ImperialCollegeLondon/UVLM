@@ -561,23 +561,154 @@ void UVLM::BiotSavart::surface
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
-    // #pragma omp parallel for collapse(2)
+    UVLM::Types::Vector3 v1;
+    UVLM::Types::Vector3 v2;
     UVLM::Types::Vector3 temp_uout;
+    //TODO: substitute M0 by Mstart and Nstart
+    // i=0
+    for (unsigned int j=Nstart; j<Nend; ++j)
+    {
+        v1 << zeta[0](0, j),
+              zeta[1](0, j),
+              zeta[2](0, j);
+        v2 << zeta[0](0, j+1),
+              zeta[1](0, j+1),
+              zeta[2](0, j+1);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              -gamma(0,j));
+        uout[0](0, j) += temp_uout(0);
+        uout[1](0, j) += temp_uout(1);
+        uout[2](0, j) += temp_uout(2);
+    }
+
+    // i=M
+    for (unsigned int j=Nstart; j<Nend; ++j)
+    {
+        v1 << zeta[0](Mend, j),
+              zeta[1](Mend, j),
+              zeta[2](Mend, j);
+        v2 << zeta[0](Mend, j+1),
+              zeta[1](Mend, j+1),
+              zeta[2](Mend, j+1);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              gamma(Mend - 1,j));
+        uout[0](Mend-1, j) += temp_uout(0);
+        uout[1](Mend-1, j) += temp_uout(1);
+        uout[2](Mend-1, j) += temp_uout(2);
+    }
+
+    // j=0
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
-        for (unsigned int j=Nstart; j<Nend; ++j)
-        {
-            temp_uout = UVLM::BiotSavart::vortex_ring(target_triad,
-                                          zeta[0].template block<2, 2>(i,j),
-                                          zeta[1].template block<2, 2>(i,j),
-                                          zeta[2].template block<2, 2>(i,j),
-                                          gamma(i,j));
-                                          // temp_uout);
-            uout[0](i, j) += temp_uout(0);
-            uout[1](i, j) += temp_uout(1);
-            uout[2](i, j) += temp_uout(2);
-        }
+        v1 << zeta[0](i, 0),
+              zeta[1](i, 0),
+              zeta[2](i, 0);
+        v2 << zeta[0](i+1, 0),
+              zeta[1](i+1, 0),
+              zeta[2](i+1, 0);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              gamma(i,0));
+        uout[0](i, 0) += temp_uout(0);
+        uout[1](i, 0) += temp_uout(1);
+        uout[2](i, 0) += temp_uout(2);
     }
+
+    // j=N
+    for (unsigned int i=Mstart; i<Mend; ++i)
+    {
+        v1 << zeta[0](i, Nend),
+              zeta[1](i, Nend),
+              zeta[2](i, Nend);
+        v2 << zeta[0](i+1, Nend),
+              zeta[1](i+1, Nend),
+              zeta[2](i+1, Nend);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              -gamma(i, Nend-1));
+        uout[0](i, Nend-1) += temp_uout(0);
+        uout[1](i, Nend-1) += temp_uout(1);
+        uout[2](i, Nend-1) += temp_uout(2);
+    }
+
+    // ams: I need to split the loop in two for parallelisation. The influence of each
+    // filament has to be incluede in two memory directions uout[](i,j) and uout[](i,j-1) and
+    // similarly for the spanwise vortice. The two memory directions cannot be accessed in the
+    // same parallel loop. TODO: explain this better
+    // for (unsigned int delay=1; delay<3; ++delay)
+    // {
+        // #pragma omp parallel for collapse(2)
+        // std::cout << "Mstart: " << Mstart << " Mend: " << Mend;
+        // std::cout << "Nstart: " << Nstart << " Nend: " << Nend;
+        for (unsigned int i=Mstart+1; i<Mend; ++i)
+        {
+            for (unsigned int j=Nstart; j<Nend; ++j)
+            {
+                // std::cout << "this should not appear" << std::endl;
+                // std::cout << "i,j" << i << j << std::endl;
+                // Spanwise vortices
+                v1 << zeta[0](i, j),
+                      zeta[1](i, j),
+                      zeta[2](i, j);
+                v2 << zeta[0](i, j+1),
+                      zeta[1](i, j+1),
+                      zeta[2](i, j+1);
+
+                temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                      v1,
+                                                      v2,
+                                                      -gamma(i,j));
+                uout[0](i, j) += temp_uout(0);
+                uout[1](i, j) += temp_uout(1);
+                uout[2](i, j) += temp_uout(2);
+                uout[0](i-1, j) -= temp_uout(0);
+                uout[1](i-1, j) -= temp_uout(1);
+                uout[2](i-1, j) -= temp_uout(2);
+            }
+        }
+
+        for (unsigned int i=Mstart; i<Mend; ++i)
+        {
+            for (unsigned int j=Nstart+1; j<Nend; ++j)
+            {
+                // std::cout << "this should not appear" << std::endl;
+                // std::cout << "i,j" << i << j << std::endl;
+                v1 << zeta[0](i, j),
+                      zeta[1](i, j),
+                      zeta[2](i, j);
+
+                // Streamwise/chordwise vortices
+                v2 << zeta[0](i+1, j),
+                      zeta[1](i+1, j),
+                      zeta[2](i+1, j);
+
+                temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                      v1,
+                                                      v2,
+                                                      gamma(i,j));
+                uout[0](i, j) += temp_uout(0);
+                uout[1](i, j) += temp_uout(1);
+                uout[2](i, j) += temp_uout(2);
+                uout[0](i, j-1) -= temp_uout(0);
+                uout[1](i, j-1) -= temp_uout(1);
+                uout[2](i, j-1) -= temp_uout(2);
+            }
+        }
+    // }
+
+    // for (unsigned int i=Mstart; i<Mend; ++i){
+    //     for (unsigned int j=Nstart; j<Nend; ++j){
+    //         uout[0](i,j) *= -1.;
+    //         uout[1](i,j) *= -1.;
+    //         uout[2](i,j) *= -1.;
+    //     }
+    // }
 }
 
 
