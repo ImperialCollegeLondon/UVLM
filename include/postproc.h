@@ -190,9 +190,6 @@ namespace UVLM
                 UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
                 UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
 
-                uint auxM = 0;
-                uint auxN = 0;
-
                 UVLM::Types::Vector3 dl;
                 UVLM::Types::Vector3 v;
                 UVLM::Types::Vector3 f;
@@ -416,7 +413,6 @@ namespace UVLM
                                 forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
                             }
                             forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
-
                         }
                     }
                 }
