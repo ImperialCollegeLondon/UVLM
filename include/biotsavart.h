@@ -641,18 +641,14 @@ void UVLM::BiotSavart::surface
     // filament has to be incluede in two memory directions uout[](i,j) and uout[](i,j-1) and
     // similarly for the spanwise vortice. The two memory directions cannot be accessed in the
     // same parallel loop. TODO: explain this better
-    // for (unsigned int delay=1; delay<3; ++delay)
-    // {
+    for (unsigned int delay=1; delay<3; ++delay)
+    {
         // #pragma omp parallel for collapse(2)
-        // std::cout << "Mstart: " << Mstart << " Mend: " << Mend;
-        // std::cout << "Nstart: " << Nstart << " Nend: " << Nend;
-        for (unsigned int i=Mstart+1; i<Mend; ++i)
+        // Spanwise vortices
+        for (unsigned int i=Mstart+delay; i<Mend; i+=2)
         {
             for (unsigned int j=Nstart; j<Nend; ++j)
             {
-                // std::cout << "this should not appear" << std::endl;
-                // std::cout << "i,j" << i << j << std::endl;
-                // Spanwise vortices
                 v1 << zeta[0](i, j),
                       zeta[1](i, j),
                       zeta[2](i, j);
@@ -673,17 +669,15 @@ void UVLM::BiotSavart::surface
             }
         }
 
+        // Streamwise/chordwise vortices
         for (unsigned int i=Mstart; i<Mend; ++i)
         {
-            for (unsigned int j=Nstart+1; j<Nend; ++j)
+            for (unsigned int j=Nstart+delay; j<Nend; j+=2)
             {
-                // std::cout << "this should not appear" << std::endl;
-                // std::cout << "i,j" << i << j << std::endl;
                 v1 << zeta[0](i, j),
                       zeta[1](i, j),
                       zeta[2](i, j);
 
-                // Streamwise/chordwise vortices
                 v2 << zeta[0](i+1, j),
                       zeta[1](i+1, j),
                       zeta[2](i+1, j);
@@ -700,15 +694,7 @@ void UVLM::BiotSavart::surface
                 uout[2](i, j-1) -= temp_uout(2);
             }
         }
-    // }
-
-    // for (unsigned int i=Mstart; i<Mend; ++i){
-    //     for (unsigned int j=Nstart; j<Nend; ++j){
-    //         uout[0](i,j) *= -1.;
-    //         uout[1](i,j) *= -1.;
-    //         uout[2](i,j) *= -1.;
-    //     }
-    // }
+    }
 }
 
 
