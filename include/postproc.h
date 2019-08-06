@@ -190,29 +190,29 @@ namespace UVLM
                 UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
                 UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
 
-                UVLM::Types::Vector3 dl;
-                UVLM::Types::Vector3 v;
-                UVLM::Types::Vector3 f;
-                UVLM::Types::Vector3 v_ind;
-                UVLM::Types::Vector3 rp;
-                UVLM::Types::Vector3 r1;
-                UVLM::Types::Vector3 r2;
-                UVLM::Types::Real delta_gamma;
+                // UVLM::Types::Vector3 dl;
+                // UVLM::Types::Vector3 v;
+                // UVLM::Types::Vector3 f;
+                // UVLM::Types::Vector3 v_ind;
+                // UVLM::Types::Vector3 rp;
+                // UVLM::Types::Vector3 r1;
+                // UVLM::Types::Vector3 r2;
+                // UVLM::Types::Real delta_gamma;
 
                 // Computation of induced velocity in each vector
-                // #pragma omp parallel for collapse(2)
+                #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
-                        // UVLM::Types::Vector3 dl;
-                        // UVLM::Types::Vector3 v;
-                        // UVLM::Types::Vector3 f;
-                        // UVLM::Types::Vector3 v_ind;
-                        // UVLM::Types::Vector3 rp;
-                        // UVLM::Types::Vector3 r1;
-                        // UVLM::Types::Vector3 r2;
-                        // UVLM::Types::Real delta_gamma;
+                        UVLM::Types::Vector3 dl;
+                        UVLM::Types::Vector3 v;
+                        UVLM::Types::Vector3 f;
+                        UVLM::Types::Vector3 v_ind;
+                        UVLM::Types::Vector3 rp;
+                        UVLM::Types::Vector3 r1;
+                        UVLM::Types::Vector3 r2;
+                        UVLM::Types::Real delta_gamma;
 
                         // Spanwise vortices
                         r1 << zeta[i_surf][0](i_M, i_N),
@@ -331,14 +331,14 @@ namespace UVLM
                 }
 
                 // Influence of the last chordwise column of vortices
-                // UVLM::Types::Vector3 dl;
-                // UVLM::Types::Vector3 v;
-                // UVLM::Types::Vector3 f;
-                // UVLM::Types::Vector3 v_ind;
-                // UVLM::Types::Vector3 rp;
-                // UVLM::Types::Vector3 r1;
-                // UVLM::Types::Vector3 r2;
-                // UVLM::Types::Real delta_gamma;
+                UVLM::Types::Vector3 dl;
+                UVLM::Types::Vector3 v;
+                UVLM::Types::Vector3 f;
+                UVLM::Types::Vector3 v_ind;
+                UVLM::Types::Vector3 rp;
+                UVLM::Types::Vector3 r1;
+                UVLM::Types::Vector3 r2;
+                UVLM::Types::Real delta_gamma;
                 for (uint i_M=0; i_M<M; ++i_M){
 
                     r1 << zeta[i_surf][0](i_M, N),
