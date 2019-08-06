@@ -202,29 +202,30 @@ void UVLM::Matrix::RHS
 {
     const uint n_surf = options.NumSurfaces;
 
-    // make a copy of uinc in order to add wake effects
-    UVLM::Types::VecVecMatrixX u_col;
-    UVLM::Types::allocate_VecVecMat(u_col, uinc_col);
-    UVLM::Types::copy_VecVecMat(uinc_col, u_col);
-
     rhs.setZero(Ktotal);
 
     // filling up RHS
     int ii = -1;
-    UVLM::Types::Vector3 v_ind;
-    UVLM::Types::Vector3 collocation_coords;
+    int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         uint M = uinc_col[i_surf][0].rows();
         uint N = uinc_col[i_surf][0].cols();
 
-
-        for (uint i=0; i<M; ++i)
+        if (!options.Steady)
         {
-            for (uint j=0; j<N; ++j)
+            #pragma omp parallel for collapse(2)
+            for (uint i=0; i<M; ++i)
             {
-                if (!options.Steady)
+                for (uint j=0; j<N; ++j)
                 {
+                    UVLM::Types::Vector3 v_ind;
+                    UVLM::Types::Vector3 collocation_coords;
+                    UVLM::Types::Vector3 u_col;
+
+                    u_col << uinc_col[i_surf][0](i,j),
+                             uinc_col[i_surf][1](i,j),
+                             uinc_col[i_surf][2](i,j);
                     // we have to add the wake effect on the induced velocity.
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
@@ -242,18 +243,31 @@ void UVLM::Matrix::RHS
                                                                       -1,
                                                                       options.ImageMethod);
                     }
-                    u_col[i_surf][0](i, j) += v_ind(0);
-                    u_col[i_surf][1](i, j) += v_ind(1);
-                    u_col[i_surf][2](i, j) += v_ind(2);
+                    u_col += v_ind;
 
+                    // dot product of uinc and panel normal
+                    uint counter = istart + j + i*N;
+                    rhs(counter) =
+                    -(
+                        u_col(0)*normal[i_surf][0](i,j) +
+                        u_col(1)*normal[i_surf][1](i,j) +
+                        u_col(2)*normal[i_surf][2](i,j)
+                    );
                 }
-                // dot product of uinc and panel normal
-                rhs(++ii) =
-                -(
-                    u_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                    u_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                    u_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
-                );
+            }
+            istart += M*N;
+        } else {
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    rhs(++ii) =
+                    -(
+                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    );
+                }
             }
         }
     }
