@@ -577,21 +577,99 @@ void UVLM::BiotSavart::surface
     if (Mend == -1) {Mend = gamma.rows();}
     if (Nend == -1) {Nend = gamma.cols();}
 
-    #pragma omp parallel for collapse(2)
-    for (unsigned int i=Mstart; i<Mend; ++i)
+    UVLM::Types::VecVecMatrixX span_seg_uout;
+    UVLM::Types::VecVecMatrixX chord_seg_uout;
+    UVLM::Types::allocate_VecVecMat(span_seg_uout, 1, 3, (Mend-Mstart)+1, (Nend-Nstart));
+    UVLM::Types::allocate_VecVecMat(chord_seg_uout, 1, 3, (Mend-Mstart), (Nend-Nstart)+1);
+
+    UVLM::Types::Vector3 v1;
+    UVLM::Types::Vector3 v2;
+    UVLM::Types::Vector3 temp_uout;
+
+    for (uint i=Mstart; i<Mend; ++i)
     {
-        for (unsigned int j=Nstart; j<Nend; ++j)
+        for (uint j=Nstart; j<Nend; ++j)
         {
-            UVLM::Types::Vector3 temp_uout;
-            temp_uout = UVLM::BiotSavart::vortex_ring(target_triad,
-                                          zeta[0].template block<2, 2>(i,j),
-                                          zeta[1].template block<2, 2>(i,j),
-                                          zeta[2].template block<2, 2>(i,j),
-                                          gamma(i,j));
-                                          // temp_uout);
-            uout[0](i, j) += temp_uout(0);
-            uout[1](i, j) += temp_uout(1);
-            uout[2](i, j) += temp_uout(2);
+            // Spanwise vortices
+            v1 << zeta[0](i, j),
+                  zeta[1](i, j),
+                  zeta[2](i, j);
+            v2 << zeta[0](i, j+1),
+                  zeta[1](i, j+1),
+                  zeta[2](i, j+1);
+            temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  1.0);
+            span_seg_uout[0][0](i,j) = temp_uout(0);
+            span_seg_uout[0][1](i,j) = temp_uout(1);
+            span_seg_uout[0][2](i,j) = temp_uout(2);
+
+            // Streamwise/chordwise vortices
+            v2 << zeta[0](i+1, j),
+                  zeta[1](i+1, j),
+                  zeta[2](i+1, j);
+            temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  1.0);
+            chord_seg_uout[0][0](i,j) = temp_uout(0);
+            chord_seg_uout[0][1](i,j) = temp_uout(1);
+            chord_seg_uout[0][2](i,j) = temp_uout(2);
+        }
+    }
+
+    // Influence of the last spanwise vortex
+    for (uint j=Nstart; j<Nend; j++)
+    {
+        v1 << zeta[0](Mend, j),
+              zeta[1](Mend, j),
+              zeta[2](Mend, j);
+        v2 << zeta[0](Mend, j+1),
+              zeta[1](Mend, j+1),
+              zeta[2](Mend, j+1);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              1.0);
+        span_seg_uout[0][0](Mend,j) = temp_uout(0);
+        span_seg_uout[0][1](Mend,j) = temp_uout(1);
+        span_seg_uout[0][2](Mend,j) = temp_uout(2);
+    }
+
+    // Influence of the last chordwise vortex
+    for (uint i=Mstart; i<Mend; i++)
+    {
+        v1 << zeta[0](i, Nend),
+              zeta[1](i, Nend),
+              zeta[2](i, Nend);
+        v2 << zeta[0](i+1, Nend),
+              zeta[1](i+1, Nend),
+              zeta[2](i+1, Nend);
+        temp_uout = UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              1.0);
+        chord_seg_uout[0][0](i,Nend) = temp_uout(0);
+        chord_seg_uout[0][1](i,Nend) = temp_uout(1);
+        chord_seg_uout[0][2](i,Nend) = temp_uout(2);
+    }
+
+    // Transfer influence from segments to vortices
+    for (uint i=Mstart; i<Mend; i++)
+    {
+        for (uint j=Nstart; j<Nend; j++)
+        {
+            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+            {
+                uout[i_dim](i,j) -= span_seg_uout[0][i_dim](i,j)*gamma(i,j);
+                uout[i_dim](i,j) += span_seg_uout[0][i_dim](i+1,j)*gamma(i,j);
+                uout[i_dim](i,j) += chord_seg_uout[0][i_dim](i,j)*gamma(i,j);
+                uout[i_dim](i,j) -= chord_seg_uout[0][i_dim](i,j+1)*gamma(i,j);
+            }
+            // std::cout << i << " " << j  << " "<< span_seg_uout[0][0](i,j)  << " "<< span_seg_uout[0][1](i,j)  << " "<< span_seg_uout[0][2](i,j) << std::endl;
+            // std::cout << i << " " << j  << " "<< chord_seg_uout[0][0](i,j)  << " "<< chord_seg_uout[0][1](i,j)  << " "<< chord_seg_uout[0][2](i,j) << std::endl;
+            // std::cout << i << " " << j  << " "<< uout[0](i,j)  << " "<< uout[1](i,j)  << " "<< uout[2](i,j) << std::endl;
         }
     }
 }
@@ -656,7 +734,7 @@ void UVLM::BiotSavart::surface_with_steady_wake
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
             temp_uout.setZero();
-            #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
+            // #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
             for (uint i_star=0; i_star<mstar; ++i_star)
             {
                 temp_uout += UVLM::BiotSavart::vortex_ring(target_triad,
@@ -721,7 +799,7 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     for (uint j=Nstart; j<Nend; ++j)
     {
         temp_uout.setZero();
-        #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
+        // #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
         for (uint i_star=0; i_star<mstar; ++i_star)
         {
             // std::cout << "WARNING: this should not be computed" << std::endl;
@@ -757,21 +835,23 @@ void UVLM::BiotSavart::multisurface
     const unsigned int rows_collocation = target_surface[0].rows();
     const unsigned int cols_collocation = target_surface[0].cols();
 
-    UVLM::Types::VecMatrixX temp_uout;
-    UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
-    UVLM::Types::Vector3 target_triad;
 
-    int collocation_counter = -1;
+    // int collocation_counter = -1;
     // int surface_counter;
     unsigned int surf_rows = gamma.rows();
     unsigned int surf_cols = gamma.cols();
 
+    #pragma omp parallel for collapse(2)
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
     {
         for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
         {
-            ++collocation_counter;
+            UVLM::Types::Vector3 target_triad;
+            UVLM::Types::VecMatrixX temp_uout;
+            UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
             UVLM::Types::initialise_VecMat(temp_uout, 0.0);
+
+            int collocation_counter = j_col + i_col*cols_collocation;
             target_triad << target_surface[0](i_col, j_col),
                             target_surface[1](i_col, j_col),
                             target_surface[2](i_col, j_col);
@@ -781,7 +861,7 @@ void UVLM::BiotSavart::multisurface
                                       temp_uout);
 
             // surface_counter = -1;
-            #pragma omp parallel for collapse(2)
+            // #pragma omp parallel for collapse(2)
             for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
             {
                 for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
@@ -825,25 +905,24 @@ void UVLM::BiotSavart::multisurface_steady_wake
     const unsigned int rows_collocation = target_surface[0].rows();
     const unsigned int cols_collocation = target_surface[0].cols();
 
-    UVLM::Types::VecMatrixX temp_uout;
-    UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
-    UVLM::Types::Vector3 target_triad;
-
-    int collocation_counter = -1;
     // int surface_counter;
     const uint surf_rows = gamma.rows();
     const uint surf_cols = gamma.cols();
 
+    #pragma omp parallel for collapse(2)
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
     {
         for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
         {
-            // collocation_counter = i_col*cols_collocation + j_col;
-            ++collocation_counter;
+            UVLM::Types::Vector3 target_triad;
+            UVLM::Types::VecMatrixX temp_uout;
+            UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
+            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
+
+            int collocation_counter = j_col + i_col*cols_collocation;
             target_triad << target_surface[0](i_col, j_col),
                             target_surface[1](i_col, j_col),
                             target_surface[2](i_col, j_col);
-            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
 
             UVLM::BiotSavart::surface_with_steady_wake(zeta,
                                                        zeta_star,
@@ -854,7 +933,7 @@ void UVLM::BiotSavart::multisurface_steady_wake
                                                        temp_uout
                                                       );
 
-            #pragma omp parallel for collapse(2)
+            // #pragma omp parallel for collapse(2)
             for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
             {
                 for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
@@ -897,20 +976,24 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
     UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
     UVLM::Types::Vector3 target_triad;
 
-    int collocation_counter = -1;
     // int surface_counter;
     unsigned int surf_rows = gamma.rows();
     unsigned int surf_cols = gamma.cols();
 
+    #pragma omp parallel for collapse(2)
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
     {
         for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
         {
-            ++collocation_counter;
+            UVLM::Types::Vector3 target_triad;
+            UVLM::Types::VecMatrixX temp_uout;
+            UVLM::Types::allocate_VecMat(temp_uout, zeta, -1);
+            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
+
+            int collocation_counter = j_col + i_col*cols_collocation;
             target_triad << target_surface[0](i_col, j_col),
                             target_surface[1](i_col, j_col),
                             target_surface[2](i_col, j_col);
-            UVLM::Types::initialise_VecMat(temp_uout, 0.0);
 
             UVLM::BiotSavart::surface_with_unsteady_wake(zeta,
                                                          zeta_star,
@@ -922,7 +1005,7 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
                                                          n_rows
                                                         );
 
-            #pragma omp parallel for collapse(2)
+            // #pragma omp parallel for collapse(2)
             for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
             {
                 for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
@@ -972,6 +1055,7 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const uint n_M = zeta[0].rows();
     const uint n_N = zeta[0].cols();
 
+    #pragma omp parallel for collapse(2)
     for (uint col_i_M=0; col_i_M<col_n_M; ++col_i_M)
     {
         for (uint col_j_N=0; col_j_N<col_n_N; ++col_j_N)
@@ -1022,18 +1106,79 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
 
     UVLM::Types::Vector3 uout;
     uout.setZero();
-    #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
+    UVLM::Types::Vector3 temp_uout;
+    UVLM::Types::Vector3 v1;
+    UVLM::Types::Vector3 v2;
+    UVLM::Types::Real delta_gamma;
     for (unsigned int i=Mstart; i<Mend; ++i)
     {
+
         for (unsigned int j=Nstart; j<Nend; ++j)
         {
-            uout += UVLM::BiotSavart::vortex_ring(target_triad,
-                                                  zeta[0].template block<2, 2>(i,j),
-                                                  zeta[1].template block<2, 2>(i,j),
-                                                  zeta[2].template block<2, 2>(i,j),
-                                                  gamma(i,j));
-                                                  // uout);
+
+            // Spanwise vortices
+            v1 << zeta[0](i, j),
+                  zeta[1](i, j),
+                  zeta[2](i, j);
+            v2 << zeta[0](i, j+1),
+                  zeta[1](i, j+1),
+                  zeta[2](i, j+1);
+
+            if (i == Mstart){
+                delta_gamma = gamma(i, j);
+            } else {
+                delta_gamma = gamma(i, j) - gamma(i-1, j);
+            }
+            uout += UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  -delta_gamma);
+
+            // Streamwise/chordwise vortices
+            v2 << zeta[0](i+1, j),
+                  zeta[1](i+1, j),
+                  zeta[2](i+1, j);
+
+            if (j == Nstart){
+                delta_gamma = -gamma(i, j);
+            } else {
+                delta_gamma = gamma(i, j-1) - gamma(i, j);
+            }
+            uout += UVLM::BiotSavart::segment(target_triad,
+                                                  v1,
+                                                  v2,
+                                                  -delta_gamma);
         }
+    }
+    for (unsigned int j=Nstart; j<Nend; ++j)
+    {
+        // Spanwise vortices
+        v1 << zeta[0](Mend, j),
+              zeta[1](Mend, j),
+              zeta[2](Mend, j);
+        v2 << zeta[0](Mend, j+1),
+              zeta[1](Mend, j+1),
+              zeta[2](Mend, j+1);
+        uout += UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              gamma(Mend-1,j));
+    }
+
+    for (unsigned int i=Mstart; i<Mend; ++i)
+    {
+        // Streamwise/chordwise vortices
+        v1 << zeta[0](i, Nend),
+              zeta[1](i, Nend),
+              zeta[2](i, Nend);
+        v2 << zeta[0](i+1, Nend),
+              zeta[1](i+1, Nend),
+              zeta[2](i+1, Nend);
+
+        uout += UVLM::BiotSavart::segment(target_triad,
+                                              v1,
+                                              v2,
+                                              -gamma(i, Nend-1));
     }
     return uout;
 }
