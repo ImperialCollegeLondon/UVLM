@@ -315,30 +315,24 @@ namespace UVLMlin{
 
 // SOURCE CODE
 template <typename t_triad>
-UVLM::Types::Vector3 UVLM::BiotSavart::segment
+inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
         (
             const t_triad& rp,
             const UVLM::Types::Vector3& v1,
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
-            const UVLM::Types::Real vortex_radius
+            const UVLM::Types::Real vortex_radius // not used anymore
         )
 {
     UVLM::Types::Vector3 uind;
 
-    //UVLM::Types::Vector3 r0 = v2 - v1;
-    //UVLM::Types::Vector3 r1 = rp - v1;
-    //UVLM::Types::Vector3 r2 = rp - v2;
-    //UVLM::Types::Real r0_mod = r0.norm();
-    //UVLM::Types::Real r1_mod = r1.norm();
-    //UVLM::Types::Real r2_mod = r2.norm();
     UVLM::Types::Real r0[3], r0_mod;
     UVLM::Types::Real r1[3], r1_mod;
     UVLM::Types::Real r2[3], r2_mod;
     r0_mod = 0.0;
     r1_mod = 0.0;
     r2_mod = 0.0;
-    // hopefully this look is unfolded
+    // hopefully this loop is unrolled
     for (uint i=0; i<3; ++i)
     {
         r0[i] = v2(i) - v1(i);
@@ -349,43 +343,26 @@ UVLM::Types::Vector3 UVLM::BiotSavart::segment
         r1_mod += r1[i]*r1[i];
         r2_mod += r2[i]*r2[i];
     }
-    // can we use another norm that is cheaper to evaluate?
     r0_mod = sqrt(r0_mod);
     r1_mod = sqrt(r1_mod);
     r2_mod = sqrt(r2_mod);
 
-    UVLM::Types::Real relative_vortex_radius = r0_mod*vortex_radius;
 
-    UVLM::Types::Real s_v = 0.5*(r1_mod + r2_mod + r0_mod);
-    UVLM::Types::Real a_v;
-    a_v = 2.0/(EPSILON_VORTEX + r0_mod)*sqrt(s_v*(s_v - r1_mod)*
-                                                 (s_v - r2_mod)*
-                                                 (s_v - r0_mod));
-
-    // do I really need the NaN check?
-    if (std::isnan(a_v) || (a_v < relative_vortex_radius))
-    {
-        uind.setZero();
-        return uind;
-    }
-
-    //UVLM::Types::Vector3 r1_cross_r2 = r1.cross(r2);
     UVLM::Types::Real r1_cross_r2[3];
     r1_cross_r2[0] = r1[1]*r2[2] - r1[2]*r2[1];
     r1_cross_r2[1] = r1[2]*r2[0] - r1[0]*r2[2];
     r1_cross_r2[2] = r1[0]*r2[1] - r1[1]*r2[0];
 
-    //UVLM::Types::Real r0_dot_r1 = r0.dot(r1);
     UVLM::Types::Real r0_dot_r1;
     r0_dot_r1 = r0[0]*r1[0] +
                 r0[1]*r1[1] +
                 r0[2]*r1[2];
-    //UVLM::Types::Real r0_dot_r2 = r0.dot(r2);
+
     UVLM::Types::Real r0_dot_r2;
     r0_dot_r2 = r0[0]*r2[0] +
                 r0[1]*r2[1] +
                 r0[2]*r2[2];
-    //UVLM::Types::Real r1_cross_r2_mod_sq = r1_cross_r2.squaredNorm();
+
     UVLM::Types::Real r1_cross_r2_mod_sq;
     r1_cross_r2_mod_sq = r1_cross_r2[0]*r1_cross_r2[0] + 
                          r1_cross_r2[1]*r1_cross_r2[1] + 
@@ -393,10 +370,9 @@ UVLM::Types::Vector3 UVLM::BiotSavart::segment
                          EPSILON_VORTEX;
 
     UVLM::Types::Real K;
-    K = (gamma*UVLM::Constants::PI4/(r1_cross_r2_mod_sq))*
+    K = (gamma*UVLM::Constants::INV_PI4/(r1_cross_r2_mod_sq))*
         (r0_dot_r1/(r1_mod + EPSILON_VORTEX) - r0_dot_r2/(r2_mod + EPSILON_VORTEX));
 
-    //uind = K*r1_cross_r2;
     uind(0) = K*r1_cross_r2[0];
     uind(1) = K*r1_cross_r2[1];
     uind(2) = K*r1_cross_r2[2];
