@@ -459,7 +459,7 @@ DLLEXPORT void UVLM_check_incidence_angle
     );
 }
 
-DLLEXPORT void total_induced_velocity_at_point
+DLLEXPORT void total_induced_velocity_at_points
 (
     const UVLM::Types::UVMopts& options,
     unsigned int** p_dimensions,
@@ -468,8 +468,9 @@ DLLEXPORT void total_induced_velocity_at_point
     double** p_zeta_star,
     double** p_gamma,
     double** p_gamma_star,
-    double* p_target_triad,
-    double* p_uout
+    double* p_target_triads,
+    double* p_uout,
+    unsigned int npoints
 )
 {
     omp_set_num_threads(options.NumCores);
@@ -495,11 +496,13 @@ DLLEXPORT void total_induced_velocity_at_point
                                       zeta_star,
                                       1);
 
-    UVLM::Types::MapVectorX uout (p_uout, UVLM::Constants::NDIM);
-    // UVLM::Types::MapVectorX target_triad (p_target_triad, UVLM::Constants::NDIM);
+    UVLM::Types::MapMatrixX uout(p_uout,
+                                 npoints,
+                                 UVLM::Constants::NDIM);
 
-    // UVLM::Types::Vector3 uout(p_uout);
-    UVLM::Types::Vector3 target_triad(p_target_triad);
+    UVLM::Types::MapMatrixX target_triads(p_target_triads,
+                                          npoints,
+                                          UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX gamma;
     UVLM::CppInterface::map_VecMat(dimensions,
@@ -513,16 +516,25 @@ DLLEXPORT void total_induced_velocity_at_point
                                    gamma_star,
                                    0);
 
-    UVLM::BiotSavart::total_induced_velocity_on_point
-    (
-        target_triad,
-        zeta,
-        zeta_star,
-        gamma,
-        gamma_star,
-        uout,
-        options.ImageMethod
-    );
+    #pragma omp parallel for
+    for (uint ipoint=0; ipoint<npoints; ipoint++)
+    {
+        UVLM::Types::Vector3 target_triad;
+        UVLM::Types::Vector3 aux_uout;
+        target_triad << target_triads(ipoint, 0),
+                        target_triads(ipoint, 1),
+                        target_triads(ipoint, 2);
+        aux_uout = UVLM::BiotSavart::total_induced_velocity_on_point(target_triad,
+                        zeta,
+                        zeta_star,
+                        gamma,
+                        gamma_star,
+                        options.ImageMethod);
+        uout(ipoint, 0) = aux_uout(0);
+        uout(ipoint, 1) = aux_uout(1);
+        uout(ipoint, 2) = aux_uout(2);
+    }
+
 }
 
 DLLEXPORT void run_SHW
