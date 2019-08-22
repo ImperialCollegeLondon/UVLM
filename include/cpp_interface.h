@@ -64,3 +64,19 @@ namespace UVLM
         }
     }
 }
+
+
+namespace UVLMlin{
+
+  extern "C" void call_der_biot_panel(double p_DerP[9],
+                    double p_DerVertices[36],
+                    double p_zetaP[3],
+                    double p_ZetaPanel[12],
+                    const double& gamma );
+
+
+  extern "C" void call_biot_panel(double p_vel[3],
+                  double p_zetaP[3],
+                  double p_ZetaPanel[12],
+                  const double& gamma );
+}

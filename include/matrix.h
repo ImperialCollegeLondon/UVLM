@@ -64,14 +64,21 @@ namespace UVLM
 
         template <typename t_gamma,
                   typename t_zeta_col>
-                  //typename t_zeta_star>
         void reconstruct_gamma
         (
             const UVLM::Types::VectorX& gamma_flat,
             t_gamma& gamma,
-            const t_zeta_col& zeta_col,
-            //const t_zeta_star& zeta_star,
-            const UVLM::Types::VMopts& options
+            const t_zeta_col& zeta_col
+        );
+
+
+        template <typename t_gamma,
+                  typename t_zeta_col>
+        void deconstruct_gamma
+        (
+            const t_gamma& gamma,
+            UVLM::Types::VectorX& gamma_flat,
+            const t_zeta_col& zeta_col
         );
     }
 }
@@ -166,7 +173,7 @@ void UVLM::Matrix::AIC
                     block,
                     options.ImageMethod,
                     normals[icol_surf],
-                    1
+                    0
                 );
             }
         }
@@ -195,57 +202,72 @@ void UVLM::Matrix::RHS
 {
     const uint n_surf = options.NumSurfaces;
 
-    // make a copy of uinc in order to add wake effects
-    UVLM::Types::VecVecMatrixX u_col;
-    UVLM::Types::allocate_VecVecMat(u_col, uinc_col);
-    UVLM::Types::copy_VecVecMat(uinc_col, u_col);
-
     rhs.setZero(Ktotal);
 
     // filling up RHS
     int ii = -1;
+    int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         uint M = uinc_col[i_surf][0].rows();
         uint N = uinc_col[i_surf][0].cols();
 
-
-        for (uint i=0; i<M; ++i)
+        if (!options.Steady)
         {
-            for (uint j=0; j<N; ++j)
+            #pragma omp parallel for collapse(2)
+            for (uint i=0; i<M; ++i)
             {
-                if (!options.Steady)
+                for (uint j=0; j<N; ++j)
                 {
-                    // we have to add the wake effect on the induced velocity.
+                    UVLM::Types::Vector3 v_ind;
                     UVLM::Types::Vector3 collocation_coords;
+                    UVLM::Types::Vector3 u_col;
+
+                    u_col << uinc_col[i_surf][0](i,j),
+                             uinc_col[i_surf][1](i,j),
+                             uinc_col[i_surf][2](i,j);
+                    // we have to add the wake effect on the induced velocity.
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
                                           zeta_col[i_surf][2](i,j);
+
+                    v_ind.setZero();
                     for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                     {
-                        UVLM::Types::VecMatrixX induced_vel;
-                        UVLM::Types::allocate_VecMat(induced_vel, zeta_star[ii_surf], -1);
-
-                        UVLM::BiotSavart::surface
-                        (
-                            zeta_star[ii_surf],
-                            gamma_star[ii_surf],
-                            collocation_coords,
-                            induced_vel,
-                            1
-                        );
-                        u_col[i_surf][0](i, j) += induced_vel[0].sum();
-                        u_col[i_surf][1](i, j) += induced_vel[1].sum();
-                        u_col[i_surf][2](i, j) += induced_vel[2].sum();
+                        v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                      gamma_star[ii_surf],
+                                                                      collocation_coords,
+                                                                      0,
+                                                                      0,
+                                                                      -1,
+                                                                      -1,
+                                                                      options.ImageMethod);
                     }
+                    u_col += v_ind;
+
+                    // dot product of uinc and panel normal
+                    uint counter = istart + j + i*N;
+                    rhs(counter) =
+                    -(
+                        u_col(0)*normal[i_surf][0](i,j) +
+                        u_col(1)*normal[i_surf][1](i,j) +
+                        u_col(2)*normal[i_surf][2](i,j)
+                    );
                 }
-                // dot product of uinc and panel normal
-                rhs(++ii) =
-                -(
-                    u_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                    u_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                    u_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
-                );
+            }
+            istart += M*N;
+        } else {
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    rhs(++ii) =
+                    -(
+                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    );
+                }
             }
         }
     }
@@ -282,14 +304,11 @@ void UVLM::Matrix::generate_assembly_offset
 
 template <typename t_gamma,
           typename t_zeta_col>
-          //typename t_zeta_star>
 void UVLM::Matrix::reconstruct_gamma
 (
     const UVLM::Types::VectorX& gamma_flat,
     t_gamma& gamma,
-    const t_zeta_col& zeta_col,
-    //const t_zeta_star& zeta_star,
-    const UVLM::Types::VMopts& options
+    const t_zeta_col& zeta_col
 )
 {
     const uint n_surf = gamma.size();
@@ -304,6 +323,40 @@ void UVLM::Matrix::reconstruct_gamma
             for (uint j=0; j<dimensions[i_surf].second; ++j)
             {
                 gamma[i_surf](i, j) = gamma_flat(i_flat++);
+            }
+        }
+    }
+
+}
+
+template <typename t_gamma,
+          typename t_zeta_col>
+void UVLM::Matrix::deconstruct_gamma
+(
+    const t_gamma& gamma,
+    UVLM::Types::VectorX& gamma_flat,
+    const t_zeta_col& zeta_col
+)
+{
+    const uint n_surf = gamma.size();
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::Types::generate_dimensions(zeta_col, dimensions);
+
+    uint n_total = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        n_total += dimensions[i_surf].first*dimensions[i_surf].second;
+    }
+    gamma_flat.resize(n_total);
+
+    uint i_flat = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        for (uint i=0; i<dimensions[i_surf].first; ++i)
+        {
+            for (uint j=0; j<dimensions[i_surf].second; ++j)
+            {
+                gamma_flat(i_flat++) = gamma[i_surf](i, j);
             }
         }
     }
