@@ -232,16 +232,14 @@ namespace UVLM
                   typename t_zeta,
                   typename t_zeta_star,
                   typename t_gamma,
-                  typename t_gamma_star,
-                  typename t_uout>
-        void total_induced_velocity_on_point
+                  typename t_gamma_star>
+        UVLM::Types::Vector3 total_induced_velocity_on_point
         (
             const t_ttriad&     target_triad,
             const t_zeta&       zeta,
             const t_zeta_star&  zeta_star,
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
-            t_uout&             uout,
             const bool&         image_method,
             const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
         );
@@ -1230,20 +1228,19 @@ template <typename t_ttriad,
           typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
-          typename t_gamma_star,
-          typename t_uout>
-void UVLM::BiotSavart::total_induced_velocity_on_point
+          typename t_gamma_star>
+UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
 (
     const t_ttriad&     target_triad,
     const t_zeta&       zeta,
     const t_zeta_star&  zeta_star,
     const t_gamma&      gamma,
     const t_gamma_star& gamma_star,
-    t_uout&             uout,
     const bool&         image_method,
     const UVLM::Types::Real vortex_radius
 )
 {
+    UVLM::Types::Vector3 uout;
     uout.setZero();
     const uint n_surf = zeta.size();
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -1277,6 +1274,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_point
             vortex_radius
         );
     }
+    return uout;
 }
 
 
