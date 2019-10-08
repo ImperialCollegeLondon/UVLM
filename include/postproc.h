@@ -199,7 +199,7 @@ namespace UVLM
                 // UVLM::Types::Vector3 r2;
                 // UVLM::Types::Real delta_gamma;
 
-                // Computation of induced velocity in each vector
+                // Computation of induced velocity in each segment
                 #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
                 {
@@ -394,11 +394,11 @@ namespace UVLM
 
                 }
 
-                // Transfer forces to nodes
                 // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
-                for (uint i_M=0; i_M<M; ++i_M)
+                // Transfer forces to nodes
+                for (uint i_M=0; i_M<M+1; ++i_M)
                 {
-                    for (uint i_N=0; i_N<N; ++i_N)
+                    for (uint i_N=0; i_N<N+1; ++i_N)
                     {
                         for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                         {
@@ -406,13 +406,17 @@ namespace UVLM
                             if (i_N != 0){
                                 forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
                             }
-                            forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
+                            if (i_N != N){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
+                            }
 
                             // Chordwise segments
                             if (i_M != 0){
                                 forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
                             }
-                            forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
+                            if (i_M != M){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
+                            }
                         }
                     }
                 }
