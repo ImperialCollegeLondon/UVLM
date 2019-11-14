@@ -1,13 +1,13 @@
 ## LINUX G++ SUPPORT
-#FLAGS = -fPIC -O3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE
+#FLAGS = -fPIC -O3 -std=c++14 -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE
 #LINKER_FLAGS = -L$(PREFIX)/lib -shared -fPIC -fopenmp -lblas -llapacke -Wl,-z,defs
 
 ## G++ DEBUG (VERY SLOW)
-#FLAGS = -fPIC -O0 -g3 -march=native -std=c++14 -I$(EIGEN3_INCLUDE_DIR) 
+#FLAGS = -fPIC -O0 -g3 -std=c++14 -I$(EIGEN3_INCLUDE_DIR) 
 #LINKER_FLAGS = -L$(EIGEN3_INCLUDE_DIR)/../../lib -shared -fPIC -lblas -llapacke -Wl,-z,defs
 
 ## LINUX G++ + MKL
-FLAGS = -fPIC -O3 -march=native -std=c++14 -DEIGEN_USE_MKL_ALL -I$(PREFIX)/include -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
+FLAGS = -fPIC -O3 -std=c++14 -DEIGEN_USE_MKL_ALL -I$(PREFIX)/include -I$(EIGEN3_INCLUDE_DIR) -fomit-frame-pointer -ffast-math -fopenmp
 LINKER_FLAGS = -shared -fPIC -fopenmp -L$(PREFIX)/lib -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 
 
