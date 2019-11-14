@@ -1,6 +1,6 @@
 #! /bin/sh
 mkdir -p lib
-PREFIX=$(conda info --json | python -c "import sys, json; print(json.load(sys.stdin)['active_prefix'])")
+export PREFIX=$(conda info --json | python -c "import sys, json; print(json.load(sys.stdin)['active_prefix'])")
 if [ "$PREFIX" = "None" ]; then
     echo "*** Please check that the python environment is active."
     echo "*** Run ``conda activate sharpy_env``."
