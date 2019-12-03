@@ -29,5 +29,5 @@ endif()
 target_compile_options(uvlm PUBLIC $<$<CONFIG:RELEASE>: -fomit-frame-pointer -ffast-math -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE>)
 
 install(TARGETS uvlm
-    LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/lib)
+    LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
