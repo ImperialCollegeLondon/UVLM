@@ -6,9 +6,10 @@
 #include "steady.h"
 #include "unsteady.h"
 
-// #include "omp.h"
-
 #include <iostream>
+#ifdef _OPENMP
+    #include "omp.h"
+#endif
 
 #define DLLEXPORT extern "C"
 #pragma warning disable 1017

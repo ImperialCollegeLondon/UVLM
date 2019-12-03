@@ -16,10 +16,9 @@ DLLEXPORT void run_VLM
     double** p_forces
 )
 {
-    // std::cout << options.n_rollup << std::endl;
-    // feenableexcept(FE_INVALID | FE_OVERFLOW);
-    // omp_set_nested(1);
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
@@ -103,7 +102,9 @@ DLLEXPORT void init_UVLM
     double** p_forces
 )
 {
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -205,7 +206,9 @@ DLLEXPORT void run_UVLM
     double** p_dynamic_forces
 )
 {
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -323,7 +326,9 @@ DLLEXPORT void calculate_unsteady_forces
     double** p_dynamic_forces
 )
 {
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -473,7 +478,9 @@ DLLEXPORT void total_induced_velocity_at_points
     unsigned int npoints
 )
 {
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -559,7 +566,9 @@ DLLEXPORT void run_SHW
     double** p_dynamic_forces
 )
 {
-    omp_set_num_threads(options.NumCores);
+    #if defined(_OPENMP)
+        omp_set_num_threads(options.NumCores);
+    #endif
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -675,7 +684,9 @@ DLLEXPORT void multisurface
     // double  vortex_radius
 )
 {
+#ifdef _OPENMP
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
     uint n_surf_target = 1;
 
