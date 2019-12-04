@@ -27,8 +27,8 @@ namespace UVLM
                     {
                         for (uint i_row=n_rows - 1; i_row>0; --i_row)
                         {
-                            mat[i_surf][i_dim].template row(i_row) =
-                                mat [i_surf][i_dim].template row(i_row - 1);
+                            mat[i_surf][i_dim].row(i_row) =
+                                mat [i_surf][i_dim].row(i_row - 1);
                         }
                         mat[i_surf][i_dim].template topRows<1>().setZero();
                     }
@@ -47,8 +47,8 @@ namespace UVLM
                     const uint n_rows = mat[i_surf].rows();
                     for (uint i_row=n_rows - 1; i_row>0; --i_row)
                     {
-                        mat[i_surf].template row(i_row) =
-                            mat[i_surf].template row(i_row - 1);
+                        mat[i_surf].row(i_row) =
+                            mat[i_surf].row(i_row - 1);
                     }
                     mat[i_surf].template topRows<1>().setZero();
                 }
@@ -217,7 +217,7 @@ namespace UVLM
                     }
                     for (uint i_m=0; i_m<n_rows; ++i_m)
                     {
-                        gamma_star[i_surf].template row(i_m) = gamma[i_surf].template bottomRows<1>();
+                        gamma_star[i_surf].row(i_m) = gamma[i_surf].template bottomRows<1>();
                     }
                 }
             }
