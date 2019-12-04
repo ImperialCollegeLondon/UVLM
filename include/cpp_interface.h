@@ -7,9 +7,9 @@
 #include "unsteady.h"
 
 #include <iostream>
-#ifdef _OPENMP
-    #include "omp.h"
-#endif
+//#ifdef _OPENMP
+    //#include "omp.h"
+//#endif
 
 #define DLLEXPORT extern "C"
 #pragma warning disable 1017
