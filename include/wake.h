@@ -28,7 +28,7 @@ namespace UVLM
                         for (uint i_row=n_rows - 1; i_row>0; --i_row)
                         {
                             mat[i_surf][i_dim].row(i_row) =
-                                mat [i_surf][i_dim].row(i_row - 1);
+                                mat[i_surf][i_dim].row(i_row - 1);
                         }
                         mat[i_surf][i_dim].template topRows<1>().setZero();
                     }
