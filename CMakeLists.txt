@@ -43,7 +43,6 @@ target_compile_options(uvlm PUBLIC $<$<CONFIG:RELEASE>: -fomit-frame-pointer -ff
 # So compilers that are not the original Clang (AppleClang in CMAKE)
 # do not work without this line
 if(APPLE)
-    message(STATUS ${CMAKE_CXX_COMPILER_ID})
     if(NOT ${CMAKE_SYSTEM_VERSION} VERSION_LESS "19.0.0")
         if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
             message(FATAL_ERROR "Intel icpc compiler with MacOS Catalina does not work properly as I am writing this.  If you think this is wrong (or outdated), please file an issue in github.com/imperialcollegelondon/sharpy.  For now, try another C++ compiler, like g++ or clang")
