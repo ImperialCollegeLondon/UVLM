@@ -35,22 +35,91 @@ namespace UVLM
                 }
             }
 
-            template <typename t_mat>
+            template <typename t_zeta_star,
+                      typename t_gamma_star,
+                      typename t_uext_total_col>
             void displace_VecMat
             (
-                t_mat& mat
+                const t_zeta_star& zeta_star,
+                t_gamma_star& gamma_star,
+                const t_uext_total_col& uext_total_col,
+                double dt=0.
             )
             {
-                const uint n_surf = mat.size();
+                uint n_cols, n_rows, M;
+                double cfl;
+                UVLM::Types::Vector3 vel, dist;
+                // UVLM::Types::VecDimensions dimensions;
+                UVLM::Types::VecMatrixX old_gamma_star;
+
+                // old_gamma_star = gamma_star;
+                // UVLM::Types::generate_dimensions(gamma_star, dimensions);
+                // UVLM::Types::allocate_VecMat(old_gamma_star, dimensions);
+
+                const uint n_surf = gamma_star.size();
+                old_gamma_star.resize(n_surf);
+                for (unsigned int i=0; i<n_surf; ++i)
+                {
+                    old_gamma_star[i].setConstant
+                    (
+                        gamma_star[i].rows(),
+                        gamma_star[i].cols(),
+                        0.0
+                    );
+                }
+
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    const uint n_rows = mat[i_surf].rows();
-                    for (uint i_row=n_rows - 1; i_row>0; --i_row)
+                    n_cols = gamma_star[i_surf].cols();
+                    for (uint i_n=0; i_n<n_cols; ++i_n)
                     {
-                        mat[i_surf].row(i_row) =
-                            mat[i_surf].row(i_row - 1);
+                        n_rows = gamma_star[i_surf].rows();
+                        for (uint i_m=0; i_m<n_rows; ++i_m)
+                        {
+                        old_gamma_star[i_surf](i_m, i_n) = gamma_star[i_surf](i_m, i_n) + 0.0;
+                        }
                     }
-                    mat[i_surf].template topRows<1>().setZero();
+                }
+
+                // const uint n_surf = gamma_star.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    // UVLM::Types::generate_dimensions(gamma_star[i_surf], dimensions);
+                    // UVLM::Types::allocate_VecMat(old_gamma_star, dimensions);
+                    // old_gamma_star = gamma_star[i_surf];
+                    n_cols = gamma_star[i_surf].cols();
+                    for (uint i_n=0; i_n<n_cols; ++i_n)
+                    {
+                        n_rows = gamma_star[i_surf].rows();
+                        M = uext_total_col[i_surf][0].rows();
+                        for (uint i_m=1; i_m<n_rows-1; ++i_m)
+                        {
+                        dist << 0.25*(zeta_star[i_surf][0](i_m+1, i_n) + zeta_star[i_surf][0](i_m+1, i_n+1)
+                                        - zeta_star[i_surf][0](i_m-1, i_n) - zeta_star[i_surf][0](i_m-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][1](i_m+1, i_n) + zeta_star[i_surf][1](i_m+1, i_n+1)
+                                        - zeta_star[i_surf][1](i_m-1, i_n) - zeta_star[i_surf][1](i_m-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][2](i_m+1, i_n) + zeta_star[i_surf][2](i_m+1, i_n+1)
+                                        - zeta_star[i_surf][2](i_m-1, i_n) - zeta_star[i_surf][2](i_m-1, i_n+1));
+                        // Maybe this should be in the wake? Probably both solutions have drawbacks
+                        vel << uext_total_col[i_surf][0](M-1, i_n),
+                               uext_total_col[i_surf][1](M-1, i_n),
+                               uext_total_col[i_surf][2](M-1, i_n);
+                        cfl = dt*vel.norm()/dist.norm();
+                        std::cout << "dist" << dist << std::endl;
+                        std::cout << "vel" << vel << std::endl;
+                        std::cout << "cfl" << cfl << std::endl;
+                        // if(i_m < n_rows-1){
+                        gamma_star[i_surf](i_m, i_n) = (1. - cfl)*old_gamma_star[i_surf](i_m, i_n) +
+                                                       cfl*old_gamma_star[i_surf](i_m-1, i_n);
+                        std::cout << "gamma[" << i_surf << "](" << i_m << "," << i_n << ")=" << gamma_star[i_surf](i_m, i_n) << std::endl;
+                        // }else{
+                        // gamma_star[i_surf](i_m, i_n) = (1. - cfl)*old_gamma_star[i_surf](i_m, i_n) +
+                                                       // cfl*old_gamma_star[i_surf](i_m, i_n);
+                        // }
+                        // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)
+                        // but in the new convection scheme I am copying back the old value to the first cell because otherwise its lost
+                        }
+                    }
                 }
             }
         }
@@ -106,6 +175,60 @@ namespace UVLM
                                 );
                             }
                         }
+                    }
+                }
+            }
+
+
+            template <typename t_zeta,
+                      typename t_zeta_star,
+                      typename t_gamma,
+                      typename t_gamma_star,
+                      typename t_uext_total_col>
+            void circulation_transfer
+            (
+                const t_zeta& zeta,
+                const t_zeta_star& zeta_star,
+                const t_gamma& gamma,
+                t_gamma_star& gamma_star,
+                const t_uext_total_col& uext_total_col,
+                double dt=0.
+            )
+            {
+                uint n_cols, M;
+                double cfl;
+                UVLM::Types::Vector3 vel, dist;
+
+                const uint n_surf = gamma.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    n_cols = gamma[i_surf].cols();
+                    for (uint i_n=0; i_n<n_cols; ++i_n)
+                    {
+                        M = gamma[i_surf].rows();
+                        dist << 0.25*(zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
+                                        - zeta[i_surf][0](M-1, i_n) - zeta[i_surf][0](M-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
+                                        - zeta[i_surf][1](M-1, i_n) - zeta[i_surf][1](M-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][2](1, i_n) + zeta_star[i_surf][2](1, i_n+1)
+                                        - zeta[i_surf][2](M-1, i_n) - zeta[i_surf][2](M-1, i_n+1));
+                        // delta = 0.25*pow((zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
+                        //                 - zeta[i_surf][0](-2, i_n) - zeta[i_surf][0](-2, i_n+1))*
+                        //              (zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
+                        //                 - zeta[i_surf][1](-2, i_n) - zeta[i_surf][1](-2, i_n+1))*
+                        //              (zeta_star[i_surf][2](1, i_n) + zeta_star[i_surf][2](1, i_n+1)
+                        //                 - zeta[i_surf][2](-2, i_n) - zeta[i_surf][2](-2, i_n+1)), 1./3.);
+                        vel << uext_total_col[i_surf][0](M-1, i_n),
+                               uext_total_col[i_surf][1](M-1, i_n),
+                               uext_total_col[i_surf][2](M-1, i_n);
+                        cfl = dt*vel.norm()/dist.norm();
+                        // std::cout << "dist" << dist << std::endl;
+                        // std::cout << "vel" << vel << std::endl;
+                        // std::cout << "cfl" << cfl << std::endl;
+                        gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](0, i_n) +
+                                                       cfl*gamma[i_surf](M-1, i_n);
+                        // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)
+                        // but in the new convection scheme I am copying back the old value to the first cell because otherwise its lost
                     }
                 }
             }
@@ -172,7 +295,7 @@ namespace UVLM
                         zeta_star[i_surf][0].cols() - 1;
                     const uint mstar =
                         zeta_star[i_surf][0].rows() - 1;
-
+                    // Now the wake shape generation will be dealt with from SHARPy
                     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                     {
                         for (uint j=0; j<n_spanwise_panels + 1; ++j)
@@ -207,6 +330,7 @@ namespace UVLM
                 const int in_n_rows = -1
             )
             {
+
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {

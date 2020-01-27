@@ -199,6 +199,7 @@ void UVLM::Unsteady::solver
 {
     // SOLVE------------------------------------------
     const uint n_surf = options.NumSurfaces;
+    const double dt = options.dt;
     // Generate collocation points info
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col;
@@ -239,13 +240,17 @@ void UVLM::Unsteady::solver
             gamma_star,
             uext,
             uext_star,
+            uext_total_col,
             rbm_velocity
         );
     }
 
-    UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                               gamma_star,
-                                               1);
+    UVLM::Wake::Discretised::circulation_transfer(zeta,
+                                                  zeta_star,
+                                                  gamma,
+                                                  gamma_star,
+                                                  uext_total_col,
+                                                  dt);
 
     // we can use UVLM::Steady::solve_discretised if uext_col
     // is the total velocity including non-steady contributions.
