@@ -50,36 +50,36 @@ namespace UVLM
                 double cfl;
                 UVLM::Types::Vector3 vel, dist;
                 // UVLM::Types::VecDimensions dimensions;
-                UVLM::Types::VecMatrixX old_gamma_star;
+                // UVLM::Types::VecMatrixX old_gamma_star;
 
                 // old_gamma_star = gamma_star;
                 // UVLM::Types::generate_dimensions(gamma_star, dimensions);
                 // UVLM::Types::allocate_VecMat(old_gamma_star, dimensions);
 
                 const uint n_surf = gamma_star.size();
-                old_gamma_star.resize(n_surf);
-                for (unsigned int i=0; i<n_surf; ++i)
-                {
-                    old_gamma_star[i].setConstant
-                    (
-                        gamma_star[i].rows(),
-                        gamma_star[i].cols(),
-                        0.0
-                    );
-                }
+                // old_gamma_star.resize(n_surf);
+                // for (unsigned int i=0; i<n_surf; ++i)
+                // {
+                //     old_gamma_star[i].setConstant
+                //     (
+                //         gamma_star[i].rows(),
+                //         gamma_star[i].cols(),
+                //         0.0
+                //     );
+                // }
 
-                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-                {
-                    n_cols = gamma_star[i_surf].cols();
-                    for (uint i_n=0; i_n<n_cols; ++i_n)
-                    {
-                        n_rows = gamma_star[i_surf].rows();
-                        for (uint i_m=0; i_m<n_rows; ++i_m)
-                        {
-                        old_gamma_star[i_surf](i_m, i_n) = gamma_star[i_surf](i_m, i_n) + 0.0;
-                        }
-                    }
-                }
+                // for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                // {
+                //     n_cols = gamma_star[i_surf].cols();
+                //     for (uint i_n=0; i_n<n_cols; ++i_n)
+                //     {
+                //         n_rows = gamma_star[i_surf].rows();
+                //         for (uint i_m=0; i_m<n_rows; ++i_m)
+                //         {
+                //         old_gamma_star[i_surf](i_m, i_n) = gamma_star[i_surf](i_m, i_n) + 0.0;
+                //         }
+                //     }
+                // }
 
                 // const uint n_surf = gamma_star.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -92,7 +92,8 @@ namespace UVLM
                     {
                         n_rows = gamma_star[i_surf].rows();
                         M = uext_total_col[i_surf][0].rows();
-                        for (uint i_m=1; i_m<n_rows-1; ++i_m)
+                        // Doing the loop backwards avoids copying gamma_star
+                        for (uint i_m=n_rows-1; i_m>0; --i_m)
                         {
                         dist << 0.25*(zeta_star[i_surf][0](i_m+1, i_n) + zeta_star[i_surf][0](i_m+1, i_n+1)
                                         - zeta_star[i_surf][0](i_m-1, i_n) - zeta_star[i_surf][0](i_m-1, i_n+1)),
@@ -109,8 +110,8 @@ namespace UVLM
                         std::cout << "vel" << vel << std::endl;
                         std::cout << "cfl" << cfl << std::endl;
                         // if(i_m < n_rows-1){
-                        gamma_star[i_surf](i_m, i_n) = (1. - cfl)*old_gamma_star[i_surf](i_m, i_n) +
-                                                       cfl*old_gamma_star[i_surf](i_m-1, i_n);
+                        gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m, i_n) +
+                                                       cfl*gamma_star[i_surf](i_m-1, i_n);
                         std::cout << "gamma[" << i_surf << "](" << i_m << "," << i_n << ")=" << gamma_star[i_surf](i_m, i_n) << std::endl;
                         // }else{
                         // gamma_star[i_surf](i_m, i_n) = (1. - cfl)*old_gamma_star[i_surf](i_m, i_n) +
