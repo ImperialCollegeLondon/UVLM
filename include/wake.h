@@ -48,11 +48,13 @@ namespace UVLM
             )
             {
                 const uint n_surf = gamma_star.size();
+                uint n_rows;
 
                 if(cfl1)
                 {
                     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                     {
+                        n_rows = gamma_star[i_surf].rows();
                         for (uint i_row=n_rows - 1; i_row>0; --i_row)
                         {
                             gamma_star[i_surf].row(i_row) =
@@ -62,7 +64,7 @@ namespace UVLM
                     }
                 }else
                 {
-                    uint n_cols, n_rows, M;
+                    uint n_cols, M;
                     double cfl;
                     UVLM::Types::Vector3 vel, dist;
                     // UVLM::Types::VecDimensions dimensions;
