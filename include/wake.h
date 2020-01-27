@@ -315,18 +315,19 @@ namespace UVLM
                     const uint mstar =
                         zeta_star[i_surf][0].rows() - 1;
                     // Now the wake shape generation will be dealt with from SHARPy
-                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                    {
-                        for (uint j=0; j<n_spanwise_panels + 1; ++j)
-                        {
-                            for (uint i=1; i<mstar + 1; ++i)
-                            {
-                                zeta_star[i_surf][i_dim](i, j) =
-                                    zeta_star[i_surf][i_dim](i - 1, j)\
-                                        + delta_x_vec(i_dim);
-                            }
-                        }
-                    }
+                    // It might be acceptable to keep it for horseshoe cases
+                    // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    // {
+                    //     for (uint j=0; j<n_spanwise_panels + 1; ++j)
+                    //     {
+                    //         for (uint i=1; i<mstar + 1; ++i)
+                    //         {
+                    //             zeta_star[i_surf][i_dim](i, j) =
+                    //                 zeta_star[i_surf][i_dim](i - 1, j)\
+                    //                     + delta_x_vec(i_dim);
+                    //         }
+                    //     }
+                    // }
                     for (uint j=0; j<n_spanwise_panels; ++j)
                     {
                         for (uint i=1; i<mstar; ++i)
