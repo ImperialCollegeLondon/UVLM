@@ -225,7 +225,8 @@ void UVLM::Steady::solver
         UVLM::Wake::General::displace_VecMat(zeta_star,
                                              gamma_star,
                                              uext_col,
-                                             options.dt);
+                                             options.dt,
+                                             options.cfl1);
         // copy trailing edge of zeta into 1st row of zeta_star
         for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
         {

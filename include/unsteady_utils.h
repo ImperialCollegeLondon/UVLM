@@ -127,7 +127,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::General::displace_VecMat(zeta_star,
                                              gamma_star,
                                              uext_total_col,
-                                             options.dt);
+                                             options.dt,
+                                             options.cfl1);
     } else if (options.convection_scheme == 1)
     {
         std::cerr << "convection_scheme == "
@@ -161,7 +162,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::General::displace_VecMat(zeta_star,
                                              gamma_star,
                                              uext_total_col,
-                                             options.dt);
+                                             options.dt,
+                                             options.cfl1);
         UVLM::Wake::General::displace_VecVecMat(zeta_star);
 
         // copy last row of zeta into zeta_star
@@ -230,7 +232,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::General::displace_VecMat(zeta_star,
                                              gamma_star,
                                              uext_total_col,
-                                             options.dt);
+                                             options.dt,
+                                             options.cfl1);
         UVLM::Wake::General::displace_VecVecMat(zeta_star);
 
         // copy last row of zeta into zeta_star

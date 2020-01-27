@@ -60,6 +60,7 @@ namespace UVLM
             bool iterative_solver;
             double iterative_tol;
             bool iterative_precond;
+            bool cfl1;
         };
 
         struct UVMopts
@@ -77,6 +78,7 @@ namespace UVLM
             double iterative_tol;
             bool iterative_precond;
             bool convect_wake;
+            bool cfl1;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -349,7 +351,7 @@ namespace UVLM
             vec.setZero();
             return vec;
         }
-        
+
         // inline void allocate_VecVecVecMat
         // (
         //     UVLM::Types::VecVecVecMatrixX& mat,
