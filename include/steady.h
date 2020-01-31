@@ -160,10 +160,10 @@ void UVLM::Steady::solver
 
 
     // create Wake
-    UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
-    UVLM::Wake::Horseshoe::to_discretised(zeta_star,
-                                          gamma_star,
-                                          delta_x);
+    // UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
+    // UVLM::Wake::Horseshoe::to_discretised(zeta_star,
+    //                                       gamma_star,
+    //                                       delta_x);
 
     UVLM::Steady::solve_discretised
     (
@@ -222,7 +222,11 @@ void UVLM::Steady::solver
                                          options.dt);
         // move wake 1 row down and discard last row (far field)
         UVLM::Wake::General::displace_VecVecMat(zeta_star);
-        UVLM::Wake::General::displace_VecMat(gamma_star);
+        UVLM::Wake::General::displace_VecMat(zeta_star,
+                                             gamma_star,
+                                             uext_col,
+                                             options.dt,
+                                             options.cfl1);
         // copy trailing edge of zeta into 1st row of zeta_star
         for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
         {
@@ -305,9 +309,9 @@ void UVLM::Steady::solve_horseshoe
 )
 {
     // wake generation for horseshoe initialisation
-    UVLM::Wake::Horseshoe::init(zeta,
-                                zeta_star,
-                                flightconditions);
+    // UVLM::Wake::Horseshoe::init(zeta,
+    //                             zeta_star,
+    //                             flightconditions);
 
     const uint n_surf = options.NumSurfaces;
     // size of rhs
