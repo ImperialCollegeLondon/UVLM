@@ -131,10 +131,79 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
                                              options.cfl1);
     } else if (options.convection_scheme == 1)
     {
-        std::cerr << "convection_scheme == "
-                  << options.convection_scheme
-                  << " is not yet implemented in the UVLM solver"
-                  << std::endl;
+        // unsigned int M, N;
+        // unsigned int n_surf = zeta_star.size();
+        // UVLM::Types::Vector3 vel;
+        //
+        // for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+        // {
+        //     M = zeta[i_surf][0].rows();
+        //     Mstar = zeta_star[i_surf][0].rows();
+        //     N = zeta_star[i_surf][0].cols();
+        //     for (unsigned int j=0; j<N; j++)
+        //     {
+        //         // Get the solid veloctiy (approximately from colocation points)
+        //         // Probably its better to separate RBM from deformations
+        //         if(j==0)
+        //         {
+        //             vel = uext_total_col[i_surf][0](M-1,0),
+        //                   uext_total_col[i_surf][1](M-1,0),
+        //                   uext_total_col[i_surf][2](M-1,0);
+        //         }else if(j==N-1)
+        //         {
+        //             vel = uext_total_col[i_surf][0](M-1,N-1),
+        //                   uext_total_col[i_surf][1](M-1,N-1),
+        //                   uext_total_col[i_surf][2](M-1,N-1);
+        //         }else
+        //         {
+        //             vel = 0.5*(uext_total_col[i_surf][0](M-1,j-1) + uext_total_col[i_surf][0](M-1,j)),
+        //                   0.5*(uext_total_col[i_surf][1](M-1,j-1) + uext_total_col[i_surf][1](M-1,j)),
+        //                   0.5*(uext_total_col[i_surf][2](M-1,j-1) + uext_total_col[i_surf][2](M-1,j));
+        //         } // if (j )
+        //         for (unsigned int i=1; i<Mstar; i++)
+        //         {
+        //             zeta_star[i_surf][0](i, j) += vel(0)*options.dt;
+        //             zeta_star[i_surf][1](i, j) += vel(1)*options.dt;
+        //             zeta_star[i_surf][2](i, j) += vel(2)*options.dt;
+        //         } // i
+        //     } // j
+        // } //i_surf
+        // UVLM::Types::VecVecMatrixX uext_star_total;
+        // UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
+        // UVLM::Types::VecVecMatrixX zeros;
+        // UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+        // // total stream velocity
+        // UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
+        // rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+        //
+        // UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+        // (
+        //     zeta_star,
+        //     zeros,
+        //     uext_star,
+        //     rbm_no_omega,
+        //     uext_star_total
+        // );
+        // convection with uext + delta u (perturbation)
+        // (no u_induced)
+        UVLM::Wake::Discretised::convect(zeta_star,
+                                         uext_star,
+                                         options.dt);
+        // displace both zeta and gamma
+        UVLM::Wake::General::displace_VecMat(zeta_star,
+                                             gamma_star,
+                                             uext_total_col,
+                                             options.dt,
+                                             options.cfl1);
+        // UVLM::Wake::General::displace_VecVecMat(zeta_star);
+
+        // copy last row of zeta into zeta_star
+        // UVLM::Wake::Discretised::generate_new_row
+        // (
+        //     zeta_star,
+        //     zeta
+        // );
+
     } else if (options.convection_scheme == 2)
     {
         UVLM::Types::VecVecMatrixX uext_star_total;
