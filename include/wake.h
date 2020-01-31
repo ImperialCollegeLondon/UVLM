@@ -123,13 +123,13 @@ namespace UVLM
                                    uext_total_col[i_surf][1](M-1, i_n),
                                    uext_total_col[i_surf][2](M-1, i_n);
                             cfl = dt*vel.norm()/dist.norm();
-                            std::cout << "dist" << dist << std::endl;
-                            std::cout << "vel" << vel << std::endl;
-                            std::cout << "cfl" << cfl << std::endl;
+                            // std::cout << "dist" << dist << std::endl;
+                            // std::cout << "vel" << vel << std::endl;
+                            // std::cout << "cfl" << cfl << std::endl;
                             // if(i_m < n_rows-1){
                             gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m, i_n) +
                                                            cfl*gamma_star[i_surf](i_m-1, i_n);
-                            std::cout << "gamma[" << i_surf << "](" << i_m << "," << i_n << ")=" << gamma_star[i_surf](i_m, i_n) << std::endl;
+                            // std::cout << "gamma[" << i_surf << "](" << i_m << "," << i_n << ")=" << gamma_star[i_surf](i_m, i_n) << std::endl;
                             // }else{
                             // gamma_star[i_surf](i_m, i_n) = (1. - cfl)*old_gamma_star[i_surf](i_m, i_n) +
                                                            // cfl*old_gamma_star[i_surf](i_m, i_n);
