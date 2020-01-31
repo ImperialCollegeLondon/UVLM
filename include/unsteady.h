@@ -240,7 +240,6 @@ void UVLM::Unsteady::solver
             gamma_star,
             uext,
             uext_star,
-            uext_total_col,
             rbm_velocity
         );
     }

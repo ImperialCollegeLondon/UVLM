@@ -222,11 +222,7 @@ void UVLM::Steady::solver
                                          options.dt);
         // move wake 1 row down and discard last row (far field)
         UVLM::Wake::General::displace_VecVecMat(zeta_star);
-        UVLM::Wake::General::displace_VecMat(zeta_star,
-                                             gamma_star,
-                                             uext_col,
-                                             options.dt,
-                                             options.cfl1);
+        UVLM::Wake::General::displace_VecMat(gamma_star);
         // copy trailing edge of zeta into 1st row of zeta_star
         for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
         {
