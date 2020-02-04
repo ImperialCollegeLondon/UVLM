@@ -134,9 +134,9 @@ namespace UVLM
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
                     n_cols = gamma[i_surf].cols();
+                    M = gamma[i_surf].rows();
                     for (uint i_n=0; i_n<n_cols; ++i_n)
                     {
-                        M = gamma[i_surf].rows();
                         dist << 0.25*(zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
                                         - zeta[i_surf][0](M-1, i_n) - zeta[i_surf][0](M-1, i_n+1)),
                                 0.25*(zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
@@ -153,10 +153,13 @@ namespace UVLM
                                uext_total_col[i_surf][1](M-1, i_n),
                                uext_total_col[i_surf][2](M-1, i_n);
                         cfl = dt*vel.norm()/dist.norm();
+                        // if(cfl > 1.){
+                        //     std::cout << "WARNING: CFL=" << cfl << " > 1 at isurf:" << i_surf << " in:" << i_n << std::endl;
+                        // }
                         // std::cout << "dist" << dist << std::endl;
                         // std::cout << "vel" << vel << std::endl;
                         // std::cout << "cfl" << cfl << std::endl;
-                        gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](0, i_n) +
+                        gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](1, i_n) +
                                                        cfl*gamma[i_surf](M-1, i_n);
                         // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)
                         // but in the new convection scheme I am copying back the old value to the first cell because otherwise its lost
