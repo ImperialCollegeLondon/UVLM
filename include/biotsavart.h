@@ -344,37 +344,54 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
     r0_mod = sqrt(r0_mod);
     r1_mod = sqrt(r1_mod);
     r2_mod = sqrt(r2_mod);
+    if ((r1_mod < VORTEX_RADIUS) || (r2_mod < VORTEX_RADIUS)){
+        uind(0) = 0.0;
+        uind(1) = 0.0;
+        uind(2) = 0.0;
+        return uind;
+    }else{
+
+        UVLM::Types::Real r1_cross_r2[3];
+        r1_cross_r2[0] = r1[1]*r2[2] - r1[2]*r2[1];
+        r1_cross_r2[1] = r1[2]*r2[0] - r1[0]*r2[2];
+        r1_cross_r2[2] = r1[0]*r2[1] - r1[1]*r2[0];
+
+        UVLM::Types::Real r1_cross_r2_mod_sq;
+        r1_cross_r2_mod_sq = r1_cross_r2[0]*r1_cross_r2[0] +
+                             r1_cross_r2[1]*r1_cross_r2[1] +
+                             r1_cross_r2[2]*r1_cross_r2[2] +
+                             EPSILON_VORTEX;
+
+        if (r1_cross_r2_mod_sq < VORTEX_RADIUS){
+
+            uind(0) = 0.0;
+            uind(1) = 0.0;
+            uind(2) = 0.0;
+            return uind;
+
+        }else{
+
+            UVLM::Types::Real r0_dot_r1;
+            r0_dot_r1 = r0[0]*r1[0] +
+                        r0[1]*r1[1] +
+                        r0[2]*r1[2];
+
+            UVLM::Types::Real r0_dot_r2;
+            r0_dot_r2 = r0[0]*r2[0] +
+                        r0[1]*r2[1] +
+                        r0[2]*r2[2];
 
 
-    UVLM::Types::Real r1_cross_r2[3];
-    r1_cross_r2[0] = r1[1]*r2[2] - r1[2]*r2[1];
-    r1_cross_r2[1] = r1[2]*r2[0] - r1[0]*r2[2];
-    r1_cross_r2[2] = r1[0]*r2[1] - r1[1]*r2[0];
+            UVLM::Types::Real K;
+            K = (gamma*UVLM::Constants::INV_PI4/(r1_cross_r2_mod_sq))*
+                (r0_dot_r1/(r1_mod + EPSILON_VORTEX) - r0_dot_r2/(r2_mod + EPSILON_VORTEX));
 
-    UVLM::Types::Real r0_dot_r1;
-    r0_dot_r1 = r0[0]*r1[0] +
-                r0[1]*r1[1] +
-                r0[2]*r1[2];
-
-    UVLM::Types::Real r0_dot_r2;
-    r0_dot_r2 = r0[0]*r2[0] +
-                r0[1]*r2[1] +
-                r0[2]*r2[2];
-
-    UVLM::Types::Real r1_cross_r2_mod_sq;
-    r1_cross_r2_mod_sq = r1_cross_r2[0]*r1_cross_r2[0] + 
-                         r1_cross_r2[1]*r1_cross_r2[1] + 
-                         r1_cross_r2[2]*r1_cross_r2[2] +
-                         EPSILON_VORTEX;
-
-    UVLM::Types::Real K;
-    K = (gamma*UVLM::Constants::INV_PI4/(r1_cross_r2_mod_sq))*
-        (r0_dot_r1/(r1_mod + EPSILON_VORTEX) - r0_dot_r2/(r2_mod + EPSILON_VORTEX));
-
-    uind(0) = K*r1_cross_r2[0];
-    uind(1) = K*r1_cross_r2[1];
-    uind(2) = K*r1_cross_r2[2];
-    return uind;
+            uind(0) = K*r1_cross_r2[0];
+            uind(1) = K*r1_cross_r2[1];
+            uind(2) = K*r1_cross_r2[2];
+            return uind;
+        }
+    }
 }
 
 
