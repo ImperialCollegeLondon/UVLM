@@ -52,6 +52,26 @@ namespace UVLM
             const uint& Ktotal
         );
 
+        template <typename t_zeta_col,
+                  typename t_zeta_star,
+                  typename t_uext_col,
+                //   typename t_zeta_dot_col,
+                  typename t_gamma_star,
+                  typename t_normal,
+                  typename t_uindw>
+        void RHS_uindw
+        (
+            const t_zeta_col& zeta_col,
+            const t_zeta_star& zeta_star,
+            const t_uext_col& uext_col,
+            // const t_zeta_dot_col& zeta_dot_col,
+            const t_gamma_star& gamma_star,
+            const t_normal& normal,
+            const UVLM::Types::VMopts& options,
+            UVLM::Types::VectorX& rhs,
+            const uint& Ktotal,
+            t_uindw& uindw
+        );
 
         void generate_assembly_offset
         (
@@ -273,6 +293,100 @@ void UVLM::Matrix::RHS
     }
 }
 
+template <typename t_zeta_col,
+          typename t_zeta_star,
+          typename t_uext_col,
+          typename t_gamma_star,
+          typename t_normal,
+          typename t_uindw>
+void UVLM::Matrix::RHS_uindw
+(
+    const t_zeta_col& zeta_col,
+    const t_zeta_star& zeta_star,
+    const t_uext_col& uinc_col,
+    const t_gamma_star& gamma_star,
+    const t_normal& normal,
+    const UVLM::Types::VMopts& options,
+    UVLM::Types::VectorX& rhs,
+    const uint& Ktotal,
+    t_uindw& uindw
+)
+{
+    const uint n_surf = options.NumSurfaces;
+
+    rhs.setZero(Ktotal);
+
+    // filling up RHS
+    int ii = -1;
+    int istart = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uinc_col[i_surf][0].rows();
+        uint N = uinc_col[i_surf][0].cols();
+
+        if (!options.Steady)
+        {
+            #pragma omp parallel for collapse(2)
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    UVLM::Types::Vector3 v_ind;
+                    UVLM::Types::Vector3 collocation_coords;
+                    UVLM::Types::Vector3 u_col;
+
+                    u_col << uinc_col[i_surf][0](i,j),
+                             uinc_col[i_surf][1](i,j),
+                             uinc_col[i_surf][2](i,j);
+                    // we have to add the wake effect on the induced velocity.
+                    collocation_coords << zeta_col[i_surf][0](i,j),
+                                          zeta_col[i_surf][1](i,j),
+                                          zeta_col[i_surf][2](i,j);
+
+                    v_ind.setZero();
+                    for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                    {
+                        v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                      gamma_star[ii_surf],
+                                                                      collocation_coords,
+                                                                      0,
+                                                                      0,
+                                                                      -1,
+                                                                      -1,
+                                                                      options.ImageMethod);
+                    }
+                    uindw[i_surf][0](i,j) = v_ind(0);
+                    uindw[i_surf][1](i,j) = v_ind(1);
+                    uindw[i_surf][2](i,j) = v_ind(2);
+                    u_col += v_ind;
+
+                    // dot product of uinc and panel normal
+                    uint counter = istart + j + i*N;
+                    rhs(counter) =
+                    -(
+                        u_col(0)*normal[i_surf][0](i,j) +
+                        u_col(1)*normal[i_surf][1](i,j) +
+                        u_col(2)*normal[i_surf][2](i,j)
+                    );
+                }
+            }
+            istart += M*N;
+        } else {
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    rhs(++ii) =
+                    -(
+                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    );
+                }
+            }
+        }
+    }
+}
 
 void UVLM::Matrix::generate_assembly_offset
 (
