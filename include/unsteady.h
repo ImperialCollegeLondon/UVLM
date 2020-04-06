@@ -573,11 +573,11 @@ void UVLM::Unsteady::shw_solver
     // BEGINNING
 
     // Define the two first rows of the wake (the second one will be overwritten afterwards)
-    UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
-    UVLM::Wake::SHW::to_discretised(zeta_star,
-                                    gamma_star,
-                                    flightconditions,
-                                    shwoptions);
+    // UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
+    // UVLM::Wake::SHW::to_discretised(zeta_star,
+    //                                 gamma_star,
+    //                                 flightconditions,
+    //                                 shwoptions);
 
     UVLM::Steady::solve_discretised
     (
