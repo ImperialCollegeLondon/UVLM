@@ -10,8 +10,8 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1.e-6
-#define VORTEX_RADIUS_SQ 1e-4
+#define VORTEX_RADIUS 1.e-4
+#define VORTEX_RADIUS_SQ 1e-8
 #define EPSILON_VORTEX 1e-10
 #define Nvert 4
 
@@ -359,8 +359,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
         UVLM::Types::Real r1_cross_r2_mod_sq;
         r1_cross_r2_mod_sq = r1_cross_r2[0]*r1_cross_r2[0] +
                              r1_cross_r2[1]*r1_cross_r2[1] +
-                             r1_cross_r2[2]*r1_cross_r2[2] +
-                             EPSILON_VORTEX;
+                             r1_cross_r2[2]*r1_cross_r2[2];
 
         if (r1_cross_r2_mod_sq < VORTEX_RADIUS){
 
@@ -384,7 +383,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
 
             UVLM::Types::Real K;
             K = (gamma*UVLM::Constants::INV_PI4/(r1_cross_r2_mod_sq))*
-                (r0_dot_r1/(r1_mod + EPSILON_VORTEX) - r0_dot_r2/(r2_mod + EPSILON_VORTEX));
+                (r0_dot_r1/r1_mod - r0_dot_r2/r2_mod);
 
             uind(0) = K*r1_cross_r2[0];
             uind(1) = K*r1_cross_r2[1];
