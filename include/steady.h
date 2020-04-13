@@ -78,27 +78,6 @@ namespace UVLM
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
-        template <typename t_zeta,
-                  typename t_zeta_col,
-                  typename t_uext_col,
-                  typename t_zeta_star,
-                  typename t_gamma,
-                  typename t_gamma_star,
-                  typename t_normals,
-                  typename t_uindw>
-        void solve_discretised_uindw
-        (
-            t_zeta& zeta,
-            t_zeta_col& zeta_col,
-            t_uext_col& uext_col,
-            t_zeta_star& zeta_star,
-            t_gamma& gamma,
-            t_gamma_star& gamma_star,
-            t_normals& normals,
-            t_uindw& uindw,
-            const UVLM::Types::VMopts& options,
-            const UVLM::Types::FlightConditions& flightconditions
-        );
     }
 }
 
@@ -437,98 +416,6 @@ void UVLM::Steady::solve_discretised
                       options,
                       rhs,
                       Ktotal);
-
-    // AIC generation
-    UVLM::Matrix::AIC(Ktotal,
-                      zeta,
-                      zeta_col,
-                      zeta_star,
-                      uext_col,
-                      normals,
-                      options,
-                      false,
-                      aic);
-
-    // linear system solution
-    UVLM::Types::VectorX gamma_flat;
-    UVLM::Matrix::deconstruct_gamma(gamma,
-                                    gamma_flat,
-                                    zeta_col);
-
-
-    UVLM::LinearSolver::solve_system
-    (
-        aic,
-        rhs,
-        options,
-        gamma_flat
-    );
-
-    // gamma flat to gamma
-    // probably could be done better with a Map
-    UVLM::Matrix::reconstruct_gamma(gamma_flat,
-                                    gamma,
-                                    zeta_col);
-
-    // copy gamma from trailing edge to wake
-    int in_n_rows = -1;
-    // if (!options.Steady) {in_n_rows = 1;}
-    // UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-    //                                             gamma_star,
-    //                                             in_n_rows);
-    if (options.Steady) {
-    UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                                gamma_star,
-                                                in_n_rows);
-    }
-}
-
-template <typename t_zeta,
-          typename t_zeta_col,
-          typename t_uext_col,
-          typename t_zeta_star,
-          typename t_gamma,
-          typename t_gamma_star,
-          typename t_normals,
-          typename t_uindw>
-void UVLM::Steady::solve_discretised_uindw
-(
-    t_zeta& zeta,
-    t_zeta_col& zeta_col,
-    t_uext_col& uext_col,
-    t_zeta_star& zeta_star,
-    t_gamma& gamma,
-    t_gamma_star& gamma_star,
-    t_normals& normals,
-    t_uindw& uindw,
-    const UVLM::Types::VMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions
-)
-{
-    const uint n_surf = options.NumSurfaces;
-    // size of rhs
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
-        ii += M*N;
-    }
-    const uint Ktotal = ii;
-
-    UVLM::Types::VectorX rhs;
-    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    // RHS generation
-    UVLM::Matrix::RHS_uindw(zeta_col,
-                      zeta_star,
-                      uext_col,
-                      gamma_star,
-                      normals,
-                      options,
-                      rhs,
-                      Ktotal,
-                      uindw);
 
     // AIC generation
     UVLM::Matrix::AIC(Ktotal,
