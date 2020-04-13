@@ -10,8 +10,8 @@
 #include <cmath>
 
 // #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1.e-4
-#define VORTEX_RADIUS_SQ 1e-8
+#define VORTEX_RADIUS 1.e-6
+#define VORTEX_RADIUS_SQ 1e-12
 #define EPSILON_VORTEX 1e-10
 #define Nvert 4
 
