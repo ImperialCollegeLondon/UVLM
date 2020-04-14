@@ -273,7 +273,6 @@ void UVLM::Matrix::RHS
     }
 }
 
-
 void UVLM::Matrix::generate_assembly_offset
 (
     const UVLM::Types::VecDimensions& dimensions,

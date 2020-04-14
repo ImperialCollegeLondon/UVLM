@@ -160,10 +160,10 @@ void UVLM::Steady::solver
 
 
     // create Wake
-    UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
-    UVLM::Wake::Horseshoe::to_discretised(zeta_star,
-                                          gamma_star,
-                                          delta_x);
+    // UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
+    // UVLM::Wake::Horseshoe::to_discretised(zeta_star,
+    //                                       gamma_star,
+    //                                       delta_x);
 
     UVLM::Steady::solve_discretised
     (

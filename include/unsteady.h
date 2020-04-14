@@ -199,6 +199,7 @@ void UVLM::Unsteady::solver
 {
     // SOLVE------------------------------------------
     const uint n_surf = options.NumSurfaces;
+    const double dt = options.dt;
     // Generate collocation points info
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col;
@@ -243,9 +244,12 @@ void UVLM::Unsteady::solver
         );
     }
 
-    UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                               gamma_star,
-                                               1);
+    UVLM::Wake::Discretised::circulation_transfer(zeta,
+                                                  zeta_star,
+                                                  gamma,
+                                                  gamma_star,
+                                                  uext_total_col,
+                                                  dt);
 
     // we can use UVLM::Steady::solve_discretised if uext_col
     // is the total velocity including non-steady contributions.
@@ -392,11 +396,11 @@ void UVLM::Unsteady::shw_solver
     // BEGINNING
 
     // Define the two first rows of the wake (the second one will be overwritten afterwards)
-    UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
-    UVLM::Wake::SHW::to_discretised(zeta_star,
-                                    gamma_star,
-                                    flightconditions,
-                                    shwoptions);
+    // UVLM::Wake::Horseshoe::init(zeta, zeta_star, flightconditions);
+    // UVLM::Wake::SHW::to_discretised(zeta_star,
+    //                                 gamma_star,
+    //                                 flightconditions,
+    //                                 shwoptions);
 
     UVLM::Steady::solve_discretised
     (

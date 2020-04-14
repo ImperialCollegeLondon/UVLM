@@ -569,6 +569,13 @@ namespace UVLM
                 velocities
             );
 
+            // Currently, the incidence computed is the one based on external velocities
+            // thus this function provides something like the geometric angle of attack.
+            // If we wanted the effective angle of attack (lifting line theory nomenclature)
+            // we would need to include the induced velocity, I think.
+            // It is not efficient to code it here so I will output this velocities directly
+            // from the solver
+
             // stall angle will be computed as the angle between
             // the velocity at the leading edge and the chord line
             const uint n_surf = zeta.size();
@@ -619,11 +626,11 @@ namespace UVLM
                                 normals[i_surf][2](0, i_N);
 
                     // check that normal is up, if not, change the sign
-                    UVLM::Types::Real sign = 1;
-                    if (vertical(2) < 0)
-                    {
-                        sign = -1;
-                    }
+                    // UVLM::Types::Real sign = 1;
+                    // if (vertical(2) < 0)
+                    // {
+                    //     sign = -1;
+                    // }
 
                     plane_normal = vertical.cross(chord_line_g).normalized();
 
@@ -631,11 +638,25 @@ namespace UVLM
                     local_vel_projected = local_vel -
                         (local_vel.dot(plane_normal))*plane_normal;
 
+                    // UVLM::Types::Real angle;
+                    // angle = std::atan2(
+                    //     plane_normal.dot(chord_line_g.cross(local_vel_projected)),
+                    //     chord_line_g.dot(local_vel_projected)
+                    // );
+
+                    // I think this is more intuitive, they give the same result
                     UVLM::Types::Real angle;
-                    angle = std::atan2(
-                        plane_normal.dot(chord_line_g.cross(local_vel_projected)),
-                        chord_line_g.dot(local_vel_projected)
+                    angle = std::acos(
+                        chord_line_g.dot(local_vel_projected)/
+                        chord_line_g.norm()/local_vel_projected.norm()
                     );
+
+                    UVLM::Types::Real sign = 1.;
+                    if (local_vel_projected.dot(vertical) < 0)
+                    {
+                        sign = -1.;
+                    }
+
                     for (uint i_M=0; i_M<M; ++i_M)
                     {
                         incidence_angle[i_surf](i_M, i_N) = -angle*sign;
