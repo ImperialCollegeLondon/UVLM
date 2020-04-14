@@ -11,6 +11,9 @@
 
 // #define VORTEX_RADIUS 1e-5
 #define VORTEX_RADIUS 1.e-6
+// TODO: I do not think it is an ideal definition for VORTEX_RADIUS_SQ 
+// but it only affects the linear implementation
+// Otherwise, the assembly tests do not pass
 #define VORTEX_RADIUS_SQ 1e-4
 #define EPSILON_VORTEX 1e-10
 #define Nvert 4
