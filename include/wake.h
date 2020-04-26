@@ -161,9 +161,7 @@ namespace UVLM
                         // std::cout << "cfl" << cfl << std::endl;
                         gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](1, i_n) +
                                                        cfl*gamma[i_surf](M-1, i_n);
-                        // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)
-                        // but in the new convection scheme I am copying back the old value to the first cell because otherwise its lost
-                    }
+                        // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)                    }
                 }
             }
 

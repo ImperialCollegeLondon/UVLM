@@ -103,7 +103,9 @@ template <typename t_zeta,
           typename t_gamma_star,
           typename t_uext,
           typename t_uext_star,
-          typename t_rbm_velocity>
+          typename t_rbm_velocity,
+          typename t_extra_gamma_star,
+          typename t_extra_zeta_star>
 void UVLM::Unsteady::Utils::convect_unsteady_wake
 (
     const UVLM::Types::UVMopts& options,
@@ -113,7 +115,9 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
     t_gamma_star& gamma_star,
     const t_uext& uext,
     const t_uext_star& uext_star,
-    const t_rbm_velocity& rbm_velocity
+    const t_rbm_velocity& rbm_velocity,
+    t_extra_gamma_star& extra_gamma_star,
+    t_extra_zeta_star& extra_zeta_star
 )
 {
     const uint n_surf = options.NumSurfaces;
@@ -150,6 +154,16 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::Discretised::convect(zeta_star,
                                          uext_star_total,
                                          options.dt);
+
+        // TODO: move this to a function
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+            {
+                extra_zeta_star[i_surf][i_dim] = zeta_star[i_surf][i_dim].template bottomRows<1>();
+            }
+            extra_gamma_star[i_surf] = gamma_star[i_surf].template bottomRows<1>();
+        }
+
         // displace both zeta and gamma
         UVLM::Wake::General::displace_VecMat(gamma_star);
         UVLM::Wake::General::displace_VecVecMat(zeta_star);
@@ -216,6 +230,16 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::Discretised::convect(zeta_star,
                                          u_convection,
                                          options.dt);
+
+        // TODO: move this to a function
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+            {
+                extra_zeta_star[i_surf][i_dim] = zeta_star[i_surf][i_dim].template bottomRows<1>();
+            }
+            extra_gamma_star[i_surf] = gamma_star[i_surf].template bottomRows<1>();
+        }
+
         // displace both zeta and gamma
         UVLM::Wake::General::displace_VecMat(gamma_star);
         UVLM::Wake::General::displace_VecVecMat(zeta_star);

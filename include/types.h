@@ -185,6 +185,22 @@ namespace UVLM
             }
         }
 
+        inline void allocate_VecMat
+        (
+             UVLM::Types::VecMatrixX& mat,
+             const unsigned int& n_surf,
+             const unsigned int& M,
+             const unsigned int& N
+        )
+        {
+             mat.resize(n_surf);
+             for (auto& surf: mat)
+             {
+                 surf.resize(M, N);
+                 surf.setZero(M, N);
+             }
+        }
+
         inline void initialise_VecMat
         (
             UVLM::Types::VecMatrixX& mat,

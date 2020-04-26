@@ -229,8 +229,58 @@ void UVLM::Unsteady::solver
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
-    if (options.convect_wake)
-    {
+    // if (options.convect_wake)
+    // {
+    //     UVLM::Unsteady::Utils::convect_unsteady_wake
+    //     (
+    //         options,
+    //         zeta,
+    //         zeta_star,
+    //         gamma,
+    //         gamma_star,
+    //         uext,
+    //         uext_star,
+    //         rbm_velocity
+    //     );
+    // }
+    //
+    // UVLM::Wake::Discretised::circulation_transfer(zeta,
+    //                                               zeta_star,
+    //                                               gamma,
+    //                                               gamma_star,
+    //                                               uext_total_col,
+    //                                               dt);
+
+    // Store the values that will be deleted
+    UVLM::Types::VecMatrixX extra_gamma_star;
+    // UVLM::Types::allocate_VecVecMat(extra_gamma_star,
+    //                                 n_surf,
+    //                                 1,
+    //                                 gamma[0].cols())
+    UVLM::Types::VecVecMatrixX extra_zeta_star;
+    // UVLM::Types::allocate_VecVecMat(extra_zeta_star,
+    //                                 n_surf,
+    //                                 3,
+    //                                 1,
+    //                                 gamma[0].cols() + 1)
+    // for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    // {
+    //     M = gamma[i_surf].rows()
+    //     N = gamma[i_surf].cols()
+    //     for (unsigned int i_n=0; i_n<N; ++i_n)
+    //     {
+    //         backup_gamma_star[i_surf][0, i_n] = gamma_star[i_surf][M, i_n]
+    //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+    //         {
+    //             backup_zeta_star[i_surf][i_dim][0, i_n] = zeta_star[i_surf][i_dim][M + 1, i_n]
+    //         }
+    //     }
+    //     for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+    //     {
+    //             backup_zeta_star[i_surf][i_dim][0, N + 1] = zeta_star[i_surf][i_dim][M + 1, N + 1]
+    //     }
+    // }
+
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
@@ -240,9 +290,55 @@ void UVLM::Unsteady::solver
             gamma_star,
             uext,
             uext_star,
-            rbm_velocity
+            rbm_velocity,
+            extra_gamma_star,
+            extra_zeta_star
         );
-    }
+
+    UVLM::Types::VectorX dist_to_orig_conv;
+    UVLM::Types::Vector3 origin;
+    UVLM::Types::Vector3 point;
+    unsigned int i_conv;
+    UVLM::Types::Real to_prev, to_next, prev_to_next;
+
+    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        M = gamma[i_surf].rows()
+        N = gamma[i_surf].cols()
+        dist_to_orig_conv.resize(M + 1);
+        for (unsigned int i_n=0; i_n<N; ++i_n)
+        {
+            // Compute the distance of each wake vertice to the first point of the
+            // filament
+            // origin << zeta_star[i_surf][0](0, i_n),
+            //           zeta_star[i_surf][1](0, i_n),
+            //           zeta_star[i_surf][2](0, i_n);
+            dist_to_orig_conv(0) = 0.;
+            for (unsigned int i_m=1; i_m<M+1; ++i_m)
+            {
+            point << zeta_star[i_surf][0](i_m, i_n) - zeta_star[i_surf][0](i_m - 1, i_n),
+                     zeta_star[i_surf][1](i_m, i_n) - zeta_star[i_surf][1](i_m - 1, i_n),
+                     zeta_star[i_surf][2](i_m, i_n) - zeta_star[i_surf][2](i_m - 1, i_n);
+
+            dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
+                                          point(1)*point(1) +
+                                          point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
+            }
+            // Redefine the location of the vertices
+            i_conv = 0; // index of the old point
+            for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
+            {
+                while (dist_to_orig_conv(i_conv) <= dist_to_origin(i_m)){i_conv++;}
+                to_prev = dist_to_oigin(i_m) - dist_to_origin_conv(i_conv - 1);
+                to_next = dist_to_oigin_conv(i_conv) - dist_to_origin(i_m);
+                prev_to_next = dist_to_oigin_conv(i_conv) - dist_to_origin_conv(i_conv - 1);
+
+                for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                {
+                    zeta_star[i_surf][i_dim](i_m, i_n) = (to_prev*zeta_star[i_surf][i_dim][i_conv, i_n] +
+                                           to_next*zeta_star[i_surf][i_dim][i_conv - 1, i_n])/prev_to_next;
+                }
+              }
 
     UVLM::Wake::Discretised::circulation_transfer(zeta,
                                                   zeta_star,
@@ -250,6 +346,7 @@ void UVLM::Unsteady::solver
                                                   gamma_star,
                                                   uext_total_col,
                                                   dt);
+
 
     // we can use UVLM::Steady::solve_discretised if uext_col
     // is the total velocity including non-steady contributions.
