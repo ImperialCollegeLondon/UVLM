@@ -35,6 +35,7 @@ namespace UVLM
         typedef Eigen::Matrix<Real, 6, 1> Vector6;
         typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
         typedef Eigen::Map<VectorX> MapVectorX;
+        typedef std::vector<MapVectorX> VecMapVX;
 
         // std custom containers
         typedef std::pair<unsigned int, unsigned int> IntPair;

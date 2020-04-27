@@ -165,6 +165,121 @@ namespace UVLM
                 }
             }
 
+            template <typename t_zeta_star,
+                      typename t_gamma_star,
+                      typename t_extra_gamma_star,
+                      typename t_extra_zeta_star,
+                      typename t_dist_to_origin,
+                      typename t_wake_conv_vel>
+            void cfl_n1
+            (
+                t_zeta_star& zeta_star,
+                t_gamma_star& gamma_star,
+                t_extra_gamma_star& extra_gamma_star,
+                t_extra_zeta_star& extra_zeta_star,
+                const t_dist_to_origin& dist_to_origin,
+                t_wake_conv_vel& wake_conv_vel,
+                double dt=0.
+            )
+            {
+                uint n_cols, M;
+                double cfl;
+
+            // Store the values that will be deleted
+            UVLM::Types::VecMatrixX extra_gamma_star;
+            // UVLM::Types::allocate_VecVecMat(extra_gamma_star,
+            //                                 n_surf,
+            //                                 1,
+            //                                 gamma[0].cols())
+            UVLM::Types::VecVecMatrixX extra_zeta_star;
+            // UVLM::Types::allocate_VecVecMat(extra_zeta_star,
+            //                                 n_surf,
+            //                                 3,
+            //                                 1,
+            //                                 gamma[0].cols() + 1)
+            // for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            // {
+            //     M = gamma[i_surf].rows()
+            //     N = gamma[i_surf].cols()
+            //     for (unsigned int i_n=0; i_n<N; ++i_n)
+            //     {
+            //         backup_gamma_star[i_surf][0, i_n] = gamma_star[i_surf][M, i_n]
+            //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+            //         {
+            //             backup_zeta_star[i_surf][i_dim][0, i_n] = zeta_star[i_surf][i_dim][M + 1, i_n]
+            //         }
+            //     }
+            //     for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+            //     {
+            //             backup_zeta_star[i_surf][i_dim][0, N + 1] = zeta_star[i_surf][i_dim][M + 1, N + 1]
+            //     }
+            // }
+            UVLM::Types::VectorX dist_to_orig_conv;
+            UVLM::Types::Vector3 origin;
+            UVLM::Types::Vector3 point;
+            unsigned int i_conv;
+            UVLM::Types::Real to_prev, to_next, prev_to_next;
+
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                M = gamma[i_surf].rows()
+                N = gamma[i_surf].cols()
+                dist_to_orig_conv.resize(M + 2);
+                for (unsigned int i_n=0; i_n<N; ++i_n)
+                {
+                    // Compute the distance of each wake vertice to the first point of the
+                    // filament
+                    // origin << zeta_star[i_surf][0](0, i_n),
+                    //           zeta_star[i_surf][1](0, i_n),
+                    //           zeta_star[i_surf][2](0, i_n);
+                    dist_to_orig_conv(0) = 0.;
+                    for (unsigned int i_m=1; i_m<M+1; ++i_m)
+                    {
+                    point << zeta_star[i_surf][0](i_m, i_n) - zeta_star[i_surf][0](i_m - 1, i_n),
+                             zeta_star[i_surf][1](i_m, i_n) - zeta_star[i_surf][1](i_m - 1, i_n),
+                             zeta_star[i_surf][2](i_m, i_n) - zeta_star[i_surf][2](i_m - 1, i_n);
+
+                    dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
+                    // dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
+                    //                               point(1)*point(1) +
+                    //                               point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
+                    }
+                    point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star[i_surf][0](M + 1, i_n),
+                             extra_zeta_star[i_surf][1](0, i_n) - zeta_star[i_surf][1](M + 1, i_n),
+                             extra_zeta_star[i_surf][2](0, i_n) - zeta_star[i_surf][2](M + 1, i_n);
+
+                    dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
+
+                    // Redefine the location of the vertices
+                    i_conv = 0; // index of the old point
+                    for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
+                    {
+                        while (dist_to_orig_conv(i_conv) <= dist_to_origin(i_m)){i_conv++;}
+                        to_prev = dist_to_oigin(i_m) - dist_to_origin_conv(i_conv - 1);
+                        to_next = dist_to_oigin_conv(i_conv) - dist_to_origin(i_m);
+                        prev_to_next = dist_to_oigin_conv(i_conv) - dist_to_origin_conv(i_conv - 1);
+
+                        for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                        {
+                            zeta_star[i_surf][i_dim](i_m, i_n) = (to_prev*zeta_star[i_surf][i_dim][i_conv, i_n] +
+                                                   to_next*zeta_star[i_surf][i_dim][i_conv - 1, i_n])/prev_to_next;
+                        }
+                    }
+
+                    // Convect circulation and velocities
+                    // TODO: last node
+                    for (unsigned int i_m=M - 1; i_m>-1; --i_m)
+                    {
+                        dist = dist_to_origin(i_m) - dist_to_origin(i_m - 1);
+                        cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist;
+                        gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
+                                                              cfl*gamma_star[i_surf](i_m, i_n);
+                    }
+
+
+                  } // end of N loop
+              } // end of surfaces loop
+            } // end cfl_n1 function
         }
         namespace Horseshoe
         {
