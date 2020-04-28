@@ -26,6 +26,8 @@ namespace UVLM
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
+                  typename t_dist_to_orig,
+                  typename t_wake_conv_vel,
                   typename t_normals,
                 //   typename t_previous_gamma,
                   typename t_rbm_velocity,
@@ -40,7 +42,7 @@ namespace UVLM
             t_zeta_star& zeta_star,
             t_gamma& gamma,
             t_gamma_star& gamma_star,
-            t_dist_to_origin& dist_to_origin,
+            t_dist_to_orig& dist_to_orig,
             t_wake_conv_vel& wake_conv_vel,
             t_normals& normals,
             // const t_previous_gamma& previous_gamma,
@@ -176,7 +178,7 @@ template <typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
           typename t_gamma_star,
-          typename t_dist_to_origin,
+          typename t_dist_to_orig,
           typename t_wake_conv_vel,
           typename t_normals,
         //   typename t_previous_gamma,
@@ -192,7 +194,7 @@ void UVLM::Unsteady::solver
     t_zeta_star& zeta_star,
     t_gamma& gamma,
     t_gamma_star& gamma_star,
-    t_dist_to_origin& dist_to_origin,
+    t_dist_to_orig& dist_to_orig,
     t_wake_conv_vel& wake_conv_vel,
     t_normals& normals,
     // const t_previous_gamma& previous_gamma,
@@ -216,6 +218,27 @@ void UVLM::Unsteady::solver
     UVLM::Types::VecVecMatrixX uext_total_col;
     UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
 
+    UVLM::Types::VecMatrixX extra_gamma_star;
+    UVLM::Types::VecVecMatrixX extra_zeta_star;
+    // extra_gamma_star.resize(n_surf);
+    extra_zeta_star.resize(n_surf);
+    for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        extra_gamma_star.push_back(UVLM::Types::MatrixX());
+        extra_gamma_star[i_surf].setZero(1, gamma_star[i_surf].cols());
+        // UVLM::Types::MatrixX extra_gamma_star[i_surf](1,
+                                                      // gamma_star[i_surf].cols());
+        extra_zeta_star[i_surf].resize(3);
+        for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+        {
+            // extra_gamma_star[i_surf].push_back(UVLM::Types::MatrixX(1,
+                                                                    // gamma_star[i_surf].cols()));
+            extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
+                                                                   gamma_star[i_surf].cols() + 1));
+            // extra_zeta_star[i_surf][i_dim].resize(1, gamma_star[i_surf].cols() + 1);
+        }
+    }
+
     // total stream velocity
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     (
@@ -235,7 +258,7 @@ void UVLM::Unsteady::solver
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
-    if (option.convect_wake)
+    if (options.convect_wake)
     {
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
@@ -261,8 +284,17 @@ void UVLM::Unsteady::solver
 
     if (!options.cfl1)
     {
-        UVLM::Wake::Discretised::cfl_n1(// zeta,
-                                        zeta_star,
+        // typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
+        // typedef Eigen::Map<VectorX> MapVectorX;
+        // typedef std::vector<MapVectorX> VecMapVX;
+        // typedef std::vector<MatrixX> VecMatrixX;
+        //         mat.push_back(UVLM::Types::MatrixX());
+        // UVLM::Types::MapVectorX extra_gamma_star;
+        // UVLM::CppInterface::map_VecVec1(dimensions_star,
+        //                                 p_dist_to_origin,
+        //                                 dist_to_origin,
+        //                                 1);
+        UVLM::Wake::Discretised::cfl_n1(zeta_star,
                                         // gamma,
                                         gamma_star,
                                         // uext,
@@ -270,7 +302,7 @@ void UVLM::Unsteady::solver
                                         // rbm_velocity,
                                         extra_gamma_star,
                                         extra_zeta_star,
-                                        dist_to_origin,
+                                        dist_to_orig,
                                         wake_conv_vel,
                                         dt);
     }

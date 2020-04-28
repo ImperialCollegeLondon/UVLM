@@ -29,7 +29,9 @@ namespace UVLM
                       typename t_gamma_star,
                       typename t_uext,
                       typename t_uext_star,
-                      typename t_rbm_velocity>
+                      typename t_rbm_velocity,
+                      typename t_extra_gamma_star,
+                      typename t_extra_zeta_star>
             void convect_unsteady_wake
             (
                 const UVLM::Types::UVMopts& options,
@@ -39,9 +41,9 @@ namespace UVLM
                 t_gamma_star& gamma_star,
                 const t_uext& uext,
                 const t_uext_star& uext_star,
-                const t_rbm_velocity& rbm_velocity
+                const t_rbm_velocity& rbm_velocity,
                 t_extra_gamma_star& extra_gamma_star,
-                t_extra_zeta_star& extra_zeta_star>
+                t_extra_zeta_star& extra_zeta_star
             );
         }
     }
@@ -159,11 +161,12 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
 
         // TODO: move this to a function
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-            for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+        {
+            for (uint i_dim=0; i_dim<3; ++i_dim)
             {
-                extra_zeta_star[i_surf][i_dim] = zeta_star[i_surf][i_dim].template bottomRows<1>();
+                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
             }
-            extra_gamma_star[i_surf] = gamma_star[i_surf].template bottomRows<1>();
+            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
         }
 
         // displace both zeta and gamma
@@ -235,11 +238,12 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
 
         // TODO: move this to a function
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-            for (uint i_dim=0; i_dim<n_dim; ++i_dim)
+        {
+            for (uint i_dim=0; i_dim<3; ++i_dim)
             {
-                extra_zeta_star[i_surf][i_dim] = zeta_star[i_surf][i_dim].template bottomRows<1>();
+                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
             }
-            extra_gamma_star[i_surf] = gamma_star[i_surf].template bottomRows<1>();
+            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
         }
 
         // displace both zeta and gamma
