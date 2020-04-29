@@ -221,10 +221,27 @@ namespace UVLM
                 // }
 
                 const uint n_surf = gamma_star.size();
+                UVLM::Types::VecVecMatrixX zeta_star_conv;
+                zeta_star_conv.resize(n_surf);
+                for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                    {
+                        zeta_star_conv[i_surf].push_back(UVLM::Types::MatrixX(gamma_star[i_surf].rows() + 1,
+                                                                               gamma_star[i_surf].cols() + 1));
+                    }
+                }
+
                 for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
                 {
                     M = gamma_star[i_surf].rows();
                     N = gamma_star[i_surf].cols();
+                    // backup the wake shape
+                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                    {
+                        zeta_star_conv[i_surf][i_dim] = zeta_star[i_surf][i_dim];
+                    }
+
                     dist_to_orig_conv.resize(M + 2);
                     for (unsigned int i_n=0; i_n<N + 1; ++i_n)
                     {
@@ -234,22 +251,22 @@ namespace UVLM
                         //           zeta_star[i_surf][1](0, i_n),
                         //           zeta_star[i_surf][2](0, i_n);
                         dist_to_orig_conv(0) = 0.;
+                        // Compute the last point
+                        point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star_conv[i_surf][0](M, i_n),
+                                 extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
+                                 extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
+                        dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
                         for (unsigned int i_m=1; i_m<M+1; ++i_m)
                         {
-                            point << zeta_star[i_surf][0](i_m, i_n) - zeta_star[i_surf][0](i_m - 1, i_n),
-                                     zeta_star[i_surf][1](i_m, i_n) - zeta_star[i_surf][1](i_m - 1, i_n),
-                                     zeta_star[i_surf][2](i_m, i_n) - zeta_star[i_surf][2](i_m - 1, i_n);
+                            point << zeta_star_conv[i_surf][0](i_m, i_n) - zeta_star_conv[i_surf][0](i_m - 1, i_n),
+                                     zeta_star_conv[i_surf][1](i_m, i_n) - zeta_star_conv[i_surf][1](i_m - 1, i_n),
+                                     zeta_star_conv[i_surf][2](i_m, i_n) - zeta_star_conv[i_surf][2](i_m - 1, i_n);
 
-                            dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
+                            dist_to_orig_conv(i_m) = point.norm()/dist_to_orig_conv(M + 1) + dist_to_orig_conv(i_m - 1);
                             // dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
                             //                               point(1)*point(1) +
                             //                               point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
                         }
-                        // Compute the last extra point
-                        point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star[i_surf][0](M, i_n),
-                                 extra_zeta_star[i_surf][1](0, i_n) - zeta_star[i_surf][1](M, i_n),
-                                 extra_zeta_star[i_surf][2](0, i_n) - zeta_star[i_surf][2](M, i_n);
-                        dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
 
                         // Redefine the location of the vertices
                         i_conv = 0; // index of the old point
@@ -262,8 +279,10 @@ namespace UVLM
 
                             for (unsigned int i_dim=0; i_dim<3; ++i_dim)
                             {
-                                zeta_star[i_surf][i_dim](i_m, i_n) = (to_prev*zeta_star[i_surf][i_dim](i_conv, i_n) +
-                                                       to_next*zeta_star[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                                    //zeta_star_conv[i_surf][i_dim](i_conv -1, i_n) +
+                                zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*zeta_star_conv[i_surf][i_dim](i_conv, i_n) +
+                                                       to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                                zeta_star[i_surf][i_dim](i_m, i_n) += zeta_star_conv[i_surf][i_dim](i_conv -1, i_n);
                             }
                         }
 
