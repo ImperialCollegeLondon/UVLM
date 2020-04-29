@@ -228,14 +228,13 @@ void UVLM::Unsteady::solver
         extra_gamma_star[i_surf].setZero(1, gamma_star[i_surf].cols());
         // UVLM::Types::MatrixX extra_gamma_star[i_surf](1,
                                                       // gamma_star[i_surf].cols());
-        extra_zeta_star[i_surf].resize(3);
+        // extra_zeta_star[i_surf].resize(3);
         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
         {
-            // extra_gamma_star[i_surf].push_back(UVLM::Types::MatrixX(1,
-                                                                    // gamma_star[i_surf].cols()));
             extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
                                                                    gamma_star[i_surf].cols() + 1));
-            // extra_zeta_star[i_surf][i_dim].resize(1, gamma_star[i_surf].cols() + 1);
+            // UVLM::Types::MatrixX extra_zeta_star[i_surf][i_dim](1,
+            //                                                 gamma_star[i_surf].cols() + 1));
         }
     }
 
@@ -257,6 +256,7 @@ void UVLM::Unsteady::solver
 
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
+    // std::cout << dist_to_orig[0] << std::endl;
 
     if (options.convect_wake)
     {

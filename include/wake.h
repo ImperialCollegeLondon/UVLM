@@ -255,9 +255,9 @@ namespace UVLM
                         i_conv = 0; // index of the old point
                         for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
                         {
-                            while (dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)){i_conv++;}
-                            to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
-                            to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                            while (dist_to_orig_conv(i_conv) <= dist_to_orig[i_surf](i_m)){i_conv++;}
+                            to_prev = dist_to_orig[i_surf](i_m) - dist_to_orig_conv(i_conv - 1);
+                            to_next = dist_to_orig_conv(i_conv) - dist_to_orig[i_surf](i_m);
                             prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
 
                             for (unsigned int i_dim=0; i_dim<3; ++i_dim)
@@ -272,7 +272,7 @@ namespace UVLM
                         {
                             for (unsigned int i_m=M - 1; i_m>-1; --i_m)
                             {
-                                dist = dist_to_orig(i_m) - dist_to_orig(i_m - 1);
+                                dist = dist_to_orig[i_surf](i_m) - dist_to_orig[i_surf](i_m - 1);
                                 cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist;
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
