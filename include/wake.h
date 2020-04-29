@@ -251,23 +251,27 @@ namespace UVLM
                         //           zeta_star[i_surf][1](0, i_n),
                         //           zeta_star[i_surf][2](0, i_n);
                         dist_to_orig_conv(0) = 0.;
-                        // Compute the last point
-                        point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star_conv[i_surf][0](M, i_n),
-                                 extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
-                                 extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
-                        dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
                         for (unsigned int i_m=1; i_m<M+1; ++i_m)
                         {
                             point << zeta_star_conv[i_surf][0](i_m, i_n) - zeta_star_conv[i_surf][0](i_m - 1, i_n),
                                      zeta_star_conv[i_surf][1](i_m, i_n) - zeta_star_conv[i_surf][1](i_m - 1, i_n),
                                      zeta_star_conv[i_surf][2](i_m, i_n) - zeta_star_conv[i_surf][2](i_m - 1, i_n);
 
-                            dist_to_orig_conv(i_m) = point.norm()/dist_to_orig_conv(M + 1) + dist_to_orig_conv(i_m - 1);
+                            dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
                             // dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
                             //                               point(1)*point(1) +
                             //                               point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
                         }
+                        // Compute the last point
+                        point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star_conv[i_surf][0](M, i_n),
+                                 extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
+                                 extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
+                        dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
 
+                        for (unsigned int i_m=0; i_m<M+1; ++i_m)
+                        {
+                            dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
+                        }
                         // Redefine the location of the vertices
                         i_conv = 0; // index of the old point
                         for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
