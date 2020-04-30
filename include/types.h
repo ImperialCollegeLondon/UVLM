@@ -313,13 +313,22 @@ namespace UVLM
             t_out& out
         )
         {
+            uint M, N;
             uint n_surf = in.size();
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 uint n_dim = in[i_surf].size();
+                M = in[i_surf][0].rows();
+                N = in[i_surf][0].cols();
                 for (uint i_dim=0; i_dim<n_dim; ++i_dim)
                 {
-                    out[i_surf][i_dim] = in[i_surf][i_dim];
+                    for (uint i_m=0; i_m<M; ++i_m)
+                    {
+                        for (uint i_n=0; i_n<N; ++i_n)
+                        {
+                            out[i_surf][i_dim](i_m, i_n) = in[i_surf][i_dim](i_m, i_n);
+                        }
+                    }
                 }
             }
         }

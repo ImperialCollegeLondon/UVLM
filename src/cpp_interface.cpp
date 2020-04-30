@@ -272,14 +272,19 @@ DLLEXPORT void run_UVLM
                                    gamma_star,
                                    0);
 
-    UVLM::Types::VecMapVX dist_to_orig;
-    UVLM::CppInterface::map_VecVec1(dimensions_star,
-                                    p_dist_to_orig,
-                                    dist_to_orig,
-                                    1);
+    UVLM::Types::VecMapX dist_to_orig;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_dist_to_orig,
+                                   dist_to_orig,
+                                   1);
+    // UVLM::Types::VecMapVX dist_to_orig;
+    // UVLM::CppInterface::map_VecVec1(dimensions_star,
+    //                                 p_dist_to_orig,
+    //                                 dist_to_orig,
+    //                                 1);
 
     UVLM::Types::VecMapX wake_conv_vel;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::CppInterface::map_VecMat(dimensions_star,
                                    p_wake_conv_vel,
                                    wake_conv_vel,
                                    0);
