@@ -10,7 +10,7 @@
 #include <cmath>
 
 #define VORTEX_RADIUS_DEF 1e-6
-#define VORTEX_RADIUS_SQ 1e-4
+// #define VORTEX_RADIUS_SQ 1e-4
 #define Nvert 4
 
 // Declaration for parallel computing
@@ -254,21 +254,23 @@ namespace UVLMlin{
   void biot_panel_map( map_RowVec3& velP,
              const map_RowVec3 zetaP,
              const map_Mat4by3 ZetaPanel,
-             const double gamma );
+             const double gamma,
+             double vortex_radius);
 
 
   void der_biot_panel(Matrix3d& DerP,
           Matrix3d DerVertices[Nvert],
           const RowVector3d zetaP,
           const Matrix4by3d ZetaPanel,
-          const double gamma );
+          const double gamma);
 
 
   void der_biot_panel_map( map_Mat3by3& DerP,
              Vec_map_Mat3by3& DerVertices,
              const map_RowVec3 zetaP,
              const map_Mat4by3 ZetaPanel,
-             const double gamma );
+             const double gamma,
+             double vortex_radius);
 
 
   void der_runit( Matrix3d& Der,
@@ -291,7 +293,8 @@ namespace UVLMlin{
           int& Kzeta_in,
           bool& IsBound,
           int& M_in_bound, // M of bound surf associated
-          int& Kzeta_in_bound
+          int& Kzeta_in_bound,
+          double vortex_radius
           );
 
 
@@ -299,14 +302,16 @@ namespace UVLMlin{
         const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         int& M_in,
-        int& N_in);
+        int& N_in,
+        double vortex_radius);
 
   void ind_vel(map_RowVec3 velC,
         const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         map_Mat GammaIn,
         int& M_in,
-        int& N_in);
+        int& N_in,
+        double vortex_radius);
 
 }
 
@@ -1334,7 +1339,8 @@ namespace UVLMlin{
   void biot_panel_map( map_RowVec3& velP,
              const map_RowVec3 zetaP,
              const map_Mat4by3 ZetaPanel,
-             const double gamma ){
+             const double gamma,
+             double vortex_radius){
     /*
     This implementation works with mapping objects.
     */
@@ -1351,7 +1357,7 @@ namespace UVLMlin{
 
     Matrix4by3d R;    // vectors P - vertex matrix
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
-
+    double vortex_radius_sq = vortex_radius*vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
@@ -1370,7 +1376,7 @@ namespace UVLMlin{
       RAB=ZetaPanel.row(bb)-ZetaPanel.row(aa);  // segment vector
       Vcr=R.row(aa).cross(R.row(bb));
       vcr2=Vcr.dot(Vcr);
-      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)) continue;
+      if (vcr2<vortex_radius_sq*RAB.dot(RAB)) continue;
 
       velP += ((Cbiot/vcr2) * RAB.dot(Runit.row(aa)-Runit.row(bb))) *Vcr;
     }
@@ -1382,7 +1388,7 @@ namespace UVLMlin{
 
 
   void der_biot_panel( Matrix3d& DerP, Matrix3d DerVertices[Nvert],
-    const RowVector3d zetaP, const Matrix4by3d ZetaPanel, const double gamma ){
+    const RowVector3d zetaP, const Matrix4by3d ZetaPanel, const double gamma, double vortex_radius){
     /* This implementation is no suitable for python interface */
 
 
@@ -1400,7 +1406,7 @@ namespace UVLMlin{
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
 
     Matrix3d Array_Der_runit[Nvert]; // as a static arrays (we know size)
-
+    double vortex_radius_sq = vortex_radius*vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
@@ -1426,7 +1432,7 @@ namespace UVLMlin{
       RAB=ZetaPanel.row(bb)-ZetaPanel.row(aa);  // segment vector
       Vcr=R.row(aa).cross(R.row(bb));
       vcr2=Vcr.dot(Vcr);
-      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){
+      if (vcr2<vortex_radius_sq*RAB.dot(RAB)){
         //cout << endl << "Skipping seg. " << ii << endl;
         continue;}
       Tv=Runit.row(aa)-Runit.row(bb);
@@ -1470,7 +1476,8 @@ namespace UVLMlin{
              Vec_map_Mat3by3& DerVertices,
              const map_RowVec3 zetaP,
              const map_Mat4by3 ZetaPanel,
-             const double gamma ){
+             const double gamma,
+             double vortex_radius){
     /*
     This implementation works with mapping objects.
     */
@@ -1490,7 +1497,7 @@ namespace UVLMlin{
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
 
     Matrix3d Array_Der_runit[Nvert]; // as a static arrays (we know size)
-
+    double vortex_radius_sq = vortex_radius*vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
@@ -1516,7 +1523,7 @@ namespace UVLMlin{
       RAB=ZetaPanel.row(bb)-ZetaPanel.row(aa);  // segment vector
       Vcr=R.row(aa).cross(R.row(bb));
       vcr2=Vcr.dot(Vcr);
-      if (vcr2<VORTEX_RADIUS_SQ*RAB.dot(RAB)){
+      if (vcr2<vortex_radius_sq*RAB.dot(RAB)){
         //cout << endl << "Skipping seg. " << ii << endl;
         continue;}
       Tv=Runit.row(aa)-Runit.row(bb);
@@ -1625,7 +1632,8 @@ namespace UVLMlin{
           int& Kzeta_in,
           bool& IsBound,
           int& M_in_bound, // M of bound surf associated
-          int& Kzeta_in_bound
+          int& Kzeta_in_bound,
+          double vortex_radius
           )
   {
     int cc, vv, mm, nn, jj, cc_in; //pp
@@ -1668,7 +1676,7 @@ namespace UVLMlin{
           for(vv=0; vv<Nvert; vv++) derv[vv].setZero();
 
           // get local deriv
-          der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
+          der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn), vortex_radius);
           //for(vv=0; vv<Nvert; vv++) cout << derv[vv] << endl;
 
           for(cc=0; cc<3; cc++){
@@ -1703,7 +1711,7 @@ namespace UVLMlin{
         derv[3].setZero();
 
         // get local deriv
-        der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
+        der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn), vortex_radius);
 
         for(cc=0; cc<3; cc++){
           for(cc_in=0; cc_in<3; cc_in++){
@@ -1730,7 +1738,7 @@ namespace UVLMlin{
             }
           }
           // update DerC
-          der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn));
+          der_biot_panel_map(DerC,derv,zetaC,ZetaPanel_in,GammaIn(mm,nn), vortex_radius);
         }// loop nn
       }// loop mm
     }// if-else
@@ -1743,7 +1751,8 @@ namespace UVLMlin{
         const map_RowVec3 zetaC,
         Vec_map_Mat ZetaIn,
         int& M_in,
-        int& N_in)
+        int& N_in,
+        double vortex_radius)
   {
 
     int mm,nn,cc,vv;
@@ -1767,7 +1776,7 @@ namespace UVLMlin{
         }
 
         vel.setZero();
-        biot_panel_map( vel, zetaC, ZetaPanel_in, 1.0);
+        biot_panel_map( vel, zetaC, ZetaPanel_in, 1.0, vortex_radius);
         AIC3.col(mm*N_in+nn)=vel;
 
       }
@@ -1781,7 +1790,8 @@ namespace UVLMlin{
         Vec_map_Mat ZetaIn,
         map_Mat GammaIn,
         int& M_in,
-        int& N_in)
+        int& N_in,
+        double vortex_radius)
   {
 
     int mm,nn,cc,vv;
@@ -1801,7 +1811,7 @@ namespace UVLMlin{
           }
         }
 
-        biot_panel_map( velC, zetaC, ZetaPanel_in, GammaIn(mm,nn));
+        biot_panel_map( velC, zetaC, ZetaPanel_in, GammaIn(mm,nn), vortex_radius);
       }
     }
   }
