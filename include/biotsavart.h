@@ -36,7 +36,7 @@ namespace UVLM
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
             // const bool&         horseshoe = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -57,7 +57,7 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -78,7 +78,7 @@ namespace UVLM
             const bool&         image_method,
             const t_normals&    normal,
             const int&          n_rows = -1,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -96,7 +96,7 @@ namespace UVLM
             unsigned int        Mend   = -1,
             unsigned int        Nend   = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -115,7 +115,7 @@ namespace UVLM
             const bool&         horseshoe,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -134,7 +134,7 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method,
             const int&          n_rows = -1, // default val = -1
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad,
@@ -148,7 +148,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma_star,
             // t_uind& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad,
@@ -161,7 +161,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad>
@@ -173,7 +173,7 @@ namespace UVLM
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
             // t_uind& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -191,7 +191,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -207,7 +207,7 @@ namespace UVLM
             const t_zeta_col& zeta_col,
             t_u_ind& u_ind,
             const bool image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -226,7 +226,7 @@ namespace UVLM
             unsigned int        Mend = -1,
             unsigned int        Nend = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_ttriad,
@@ -242,7 +242,7 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
             const bool&         image_method,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
     }
 }
@@ -320,7 +320,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
             const UVLM::Types::Vector3& v1,
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
-            const UVLM::Types::Real vortex_radius
+            const UVLM::Types::Real& vortex_radius
         )
 {
     UVLM::Types::Vector3 uind;
@@ -405,7 +405,7 @@ void UVLM::BiotSavart::horseshoe
     const t_block& z,
     const UVLM::Types::Real& gamma_star,
     UVLM::Types::Vector3& uind,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     // three segments.
@@ -530,7 +530,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::vortex_ring
     const t_block& z,
     const UVLM::Types::Real& gamma,
     // t_uind& uind,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     UVLM::Types::Vector3 uind;
@@ -587,7 +587,7 @@ void UVLM::BiotSavart::surface
     unsigned int        Mend,
     unsigned int        Nend,
     const bool&         image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     // If Mend or Nend are == -1, their values are taken as the surface M and N
@@ -712,7 +712,7 @@ void UVLM::BiotSavart::surface_with_steady_wake
     const bool&         horseshoe,
     t_uout&             uout,
     const bool&         image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const uint Mstart = 0;
@@ -792,7 +792,7 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     t_uout&             uout,
     const bool&         image_method,
     const int&          n_rows,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const uint Mstart = 0;
@@ -856,7 +856,7 @@ void UVLM::BiotSavart::multisurface
     t_uout&             uout,
     const bool&         image_method,
     const t_normals&    normal,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const unsigned int rows_collocation = target_surface[0].rows();
@@ -927,7 +927,7 @@ void UVLM::BiotSavart::multisurface_steady_wake
     t_uout&             uout,
     const bool&         image_method,
     const t_normals&    normal,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const unsigned int rows_collocation = target_surface[0].rows();
@@ -996,7 +996,7 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
     const bool&         image_method,
     const t_normals&    normal,
     const int&          n_rows,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const unsigned int rows_collocation = target_surface[0].rows();
@@ -1079,7 +1079,7 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const t_zeta_col& zeta_col,
     t_u_ind& u_ind,
     const bool image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const uint col_n_M = zeta_col[0].rows();
@@ -1130,7 +1130,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
     unsigned int        Mend,
     unsigned int        Nend,
     const bool&         image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     // If Mend or Nend are == -1, their values are taken as the surface M and N
@@ -1233,7 +1233,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     const t_gamma_star& gamma_star,
     t_uout&             uout,
     const bool&         image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     const uint n_surf = zeta.size();
@@ -1278,7 +1278,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     const t_gamma&      gamma,
     const t_gamma_star& gamma_star,
     const bool&         image_method,
-    const UVLM::Types::Real vortex_radius
+    const UVLM::Types::Real& vortex_radius
 )
 {
     UVLM::Types::Vector3 uout;
