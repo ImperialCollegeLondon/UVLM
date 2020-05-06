@@ -537,7 +537,8 @@ DLLEXPORT void total_induced_velocity_at_points
                         zeta_star,
                         gamma,
                         gamma_star,
-                        options.ImageMethod);
+                        options.ImageMethod,
+                        options.vortex_radius);
         uout(ipoint, 0) = aux_uout(0);
         uout(ipoint, 1) = aux_uout(1);
         uout(ipoint, 2) = aux_uout(2);
@@ -777,7 +778,8 @@ DLLEXPORT void multisurface
         target_surface_col[0],
         uout[0],
         options.ImageMethod,
-        normal[0]
+        normal[0],
+        options.vortex_radius
     );
 }
 

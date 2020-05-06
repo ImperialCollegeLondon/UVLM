@@ -9,13 +9,8 @@
 #include <math.h>
 #include <cmath>
 
-// #define VORTEX_RADIUS 1e-5
-#define VORTEX_RADIUS 1.e-6
-// TODO: I do not think it is an ideal definition for VORTEX_RADIUS_SQ 
-// but it only affects the linear implementation
-// Otherwise, the assembly tests do not pass
+#define VORTEX_RADIUS_DEF 1e-6
 #define VORTEX_RADIUS_SQ 1e-4
-#define EPSILON_VORTEX 1e-10
 #define Nvert 4
 
 // Declaration for parallel computing
@@ -41,7 +36,7 @@ namespace UVLM
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
             // const bool&         horseshoe = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -62,7 +57,7 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method = false,
             const t_normals&    normal = NULL,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -82,7 +77,8 @@ namespace UVLM
             t_uout&             uout,
             const bool&         image_method,
             const t_normals&    normal,
-            const int&          n_rows = -1
+            const int&          n_rows = -1,
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -100,7 +96,7 @@ namespace UVLM
             unsigned int        Mend   = -1,
             unsigned int        Nend   = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -119,7 +115,7 @@ namespace UVLM
             const bool&         horseshoe,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_zeta,
@@ -137,7 +133,8 @@ namespace UVLM
             const t_ttriad&     target_triad,
             t_uout&             uout,
             const bool&         image_method,
-            const int&          n_rows = -1 // default val = -1
+            const int&          n_rows = -1, // default val = -1
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad,
@@ -151,7 +148,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma_star,
             // t_uind& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad,
@@ -164,7 +161,7 @@ namespace UVLM
             const t_block& z,
             const UVLM::Types::Real& gamma,
             UVLM::Types::Vector3& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_triad>
@@ -176,7 +173,7 @@ namespace UVLM
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
             // t_uind& uind,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -194,7 +191,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             t_uout&             uout,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -209,7 +206,8 @@ namespace UVLM
             const t_gamma& gamma,
             const t_zeta_col& zeta_col,
             t_u_ind& u_ind,
-            const bool image_method = false
+            const bool image_method = false,
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
 
@@ -228,7 +226,7 @@ namespace UVLM
             unsigned int        Mend = -1,
             unsigned int        Nend = -1,
             const bool&         image_method = false,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
 
         template <typename t_ttriad,
@@ -244,7 +242,7 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
             const bool&         image_method,
-            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS
+            const UVLM::Types::Real vortex_radius = VORTEX_RADIUS_DEF
         );
     }
 }
@@ -322,7 +320,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
             const UVLM::Types::Vector3& v1,
             const UVLM::Types::Vector3& v2,
             const UVLM::Types::Real& gamma,
-            const UVLM::Types::Real vortex_radius // not used anymore
+            const UVLM::Types::Real vortex_radius
         )
 {
     UVLM::Types::Vector3 uind;
@@ -347,7 +345,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
     r0_mod = sqrt(r0_mod);
     r1_mod = sqrt(r1_mod);
     r2_mod = sqrt(r2_mod);
-    if ((r1_mod < VORTEX_RADIUS) || (r2_mod < VORTEX_RADIUS)){
+    if ((r1_mod < vortex_radius) || (r2_mod < vortex_radius)){
         uind(0) = 0.0;
         uind(1) = 0.0;
         uind(2) = 0.0;
@@ -364,7 +362,7 @@ inline UVLM::Types::Vector3 UVLM::BiotSavart::segment
                              r1_cross_r2[1]*r1_cross_r2[1] +
                              r1_cross_r2[2]*r1_cross_r2[2];
 
-        if (r1_cross_r2_mod_sq < VORTEX_RADIUS){
+        if (r1_cross_r2_mod_sq < vortex_radius*vortex_radius){
 
             uind(0) = 0.0;
             uind(1) = 0.0;
@@ -444,7 +442,8 @@ void UVLM::BiotSavart::horseshoe
     uind += UVLM::BiotSavart::segment(target_triad,
                               v1,
                               v2,
-                              gamma_star);
+                              gamma_star,
+                              vortex_radius);
                               // uind);
 
     // segment 0-1
@@ -565,7 +564,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::vortex_ring
         uind += UVLM::BiotSavart::segment(target_triad,
                                           v1,
                                           v2,
-                                          gamma);
+                                          gamma,
+                                          vortex_radius);
                                           // uind);
     }
     return uind;
@@ -617,7 +617,8 @@ void UVLM::BiotSavart::surface
             temp_uout = UVLM::BiotSavart::segment(target_triad,
                                                   v1,
                                                   v2,
-                                                  1.0);
+                                                  1.0,
+                                                  vortex_radius);
             span_seg_uout[0][0](i,j) = temp_uout(0);
             span_seg_uout[0][1](i,j) = temp_uout(1);
             span_seg_uout[0][2](i,j) = temp_uout(2);
@@ -629,7 +630,8 @@ void UVLM::BiotSavart::surface
             temp_uout = UVLM::BiotSavart::segment(target_triad,
                                                   v1,
                                                   v2,
-                                                  1.0);
+                                                  1.0,
+                                                  vortex_radius);
             chord_seg_uout[0][0](i,j) = temp_uout(0);
             chord_seg_uout[0][1](i,j) = temp_uout(1);
             chord_seg_uout[0][2](i,j) = temp_uout(2);
@@ -648,7 +650,8 @@ void UVLM::BiotSavart::surface
         temp_uout = UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              1.0);
+                                              1.0,
+                                              vortex_radius);
         span_seg_uout[0][0](Mend,j) = temp_uout(0);
         span_seg_uout[0][1](Mend,j) = temp_uout(1);
         span_seg_uout[0][2](Mend,j) = temp_uout(2);
@@ -666,7 +669,8 @@ void UVLM::BiotSavart::surface
         temp_uout = UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              1.0);
+                                              1.0,
+                                              vortex_radius);
         chord_seg_uout[0][0](i,Nend) = temp_uout(0);
         chord_seg_uout[0][1](i,Nend) = temp_uout(1);
         chord_seg_uout[0][2](i,Nend) = temp_uout(2);
@@ -724,7 +728,8 @@ void UVLM::BiotSavart::surface_with_steady_wake
                               Nstart,
                               Mend,
                               Nend,
-                              image_method);
+                              image_method,
+                              vortex_radius);
 
     const uint i0 = 0;
     const uint i = Mend - 1;
@@ -739,7 +744,8 @@ void UVLM::BiotSavart::surface_with_steady_wake
                                         zeta_star[1].template block<2,2>(i0,j),
                                         zeta_star[2].template block<2,2>(i0,j),
                                         gamma_star(i0,j),
-                                        temp_uout);
+                                        temp_uout,
+                                        vortex_radius);
             uout[0](i, j) += temp_uout(0);
             uout[1](i, j) += temp_uout(1);
             uout[2](i, j) += temp_uout(2);
@@ -758,7 +764,8 @@ void UVLM::BiotSavart::surface_with_steady_wake
                                               zeta_star[0].template block<2,2>(i_star, j),
                                               zeta_star[1].template block<2,2>(i_star, j),
                                               zeta_star[2].template block<2,2>(i_star, j),
-                                              gamma_star(i_star, j));
+                                              gamma_star(i_star, j),
+                                              vortex_radius);
                                               // temp_uout);
             }
             uout[0](i, j) += temp_uout(0);
@@ -784,7 +791,8 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     const t_ttriad&     target_triad,
     t_uout&             uout,
     const bool&         image_method,
-    const int&          n_rows // default val = -1
+    const int&          n_rows,
+    const UVLM::Types::Real vortex_radius
 )
 {
     const uint Mstart = 0;
@@ -803,7 +811,8 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
                               Nstart,
                               Mend,
                               Nend,
-                              image_method);
+                              image_method,
+                              vortex_radius);
 
     // wake contribution
     // n_rows controls the number of panels that are included
@@ -824,7 +833,8 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
                                           zeta_star[0].template block<2,2>(i_star, j),
                                           zeta_star[1].template block<2,2>(i_star, j),
                                           zeta_star[2].template block<2,2>(i_star, j),
-                                          gamma_star(i_star, j));
+                                          gamma_star(i_star, j),
+                                          vortex_radius);
                                           // temp_uout);
         }
         uout[0](i, j) += temp_uout(0);
@@ -875,7 +885,8 @@ void UVLM::BiotSavart::multisurface
             UVLM::BiotSavart::surface(zeta,
                                       gamma,
                                       target_triad,
-                                      temp_uout);
+                                      temp_uout,
+                                      vortex_radius);
 
             // surface_counter = -1;
             // #pragma omp parallel for collapse(2)
@@ -947,7 +958,8 @@ void UVLM::BiotSavart::multisurface_steady_wake
                                                        gamma_star,
                                                        target_triad,
                                                        horseshoe,
-                                                       temp_uout
+                                                       temp_uout,
+                                                       vortex_radius
                                                       );
 
             // #pragma omp parallel for collapse(2)
@@ -983,7 +995,8 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
     t_uout&             uout,
     const bool&         image_method,
     const t_normals&    normal,
-    const int&          n_rows // default val = -1
+    const int&          n_rows,
+    const UVLM::Types::Real vortex_radius
 )
 {
     const unsigned int rows_collocation = target_surface[0].rows();
@@ -1019,7 +1032,8 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
                                                          target_triad,
                                                          temp_uout,
                                                          image_method,
-                                                         n_rows
+                                                         n_rows,
+                                                         vortex_radius
                                                         );
 
             // #pragma omp parallel for collapse(2)
@@ -1064,7 +1078,8 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const t_gamma& gamma,
     const t_zeta_col& zeta_col,
     t_u_ind& u_ind,
-    const bool image_method
+    const bool image_method,
+    const UVLM::Types::Real vortex_radius
 )
 {
     const uint col_n_M = zeta_col[0].rows();
@@ -1089,7 +1104,8 @@ void UVLM::BiotSavart::whole_surface_on_surface
                         gamma,
                         target_triad,
                         // uout,
-                        image_method
+                        image_method,
+                        vortex_radius
                     );
             u_ind[0](col_i_M, col_j_N) += uout(0);
             u_ind[1](col_i_M, col_j_N) += uout(1);
@@ -1149,7 +1165,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
             uout += UVLM::BiotSavart::segment(target_triad,
                                                   v1,
                                                   v2,
-                                                  -delta_gamma);
+                                                  -delta_gamma,
+                                                  vortex_radius);
 
             // Streamwise/chordwise vortices
             v2 << zeta[0](i+1, j),
@@ -1164,7 +1181,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
             uout += UVLM::BiotSavart::segment(target_triad,
                                                   v1,
                                                   v2,
-                                                  -delta_gamma);
+                                                  -delta_gamma,
+                                                  vortex_radius);
         }
     }
     for (unsigned int j=Nstart; j<Nend; ++j)
@@ -1179,7 +1197,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
         uout += UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              gamma(Mend-1,j));
+                                              gamma(Mend-1,j),
+                                              vortex_radius);
     }
 
     for (unsigned int i=Mstart; i<Mend; ++i)
@@ -1195,7 +1214,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
         uout += UVLM::BiotSavart::segment(target_triad,
                                               v1,
                                               v2,
-                                              -gamma(i, Nend-1));
+                                              -gamma(i, Nend-1),
+                                              vortex_radius);
     }
     return uout;
 }
@@ -1228,7 +1248,8 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
                 gamma_star[i_surf],
                 zeta_star[col_i_surf],
                 uout[col_i_surf],
-                image_method
+                image_method,
+                vortex_radius
             );
             // surface on wake
             UVLM::BiotSavart::whole_surface_on_surface
@@ -1237,7 +1258,8 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
                 gamma[i_surf],
                 zeta_star[col_i_surf],
                 uout[col_i_surf],
-                image_method
+                image_method,
+                vortex_radius
             );
         }
     }
