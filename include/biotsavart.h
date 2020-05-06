@@ -1323,8 +1323,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
 
 namespace UVLMlin{
 
-  const double PI = 3.1415926535897932384626433832795028841971;
-  const double PIquart=0.25/PI;
+  const double PI = UVLM::Constants::PI;
+  const double PIquart = UVLM::Constants::INV_PI4;
   const int svec[Nvert]={0, 1, 2, 3}; // seg. no.
   const int avec[Nvert]={0, 1, 2, 3}; // seg. no.
   const int bvec[Nvert]={1, 2, 3, 0}; // seg. no.
