@@ -74,12 +74,12 @@ namespace UVLMlin{
                     double p_zetaP[3],
                     double p_ZetaPanel[12],
                     const double& gamma,
-                    double vortex_radius);
+                    double& vortex_radius);
 
 
   extern "C" void call_biot_panel(double p_vel[3],
                   double p_zetaP[3],
                   double p_ZetaPanel[12],
                   const double& gamma,
-                  double vortex_radius);
+                  double& vortex_radius);
 }

@@ -791,7 +791,7 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
                     double p_zetaP[3],
                     double p_ZetaPanel[12],
                     const double& gamma,
-                    double vortex_radius)
+                    double& vortex_radius)
   { /*
     To interface with python, matrices need to be mapped into 1d arrays.
     */
@@ -817,7 +817,7 @@ DLLEXPORT void call_biot_panel(double p_vel[3],
                   double p_zetaP[3],
                   double p_ZetaPanel[12],
                   const double& gamma,
-                  double vortex_radius){
+                  double& vortex_radius){
     /*
     To interface Eigen based routines with python, matrices need to be mapped
     into 1d arrays.
@@ -841,7 +841,7 @@ DLLEXPORT void call_dvinddzeta(double p_DerC[9],
                   int& N_in,
                   bool& IsBound,
                   int& M_in_bound, // M of bound surf associated
-                  double vortex_radius)
+                  double& vortex_radius)
   {
     int cc;
     int Kzeta_in=(M_in+1)*(N_in+1);
@@ -873,7 +873,7 @@ DLLEXPORT void call_aic3(  double p_AIC3[],
                 double p_ZetaIn[],
                 int& M_in,
                 int& N_in,
-                double vortex_radius)
+                double& vortex_radius)
   {
     int cc;
     int K_in=M_in*N_in;
@@ -899,7 +899,7 @@ DLLEXPORT void call_ind_vel(
                 double p_GammaIn[],
                 int& M_in,
                 int& N_in,
-                double vortex_radius)
+                double& vortex_radius)
   {
     int cc;
 
