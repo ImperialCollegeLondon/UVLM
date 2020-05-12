@@ -294,7 +294,8 @@ void UVLM::Unsteady::solver
         //                                 p_dist_to_origin,
         //                                 dist_to_origin,
         //                                 1);
-        UVLM::Wake::Discretised::cfl_n1(zeta_star,
+        UVLM::Wake::Discretised::cfl_n1(options,
+                                        zeta_star,
                                         // gamma,
                                         gamma_star,
                                         // uext,
