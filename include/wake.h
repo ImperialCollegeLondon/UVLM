@@ -3,6 +3,7 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include <math.h>
+#include <unsupported/Eigen/Splines>
 // #include "unsteady.h"
 // #include "steady.h"
 
@@ -184,15 +185,17 @@ namespace UVLM
                 double dt=0.
             )
             {
-                unsigned int M, N, i_conv;
+                unsigned int M, N;
+                // unsigned int M, N, i_conv;
+                const unsigned int splines_degree=3;
                 double cfl, dist;
-                UVLM::Types::VectorX dist_to_orig_conv;
+                // UVLM::Types::VectorX dist_to_orig_conv;
                 // UVLM::Types::Vector3 origin;
                 UVLM::Types::Vector3 point;
-                UVLM::Types::Real to_prev, to_next, prev_to_next;
+                // UVLM::Types::Real to_prev, to_next, prev_to_next;
 
-                UVLM::Types::Vector3 b, abc;
-                Eigen::Matrix<UVLM::Types::Real, 3, 3> Amat, Ainv;
+                // UVLM::Types::Vector3 b, abc;
+                // Eigen::Matrix<UVLM::Types::Real, 3, 3> Amat, Ainv;
 
                 // Store the values that will be deleted
                 // UVLM::Types::VecMatrixX extra_gamma_star;
@@ -245,120 +248,184 @@ namespace UVLM
 
                     // for (unsigned int i_m=0; i_m<M+1; ++i_m){
                     // std::cout << dist_to_orig[0](i_m, N) << std::endl;}
-                    dist_to_orig_conv.resize(M + 2);
-                    dist_to_orig_conv.setZero();
+                    // dist_to_orig_conv.resize(M + 2);
+                    // dist_to_orig_conv.setZero();
                     for (unsigned int i_n=0; i_n<N + 1; ++i_n)
                     {
                         // Recompute the geometry
                         if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
                         {
-                            // Compute the distance of each wake vertice to the first point of the
-                            // filament
-                            // origin << zeta_star[i_surf][0](0, i_n),
-                            //           zeta_star[i_surf][1](0, i_n),
-                            //           zeta_star[i_surf][2](0, i_n);
-                            dist_to_orig_conv(0) = 0.;
+                            // // Compute the distance of each wake vertice to the first point of the
+                            // // filament
+                            // // origin << zeta_star[i_surf][0](0, i_n),
+                            // //           zeta_star[i_surf][1](0, i_n),
+                            // //           zeta_star[i_surf][2](0, i_n);
+                            // dist_to_orig_conv(0) = 0.;
+                            // for (unsigned int i_m=1; i_m<M+1; ++i_m)
+                            // {
+                            //     point << zeta_star_conv[i_surf][0](i_m, i_n) - zeta_star_conv[i_surf][0](i_m - 1, i_n),
+                            //              zeta_star_conv[i_surf][1](i_m, i_n) - zeta_star_conv[i_surf][1](i_m - 1, i_n),
+                            //              zeta_star_conv[i_surf][2](i_m, i_n) - zeta_star_conv[i_surf][2](i_m - 1, i_n);
+                            //
+                            //     dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
+                            //     // dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
+                            //     //                               point(1)*point(1) +
+                            //     //                               point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
+                            // }
+                            // // Compute the last point
+                            // point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star_conv[i_surf][0](M, i_n),
+                            //          extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
+                            //          extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
+                            // dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
+                            //
+                            // // std::cout << "in: " << i_n << std::endl;
+                            // // std::cout << dist_to_orig_conv(M) << "..." << dist_to_orig[i_surf](M, i_n) << std::endl;
+                            //
+                            // // for (unsigned int i_m=0; i_m<M+1; ++i_m)
+                            // // {
+                            // //     dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
+                            // // }
+                            // // Redefine the location of the vertices
+
+                            UVLM::Types::MatrixX points_conv(3, M + 2);
+                            for (unsigned int i_m=0; i_m<M+1; ++i_m)
+                            {
+                                points_conv.col(i_m) << zeta_star_conv[i_surf][0](i_m, i_n),
+                                                        zeta_star_conv[i_surf][1](i_m, i_n),
+                                                        zeta_star_conv[i_surf][2](i_m, i_n);
+                                // std::cout << "point im: "<< i_m << " " << points_conv(0, i_m) <<
+                                //                                    " " << points_conv(1, i_m) <<
+                                //                                    " " << points_conv(2, i_m) << std::endl;
+                            }
+                            points_conv.col(M + 1) << extra_zeta_star[i_surf][0](0, i_n),
+                                                      extra_zeta_star[i_surf][1](0, i_n),
+                                                      extra_zeta_star[i_surf][2](0, i_n);
+                          // std::cout << "point im: "<< M+1 << " " << points_conv(0, M+1) <<
+                          //                                    " " << points_conv(1, M+1) <<
+                          //                                    " " << points_conv(2, M+1) << std::endl;
+
+                            Eigen::Spline<UVLM::Types::Real, 3, splines_degree> spline = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 3, splines_degree>>::Interpolate(points_conv, splines_degree);
+
                             for (unsigned int i_m=1; i_m<M+1; ++i_m)
                             {
-                                point << zeta_star_conv[i_surf][0](i_m, i_n) - zeta_star_conv[i_surf][0](i_m - 1, i_n),
-                                         zeta_star_conv[i_surf][1](i_m, i_n) - zeta_star_conv[i_surf][1](i_m - 1, i_n),
-                                         zeta_star_conv[i_surf][2](i_m, i_n) - zeta_star_conv[i_surf][2](i_m - 1, i_n);
+                                // std::cout << "t: " << dist_to_orig[i_surf](i_m, i_n)/dist_to_orig[i_surf](M, i_n) << std::endl;
+                                point = spline(dist_to_orig[i_surf](i_m, i_n)/dist_to_orig[i_surf](M, i_n));
 
-                                dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
-                                // dist_to_orig_conv(i_m) = sqrt(point(0)*point(0) +
-                                //                               point(1)*point(1) +
-                                //                               point(2)*point(2)) + dist_to_orig_conv(i_m - 1);
-                            }
-                            // Compute the last point
-                            point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star_conv[i_surf][0](M, i_n),
-                                     extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
-                                     extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
-                            dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
-
-                            // std::cout << "in: " << i_n << std::endl;
-                            // std::cout << dist_to_orig_conv(M) << "..." << dist_to_orig[i_surf](M, i_n) << std::endl;
-
-                            // for (unsigned int i_m=0; i_m<M+1; ++i_m)
-                            // {
-                            //     dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
-                            // }
-                            // Redefine the location of the vertices
-                            i_conv = 0; // index of the old point
-                            for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
-                            {
-                                while ((dist_to_orig_conv(i_conv) <= dist_to_orig[i_surf](i_m, i_n)) and (i_conv <= M + 1))
-                                {i_conv++;}
-
-                                if (i_conv == 1)
+                                for (unsigned int i_dim=0; i_dim<3; ++i_dim)
                                 {
-                                    // Regular point
-                                    to_prev = dist_to_orig[i_surf](i_m, i_n) - dist_to_orig_conv(i_conv - 1);
-                                    to_next = dist_to_orig_conv(i_conv) - dist_to_orig[i_surf](i_m, i_n);
-                                    prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
-
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                                    {
-                                        zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*zeta_star_conv[i_surf][i_dim](i_conv, i_n) +
-                                                               to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
-                                    }
-                                } else if (i_conv < M + 1)
-                                {
-                                    Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
-                                            dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
-                                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
-                                    Ainv = Amat.inverse();
-
-                                    // std::cout << "dto_conv:" << dist_to_orig_conv(i_conv - 2) << " " << 
-                                    //                             dist_to_orig_conv(i_conv - 1) << " " <<
-                                    //                             dist_to_orig_conv(i_conv    ) << std::endl;
-                                    // std::cout << "dto:" << dist_to_orig[i_surf](i_m, i_n) << std::endl;
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                                    {
-                                        b << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n),
-                                             zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n),
-                                             zeta_star_conv[i_surf][i_dim](i_conv    , i_n);
-                                        abc = Ainv*b;
-                                        // std::cout << "abc idim:" << i_dim << ": " << abc << std::endl;
-                                        zeta_star[i_surf][i_dim](i_m, i_n) = abc(0)*dist_to_orig[i_surf](i_m, i_n)*dist_to_orig[i_surf](i_m, i_n) +
-                                                                             abc(1)*dist_to_orig[i_surf](i_m, i_n) +
-                                                                             abc(2);
-                                        // std::cout << "zs_conv idim" << i_dim << ":" << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n) << " " <<
-                                        //                                                zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n) << " " <<
-                                        //                                                zeta_star_conv[i_surf][i_dim](i_conv    , i_n) << std::endl;
-                                        // std::cout << "zs idim" << i_dim << ":" << zeta_star[i_surf][i_dim](i_m, i_n) << std::endl;
-                                        // std::cout << " " << std::endl;
-                                    }
-                                    // std::cout << " " << std::endl;
-
-
-                                } else if (i_conv == M + 1){
-
-                                    Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
-                                            dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
-                                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
-                                    Ainv = Amat.inverse();
-
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                                    {
-                                        b << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n),
-                                             zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n),
-                                             extra_zeta_star[i_surf][i_dim](0        , i_n);
-                                        abc = Ainv*b;
-
-                                        zeta_star[i_surf][i_dim](i_m, i_n) = abc(0)*dist_to_orig[i_surf](i_m, i_n)*dist_to_orig[i_surf](i_m, i_n) +
-                                                                             abc(1)*dist_to_orig[i_surf](i_m, i_n) +
-                                                                             abc(2);
-                                    }
-                                } else {
-                                    // Point over the limit
-                                    // Not ideal situation
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                                    {
-                                        zeta_star[i_surf][i_dim](i_m, i_n) =  extra_zeta_star[i_surf][i_dim](0, i_n);
-                                    }
-
+                                    zeta_star[i_surf][i_dim](i_m, i_n) = point(i_dim);
                                 }
                             }
+
+                            // typedef Eigen::Spline<float, 3> Spline3d;
+                            //
+                            // int main(){
+                            //   std::vector<Eigen::VectorXf> waypoints;
+                            //   Eigen::Vector3f po1(2,3,4);
+                            //   Eigen::Vector3f po2(2,5,4);
+                            //   Eigen::Vector3f po3(2,8,9);
+                            //   Eigen::Vector3f po4(2,8,23);
+                            //   waypoints.push_back(po1);
+                            //   waypoints.push_back(po2);
+                            //   waypoints.push_back(po3);
+                            //   waypoints.push_back(po4);
+                            //
+                            //   // The degree of the interpolating spline needs to be one less than the number of points
+                            //   // that are fitted to the spline.
+                            //   Eigen::MatrixXf points(3, waypoints.size());
+                            //   int row_index = 0;
+                            //   for(auto const way_point : waypoints){
+                            //       points.col(row_index) << way_point[0], way_point[1], way_point[2];
+                            //       row_index++;
+                            //   }
+                            //   Spline3d spline = Eigen::SplineFitting<Spline3d>::Interpolate(points, 2);
+                            //   float time_ = 0;
+                            //   for(int i=0; i<20; i++){
+                            //       time_ += 1.0/(20*1.0);
+                            //       Eigen::VectorXf values = spline(time_);
+                            //       std::cout<< values << std::endl;
+                            //   }
+                            //   return 0;
+                            // }
+
+
+
+                            // i_conv = 0; // index of the old point
+                            // for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
+                            // {
+                            //     while ((dist_to_orig_conv(i_conv) <= dist_to_orig[i_surf](i_m, i_n)) and (i_conv <= M + 1))
+                            //     {i_conv++;}
+                            //
+                            //     if (i_conv == 1)
+                            //     {
+                            //         // Regular point
+                            //         to_prev = dist_to_orig[i_surf](i_m, i_n) - dist_to_orig_conv(i_conv - 1);
+                            //         to_next = dist_to_orig_conv(i_conv) - dist_to_orig[i_surf](i_m, i_n);
+                            //         prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+                            //
+                            //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                            //         {
+                            //             zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*zeta_star_conv[i_surf][i_dim](i_conv, i_n) +
+                            //                                    to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                            //         }
+                            //     } else if (i_conv < M + 1)
+                            //     {
+                            //         Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
+                            //                 dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            //                 dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
+                            //         Ainv = Amat.inverse();
+                            //
+                            //         // std::cout << "dto_conv:" << dist_to_orig_conv(i_conv - 2) << " " <<
+                            //         //                             dist_to_orig_conv(i_conv - 1) << " " <<
+                            //         //                             dist_to_orig_conv(i_conv    ) << std::endl;
+                            //         // std::cout << "dto:" << dist_to_orig[i_surf](i_m, i_n) << std::endl;
+                            //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                            //         {
+                            //             b << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n),
+                            //                  zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n),
+                            //                  zeta_star_conv[i_surf][i_dim](i_conv    , i_n);
+                            //             abc = Ainv*b;
+                            //             // std::cout << "abc idim:" << i_dim << ": " << abc << std::endl;
+                            //             zeta_star[i_surf][i_dim](i_m, i_n) = abc(0)*dist_to_orig[i_surf](i_m, i_n)*dist_to_orig[i_surf](i_m, i_n) +
+                            //                                                  abc(1)*dist_to_orig[i_surf](i_m, i_n) +
+                            //                                                  abc(2);
+                            //             // std::cout << "zs_conv idim" << i_dim << ":" << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n) << " " <<
+                            //             //                                                zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n) << " " <<
+                            //             //                                                zeta_star_conv[i_surf][i_dim](i_conv    , i_n) << std::endl;
+                            //             // std::cout << "zs idim" << i_dim << ":" << zeta_star[i_surf][i_dim](i_m, i_n) << std::endl;
+                            //             // std::cout << " " << std::endl;
+                            //         }
+                            //         // std::cout << " " << std::endl;
+                            //
+                            //
+                            //     } else if (i_conv == M + 1){
+                            //
+                            //         Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
+                            //                 dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            //                 dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
+                            //         Ainv = Amat.inverse();
+                            //
+                            //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                            //         {
+                            //             b << zeta_star_conv[i_surf][i_dim](i_conv - 2, i_n),
+                            //                  zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n),
+                            //                  extra_zeta_star[i_surf][i_dim](0        , i_n);
+                            //             abc = Ainv*b;
+                            //
+                            //             zeta_star[i_surf][i_dim](i_m, i_n) = abc(0)*dist_to_orig[i_surf](i_m, i_n)*dist_to_orig[i_surf](i_m, i_n) +
+                            //                                                  abc(1)*dist_to_orig[i_surf](i_m, i_n) +
+                            //                                                  abc(2);
+                            //         }
+                            //     } else {
+                            //         // Point over the limit
+                            //         // Not ideal situation
+                            //         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                            //         {
+                            //             zeta_star[i_surf][i_dim](i_m, i_n) =  extra_zeta_star[i_surf][i_dim](0, i_n);
+                            //         }
+                            //
+                            //     }
+                            // }
                         } // end if convection schemes
 
                         // Convect circulation and velocities
