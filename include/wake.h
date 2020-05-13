@@ -329,6 +329,7 @@ namespace UVLM
                         // Convect circulation and velocities
                         if (i_n < N)
                         {
+                            // The first value (i_m=0) has already been adequately assigned in the convection step
                             for (unsigned int i_m=1; i_m<M-1; ++i_m)
                             {
                                 dist = 0.25*(dist_to_orig[i_surf](i_m + 1, i_n) - dist_to_orig[i_surf](i_m - 1, i_n) +
@@ -340,7 +341,7 @@ namespace UVLM
                                                                   cfl*wake_conv_vel[i_surf](i_m, i_n);
                             }
                             dist = 0.25*(dist_to_orig[i_surf](M, i_n) - dist_to_orig[i_surf](M - 1, i_n) +
-                                         dist_to_orig[i_surf](M + 1, i_n + 1) - dist_to_orig[i_surf](M - 1, i_n + 1));
+                                         dist_to_orig[i_surf](M, i_n + 1) - dist_to_orig[i_surf](M - 1, i_n + 1));
                             cfl = dt*wake_conv_vel[i_surf](M - 1, i_n)/dist;
                             gamma_star[i_surf](M - 1, i_n) = (1. - cfl)*extra_gamma_star[i_surf](0, i_n) +
                                                                   cfl*gamma_star[i_surf](M - 1, i_n);
