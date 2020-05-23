@@ -189,7 +189,11 @@ namespace UVLM
                 UVLM::Types::VectorX dist_to_orig_conv;
                 // UVLM::Types::Vector3 origin;
                 UVLM::Types::Vector3 point;
-                UVLM::Types::Real to_prev, to_next, prev_to_next;
+                UVLM::Types::Real to_prev, to_next, prev_to_next, total_dist;
+                
+                UVLM::Types::Real r, az, ax;
+                UVLM::Types::Real r_prev, az_prev, ax_prev;
+                UVLM::Types::Real r_next, az_next, ax_next;
 
                 // Store the values that will be deleted
                 // UVLM::Types::VecMatrixX extra_gamma_star;
@@ -220,6 +224,10 @@ namespace UVLM
                 //             backup_zeta_star[i_surf][i_dim][0, N + 1] = zeta_star[i_surf][i_dim][M + 1, N + 1]
                 //     }
                 // }
+
+                // std::cout << "0x" << extra_zeta_star[0][0] << std::endl;
+                // std::cout << "0y" << extra_zeta_star[0][1] << std::endl;
+                // std::cout << "0z" << extra_zeta_star[0][2] << std::endl;
 
                 const uint n_surf = gamma_star.size();
                 UVLM::Types::VecVecMatrixX zeta_star_conv;
@@ -271,19 +279,20 @@ namespace UVLM
                                      extra_zeta_star[i_surf][1](0, i_n) - zeta_star_conv[i_surf][1](M, i_n),
                                      extra_zeta_star[i_surf][2](0, i_n) - zeta_star_conv[i_surf][2](M, i_n);
                             dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
+                            total_dist = dist_to_orig_conv(M+1) + 0.;
 
                             // std::cout << "in: " << i_n << std::endl;
                             // std::cout << dist_to_orig_conv(M) << "..." << dist_to_orig[i_surf](M, i_n) << std::endl;
 
-                            // for (unsigned int i_m=0; i_m<M+1; ++i_m)
-                            // {
-                            //     dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
-                            // }
+                            for (unsigned int i_m=0; i_m<M+2; ++i_m)
+                            {
+                                dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
+                            }
                             // Redefine the location of the vertices
                             i_conv = 0; // index of the old point
                             for (unsigned int i_m=0; i_m<M+1; ++i_m) // index for the new point
                             {
-                                while ((dist_to_orig_conv(i_conv) <= dist_to_orig[i_surf](i_m, i_n)) and (i_conv <= M + 1))
+                                while ((dist_to_orig_conv(i_conv) <= dist_to_orig[i_surf](i_m, i_n)) and (i_conv < M + 1))
                                 {i_conv++;}
                                 if (i_conv < M + 1)
                                 {
@@ -292,32 +301,189 @@ namespace UVLM
                                     to_next = dist_to_orig_conv(i_conv) - dist_to_orig[i_surf](i_m, i_n);
                                     prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
 
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+
+                                    // std::cout << "opt1 p2n: " << prev_to_next << std::endl;
+                                    // To cylindrical
+                                    r_prev = std::sqrt(zeta_star_conv[i_surf][0](i_conv - 1, i_n)*zeta_star_conv[i_surf][0](i_conv - 1, i_n) +
+                                                      zeta_star_conv[i_surf][1](i_conv - 1, i_n)*zeta_star_conv[i_surf][1](i_conv - 1, i_n));
+                                    az_prev = atan2(zeta_star_conv[i_surf][1](i_conv - 1, i_n), zeta_star_conv[i_surf][0](i_conv - 1, i_n));
+                                             // 2.*UVLM::Constants::PI;
+ 
+                                    r_next = std::sqrt(zeta_star_conv[i_surf][0](i_conv, i_n)*zeta_star_conv[i_surf][0](i_conv, i_n) +
+                                                      zeta_star_conv[i_surf][1](i_conv, i_n)*zeta_star_conv[i_surf][1](i_conv, i_n));
+                                    az_next = atan2(zeta_star_conv[i_surf][1](i_conv, i_n), zeta_star_conv[i_surf][0](i_conv, i_n));
+                                             // 2.*UVLM::Constants::PI;
+
+
+                                    if (az_prev*az_next < 0)
                                     {
-                                            //zeta_star_conv[i_surf][i_dim](i_conv -1, i_n) +
-                                        zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*zeta_star_conv[i_surf][i_dim](i_conv, i_n) +
-                                                               to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
-                                        // zeta_star[i_surf][i_dim](i_m, i_n) += zeta_star_conv[i_surf][i_dim](i_conv -1, i_n);
+                                        if ((az_prev < 0) and (az_prev < -0.5*UVLM::Constants::PI))
+                                        {
+                                            az_prev += 2.*UVLM::Constants::PI;
+                                        } else if ((az_next < 0) and (az_next < -0.5*UVLM::Constants::PI))
+                                        {
+                                            az_next += 2.*UVLM::Constants::PI;
+                                        } 
                                     }
+                                    // if (az_prev < 0)
+                                    // {
+                                    //     az_prev += 2.*UVLM::Constants::PI;
+                                    // }
+                                    // if (az_next < 0)
+                                    // {
+                                    //     az_next += 2.*UVLM::Constants::PI;
+                                    // }
+    
+                                    // Interpolation                                    
+                                    //if (az_next < az_prev)
+                                    //{
+                                    //    az_next += 2.*UVLM::Constants::PI;
+                                    //    std::cout << "inc az_next" << std::endl;
+                                    //}
+                                    r = (to_prev*r_next + to_next*r_prev)/prev_to_next;
+                                    az = (to_prev*az_next + to_next*az_prev)/prev_to_next;
+                                    
+                                    //if ((zeta_star_conv[i_surf][0](i_conv - 1, i_n) < 0) and (zeta_star_conv[i_surf][0](i_conv, i_n) < 0) and (az_next*az_prev < 0))
+                                    //{
+                                    //    az += UVLM::Constants::PI;
+                                    //    std::cout << "plus pi" << std::endl;
+                                    //}
+                                    //std::cout << az_prev*180/UVLM::Constants::PI << " " << az_next*180/UVLM::Constants::PI << " " << az*180/UVLM::Constants::PI << std::endl;
+                                    // To cartesian
+                                    zeta_star[i_surf][0](i_m, i_n) = r*std::cos(az);
+                                    zeta_star[i_surf][1](i_m, i_n) = r*std::sin(az);
+                                    zeta_star[i_surf][2](i_m, i_n) = (to_prev*zeta_star_conv[i_surf][2](i_conv, i_n) +
+                                                               to_next*zeta_star_conv[i_surf][2](i_conv - 1, i_n))/prev_to_next;
+
+                                    if (i_n == 0)
+                                    {
+                                        std::cout << "opt 1: i_m: " << i_m << " to_prev: " << to_prev << " to_next: " << to_next << " p2n: " << prev_to_next << std::endl;
+                                        std::cout << "dist point: " << dist_to_orig[i_surf](i_m, i_n) << 
+                                                     " dist next: " << dist_to_orig_conv(i_conv) <<
+                                                     " dist prev: " << dist_to_orig_conv(i_conv - 1) << std::endl;
+                                        std::cout << "point: " << zeta_star[i_surf][0](i_m, i_n) << " " <<
+                                                                  zeta_star[i_surf][1](i_m, i_n) << " " <<
+                                                                  zeta_star[i_surf][2](i_m, i_n) << std::endl;
+                                        std::cout << "point1: " << zeta_star_conv[i_surf][0](i_conv - 1, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][1](i_conv - 1, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][2](i_conv - 1, i_n) << std::endl;
+                                        std::cout << "point2: " << zeta_star_conv[i_surf][0](i_conv, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][1](i_conv, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][2](i_conv, i_n) << std::endl;
+                                    }
+                                    // for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                                    // {
+                                    //         //zeta_star_conv[i_surf][i_dim](i_conv -1, i_n) +
+                                    //     zeta_star[i_surf][i_dim](i_m, i_n) = (to_prev*zeta_star_conv[i_surf][i_dim](i_conv, i_n) +
+                                    //                            to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                                    //     // zeta_star[i_surf][i_dim](i_m, i_n) += zeta_star_conv[i_surf][i_dim](i_conv -1, i_n);
+                                    // }
                                     // std::cout << "warning im: "<< i_m << std::endl;
-                                } else if (i_conv == M + 1){
+                                // } else if (i_conv == M + 1){
+                                } else {
                                     // Point between zeta_star and extra_zeta_star
                                     to_prev = dist_to_orig[i_surf](i_m, i_n) - dist_to_orig_conv(i_conv - 1);
                                     to_next = dist_to_orig_conv(i_conv) - dist_to_orig[i_surf](i_m, i_n);
                                     prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
 
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                                    // std::cout << "opt2: p2n: " << prev_to_next << std::endl;
+                                    // To cylindrical
+                                    r_prev = std::sqrt(zeta_star_conv[i_surf][0](i_conv - 1, i_n)*zeta_star_conv[i_surf][0](i_conv - 1, i_n) +
+                                                      zeta_star_conv[i_surf][1](i_conv - 1, i_n)*zeta_star_conv[i_surf][1](i_conv - 1, i_n));
+                                    az_prev = atan2(zeta_star_conv[i_surf][1](i_conv - 1, i_n), zeta_star_conv[i_surf][0](i_conv - 1, i_n));
+                                    //          2.*UVLM::Constants::PI;
+    
+                                    r_next = std::sqrt(extra_zeta_star[i_surf][0](0, i_n)*extra_zeta_star[i_surf][0](0, i_n) +
+                                                      extra_zeta_star[i_surf][1](0, i_n)*extra_zeta_star[i_surf][1](0, i_n));
+                                    az_next = atan2(extra_zeta_star[i_surf][1](0, i_n), extra_zeta_star[i_surf][0](0, i_n));
+                                    //          2.*UVLM::Constants::PI;
+
+                                    if (az_prev*az_next < 0)
                                     {
-                                        zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*extra_zeta_star[i_surf][i_dim](0, i_n) +
-                                                               to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                                        if ((az_prev < 0) and (az_prev < -0.5*UVLM::Constants::PI))
+                                        {
+                                            az_prev += 2.*UVLM::Constants::PI;
+                                        } else if ((az_next < 0) and (az_next < -0.5*UVLM::Constants::PI))
+                                        {
+                                            az_next += 2.*UVLM::Constants::PI;
+                                        } 
                                     }
-                                } else {
+                                    // if (az_prev < 0)
+                                    // {
+                                    //     az_prev += 2.*UVLM::Constants::PI;
+                                    // }
+                                    // if (az_next < 0)
+                                    // {
+                                    //     az_next += 2.*UVLM::Constants::PI;
+                                    // }
+                                    // Interpolation                                    
+                                    //if (az_next < az_prev)
+                                    //{
+                                    //    az_next += 2.*UVLM::Constants::PI;
+                                    //    std::cout << "inc az_next" << std::endl;
+                                    //}
+                                    r = (to_prev*r_next + to_next*r_prev)/prev_to_next;
+                                    az = (to_prev*az_next + to_next*az_prev)/prev_to_next;
+                                   
+                                    //if ((zeta_star_conv[i_surf][0](i_conv - 1, i_n) < 0) and (extra_zeta_star[i_surf][0](0, i_n) < 0) and (az_next*az_prev < 0))
+                                    //{
+                                    //    az += UVLM::Constants::PI;
+                                    //    std::cout << "plus pi" << std::endl;
+                                    //}
+ 
+                                    // std::cout << az_prev*180/UVLM::Constants::PI << " " << az_next*180/UVLM::Constants::PI << " " << az*180/UVLM::Constants::PI << std::endl;
+                                    // To cartesian
+                                    zeta_star[i_surf][0](i_m, i_n) = r*std::cos(az);
+                                    zeta_star[i_surf][1](i_m, i_n) = r*std::sin(az);
+                                    zeta_star[i_surf][2](i_m, i_n) = (to_prev*extra_zeta_star[i_surf][2](0, i_n) +
+                                                               to_next*zeta_star[i_surf][2](i_conv - 1, i_n))/prev_to_next;
+                                    if (i_n == 0)
+                                    {
+                                        std::cout << "opt 2: i_m: " << i_m << " to_prev: " << to_prev << " to_next: " << to_next << " p2n: " << prev_to_next << std::endl;
+                                        std::cout << "dist point: " << dist_to_orig[i_surf](i_m, i_n) << 
+                                                     " dist next: " << dist_to_orig_conv(i_conv) <<
+                                                     " dist prev: " << dist_to_orig_conv(i_conv - 1) << std::endl;
+                                        std::cout << "point: " << zeta_star[i_surf][0](i_m, i_n) << " " <<
+                                                                  zeta_star[i_surf][1](i_m, i_n) << " " <<
+                                                                  zeta_star[i_surf][2](i_m, i_n) << std::endl;
+                                        std::cout << "point1: " << zeta_star_conv[i_surf][0](i_conv - 1, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][1](i_conv - 1, i_n) << " " <<
+                                                                  zeta_star_conv[i_surf][2](i_conv - 1, i_n) << std::endl;
+                                        std::cout << "point2: " << extra_zeta_star[i_surf][0](0, i_n) << " " <<
+                                                                  extra_zeta_star[i_surf][1](0, i_n) << " " <<
+                                                                  extra_zeta_star[i_surf][2](0, i_n) << std::endl;
+                                    }
+                                    // for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                                    // {
+                                    //     zeta_star[i_surf][i_dim](i_m, i_n) =  (to_prev*extra_zeta_star[i_surf][i_dim](0, i_n) +
+                                    //                            to_next*zeta_star_conv[i_surf][i_dim](i_conv - 1, i_n))/prev_to_next;
+                                    // }
+                             //  } else {
                                     // Point over the limit
                                     // Not ideal situation
-                                    for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                                    {
-                                        zeta_star[i_surf][i_dim](i_m, i_n) =  extra_zeta_star[i_surf][i_dim](0, i_n);
-                                    }
+                                    //if (i_m > 1)
+                                    //{
+                               //          zeta_star[i_surf][0](i_m, i_n) = 0.;
+                               //         zeta_star[i_surf][1](i_m, i_n) = 0.;
+                               //         zeta_star[i_surf][2](i_m, i_n) = 1000.;
+                                        //for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                                        //{
+                                        //zeta_star[i_surf][i_dim](i_m, i_n) =  extra_zeta_star[i_surf][i_dim](0, i_n);
+                                        //zeta_star[i_surf][i_dim](i_m, i_n) = zeta_star[i_surf][i_dim](i_m - 1, i_n) +
+                                        //                                     (zeta_star[i_surf][i_dim](i_m - 1, i_n) -
+                                        //                                      zeta_star[i_surf][i_dim](i_m - 2, i_n));
+                                        //}
+                              //          std::cout << "not ideal" << std::endl;
+                                    //}
+                                   //  else {
+                                   //      for (unsigned int i_dim=0; i_dim<3; ++i_dim)
+                                   //      {
+                                   //      zeta_star[i_surf][i_dim](i_m, i_n) = zeta_star[i_surf][i_dim](i_m - 1, i_n) +
+                                   //                                           (zeta_star[i_surf][i_dim](i_m - 1, i_n) -
+                                   //                                            zeta_star[i_surf][i_dim](i_m - 2, i_n));
+                                   //      }
+                                   //      std::cout << "absolutely not ideal" << std::endl;
+                                   //  }
 
                                 }
                                     // to_prev = 1.;
@@ -334,7 +500,7 @@ namespace UVLM
                             {
                                 dist = 0.25*(dist_to_orig[i_surf](i_m + 1, i_n) - dist_to_orig[i_surf](i_m - 1, i_n) +
                                              dist_to_orig[i_surf](i_m + 1, i_n + 1) - dist_to_orig[i_surf](i_m - 1, i_n + 1));
-                                cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist;
+                                cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist/total_dist;
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
                                 wake_conv_vel[i_surf](i_m, i_n) = (1. - cfl)*wake_conv_vel[i_surf](i_m + 1, i_n) +
@@ -342,7 +508,7 @@ namespace UVLM
                             }
                             dist = 0.25*(dist_to_orig[i_surf](M, i_n) - dist_to_orig[i_surf](M - 1, i_n) +
                                          dist_to_orig[i_surf](M, i_n + 1) - dist_to_orig[i_surf](M - 1, i_n + 1));
-                            cfl = dt*wake_conv_vel[i_surf](M - 1, i_n)/dist;
+                            cfl = dt*wake_conv_vel[i_surf](M - 1, i_n)/dist/total_dist;
                             gamma_star[i_surf](M - 1, i_n) = (1. - cfl)*extra_gamma_star[i_surf](0, i_n) +
                                                                   cfl*gamma_star[i_surf](M - 1, i_n);
                             // wake_conv_vel[i_surf](M - 1, i_n) = wake_conv_vel[i_surf](M - 2, i_n);
