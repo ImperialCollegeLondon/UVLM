@@ -80,6 +80,9 @@ namespace UVLM
             bool iterative_precond;
             bool convect_wake;
             bool cfl1;
+            uint interp_coords;
+            uint filter_method;
+            uint interp_method;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)

@@ -199,5 +199,124 @@ namespace UVLM
                                                collocation_mesh[i_surf]);
             }
         }
-    }
-}
+    } // geometry
+
+    namespace Interpolation
+    {
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void linear
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            UVLM::Types::Real to_prev, to_next, prev_to_next;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+                new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
+                new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
+                new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
+            }
+        } // linear
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void parabolic
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            UVLM::Types::Vector3 b, abc;
+            Eigen::Matrix<UVLM::Types::Real, 3, 3> Amat, Ainv;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                if (i_conv == 1)
+                {
+                    Amat << dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.,
+                            dist_to_orig_conv(i_conv + 1)*dist_to_orig_conv(i_conv + 1), dist_to_orig_conv(i_conv + 1), 1.;
+                    Ainv = Amat.inverse();
+
+                    b << coord0(i_conv - 1), coord0(i_conv), coord0(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord0(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord1(i_conv - 1), coord1(i_conv), coord1(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord1(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord2(i_conv - 1), coord2(i_conv), coord2(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord2(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+                } else {
+                    Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
+                            dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
+                    Ainv = Amat.inverse();
+
+                    b << coord0(i_conv - 2), coord0(i_conv - 1), coord0(i_conv);
+                    abc = Ainv*b;
+                    new_coord0(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord1(i_conv - 2), coord1(i_conv - 1), coord1(i_conv);
+                    abc = Ainv*b;
+                    new_coord1(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord2(i_conv - 2), coord2(i_conv - 1), coord2(i_conv);
+                    abc = Ainv*b;
+                    new_coord2(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+                }
+            }
+        } // parabolic
+    } // Interpolation
+    //
+    // namespace Filters
+    // {
+    //
+    //
+    // } // Filters
+
+} // UVLM
