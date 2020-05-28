@@ -10,6 +10,7 @@ DLLEXPORT void run_VLM
     unsigned int** p_dimensions_star,
     double** p_zeta,
     double** p_zeta_star,
+    double** p_zeta_dot,
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
@@ -42,6 +43,12 @@ DLLEXPORT void run_VLM
                                       zeta_star,
                                       1);
 
+    UVLM::Types::VecVecMapX zeta_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta_dot,
+                                      zeta_dot,
+                                      1);
+
     UVLM::Types::VecVecMapX u_ext;
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_u_ext,
@@ -66,11 +73,6 @@ DLLEXPORT void run_VLM
                                       forces,
                                       1,
                                       2*UVLM::Constants::NDIM);
-
-    // zeta_dot is zero for VLM simulations
-    UVLM::Types::VecVecMatrixX zeta_dot;
-    UVLM::Types::allocate_VecVecMat(zeta_dot,
-                                    zeta);
 
     UVLM::Steady::solver(zeta,
                          zeta_dot,
