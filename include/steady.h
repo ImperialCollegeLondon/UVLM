@@ -203,6 +203,7 @@ void UVLM::Steady::solver
     double zeta_star_norm_first = 0.0;
     double zeta_star_norm_previous = 0.0;
     double zeta_star_norm = 0.0;
+    unsigned int N;
 
     UVLM::Types::VecVecMatrixX zeta_star_previous;
     if (options.n_rollup != 0)
@@ -237,6 +238,18 @@ void UVLM::Steady::solver
         //         u_ind[i_surf][i_dim].array() += u_steady(i_dim);
         //     }
         // }
+        // Do not move the vertices in the TE
+        for (uint i_surf=0; i_surf<zeta_star.size(); ++i_surf)
+        {
+            N = zeta_star[i_surf][0].cols();
+            for (uint i_n=0; i_n<N; ++i_n)
+            {
+                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                {
+                    u_ind[i_surf][i_dim](0, i_n) = 0.;
+                }
+            }
+        }
 
         // convect based on u_ind for all the grid.
         UVLM::Wake::Discretised::convect(zeta_star,
