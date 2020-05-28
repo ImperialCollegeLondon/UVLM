@@ -26,7 +26,8 @@ namespace UVLM
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
-                  typename t_forces>
+                  typename t_forces,
+                  typename t_rbm_vel_g>
         void solver
         (
             t_zeta& zeta,
@@ -36,6 +37,7 @@ namespace UVLM
             t_gamma& gamma,
             t_gamma_star& gamma_star,
             t_forces& forces,
+            t_rbm_vel_g& rbm_vel_g,
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
@@ -90,7 +92,8 @@ template <typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
           typename t_gamma_star,
-          typename t_forces>
+          typename t_forces,
+          typename t_rbm_vel_g>
 void UVLM::Steady::solver
 (
     t_zeta& zeta,
@@ -100,6 +103,7 @@ void UVLM::Steady::solver
     t_gamma& gamma,
     t_gamma_star& gamma_star,
     t_forces& forces,
+    t_rbm_vel_g& rbm_vel_g,
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions
 )
@@ -110,7 +114,6 @@ void UVLM::Steady::solver
     UVLM::Types::VecVecMatrixX uext_col;
     UVLM::Types::VecVecMatrixX uext_total;
     UVLM::Types::VecVecMatrixX uext_total_col;
-    UVLM::Types::VecVecMatrixX zeta_dot;
 
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
@@ -126,9 +129,9 @@ void UVLM::Steady::solver
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0) - options.rbm_vel_g[0],
-                uext[0][1](0,0) - options.rbm_vel_g[1],
-                uext[0][2](0,0) - options.rbm_vel_g[2];
+    u_steady << uext[0][0](0,0),
+                uext[0][1](0,0),
+                uext[0][2](0,0);
     double delta_x = u_steady.norm()*options.dt;
 
     // total stream velocity
@@ -137,7 +140,7 @@ void UVLM::Steady::solver
         zeta,
         zeta_dot,
         uext,
-        options.rbm_velocity_g,
+        rbm_vel_g,
         uext_total
     );
 

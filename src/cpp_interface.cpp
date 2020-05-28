@@ -14,7 +14,8 @@ DLLEXPORT void run_VLM
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_forces
+    double** p_forces,
+    double* p_rbm_vel_g
 )
 {
 #if defined(_OPENMP)
@@ -74,6 +75,8 @@ DLLEXPORT void run_VLM
                                       1,
                                       2*UVLM::Constants::NDIM);
 
+    UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
+
     UVLM::Steady::solver(zeta,
                          zeta_dot,
                          u_ext,
@@ -81,6 +84,7 @@ DLLEXPORT void run_VLM
                          gamma,
                          gamma_star,
                          forces,
+                         rbm_vel_g,
                          options,
                          flightconditions);
 }

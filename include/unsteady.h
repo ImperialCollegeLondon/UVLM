@@ -138,28 +138,29 @@ void UVLM::Unsteady::initialise
 )
 {
     // incident velocity taking into account RBM, zeta_dot:
-    UVLM::Types::VecVecMatrixX uext_resultant;
-    UVLM::Types::allocate_VecVecMat(uext_resultant,
-                                    uext);
-    UVLM::Unsteady::Utils::compute_resultant_grid_velocity
-    (
-        zeta,
-        zeta_dot,
-        uext,
-        rbm_velocity,
-        uext_resultant
-    );
+    // UVLM::Types::VecVecMatrixX uext_resultant;
+    // UVLM::Types::allocate_VecVecMat(uext_resultant,
+    //                                 uext);
+    // UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+    // (
+    //     zeta,
+    //     zeta_dot,
+    //     uext,
+    //     rbm_velocity,
+    //     uext_resultant
+    // );
 
     // call steady solver
     UVLM::Steady::solver
     (
         zeta,
         zeta_dot,
-        uext_resultant,
+        uext,
         zeta_star,
         gamma,
         gamma_star,
         forces,
+        rbm_velocity,
         options,
         flightconditions
     );
