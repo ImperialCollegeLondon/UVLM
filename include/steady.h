@@ -108,10 +108,17 @@ void UVLM::Steady::solver
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col;
     UVLM::Types::VecVecMatrixX uext_col;
+    UVLM::Types::VecVecMatrixX uext_total;
+    UVLM::Types::VecVecMatrixX uext_total_col;
+    UVLM::Types::VecVecMatrixX zeta_dot;
 
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
     UVLM::Geometry::generate_colocationMesh(uext, uext_col);
+
+    UVLM::Types::allocate_VecVecMat(uext_total, uext);
+    UVLM::Types::copy_VecVecMat(uext, uext_total);
+    UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
 
     // panel normals
     UVLM::Types::VecVecMatrixX normals;
@@ -119,10 +126,22 @@ void UVLM::Steady::solver
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0),
-                uext[0][1](0,0),
-                uext[0][2](0,0);
+    u_steady << uext[0][0](0,0) - options.rbm_vel_g[0],
+                uext[0][1](0,0) - options.rbm_vel_g[1],
+                uext[0][2](0,0) - options.rbm_vel_g[2];
     double delta_x = u_steady.norm()*options.dt;
+
+    // total stream velocity
+    UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+    (
+        zeta,
+        zeta_dot,
+        uext,
+        options.rbm_velocity_g,
+        uext_total
+    );
+
+    UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
 
     // if options.horseshoe, it is finished.
     if (options.horseshoe)
@@ -132,7 +151,7 @@ void UVLM::Steady::solver
         (
             zeta,
             zeta_col,
-            uext_col,
+            uext_total_col,
             zeta_star,
             gamma,
             gamma_star,
@@ -147,7 +166,7 @@ void UVLM::Steady::solver
             zeta_star,
             gamma,
             gamma_star,
-            uext,
+            uext_total,
             forces,
             options,
             flightconditions
@@ -169,7 +188,7 @@ void UVLM::Steady::solver
     (
         zeta,
         zeta_col,
-        uext_col,
+        uext_total_col,
         zeta_star,
         gamma,
         gamma_star,
@@ -240,7 +259,7 @@ void UVLM::Steady::solver
             (
                 zeta,
                 zeta_col,
-                uext_col,
+                uext_total_col,
                 zeta_star,
                 gamma,
                 gamma_star,
@@ -272,7 +291,7 @@ void UVLM::Steady::solver
         zeta_star,
         gamma,
         gamma_star,
-        uext,
+        uext_total,
         forces,
         options,
         flightconditions

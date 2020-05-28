@@ -61,6 +61,7 @@ namespace UVLM
             double iterative_tol;
             bool iterative_precond;
             bool cfl1;
+            double rbm_vel_g[6];
         };
 
         struct UVMopts
