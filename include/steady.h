@@ -301,17 +301,33 @@ void UVLM::Steady::solver
         }
     }
 
-    UVLM::PostProc::calculate_static_forces
+    // UVLM::PostProc::calculate_static_forces
+    // (
+    //     zeta,
+    //     zeta_star,
+    //     gamma,
+    //     gamma_star,
+    //     uext_total,
+    //     forces,
+    //     options,
+    //     flightconditions
+    // );
+    UVLM::PostProc::calculate_static_forces_unsteady
     (
         zeta,
+        zeta_dot,
         zeta_star,
         gamma,
         gamma_star,
-        uext_total,
+        uext,
+        rbm_vel_g,
         forces,
         options,
         flightconditions
     );
+
+
+
 }
 
 
