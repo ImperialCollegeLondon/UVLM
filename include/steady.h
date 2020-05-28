@@ -227,30 +227,30 @@ void UVLM::Steady::solver
             gamma_star,
             u_ind);
         // convection velocity of the background flow
-        for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-            {
-                u_ind[i_surf][i_dim].array() += u_steady(i_dim);
-            }
-        }
+        // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
+        // {
+        //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+        //     {
+        //         u_ind[i_surf][i_dim].array() += u_steady(i_dim);
+        //     }
+        // }
 
         // convect based on u_ind for all the grid.
         UVLM::Wake::Discretised::convect(zeta_star,
                                          u_ind,
                                          options.dt);
         // move wake 1 row down and discard last row (far field)
-        UVLM::Wake::General::displace_VecVecMat(zeta_star);
-        UVLM::Wake::General::displace_VecMat(gamma_star);
+        // UVLM::Wake::General::displace_VecVecMat(zeta_star);
+        // UVLM::Wake::General::displace_VecMat(gamma_star);
         // copy trailing edge of zeta into 1st row of zeta_star
-        for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-            {
-                zeta_star[i_surf][i_dim].template topRows<1>() =
-                    zeta[i_surf][i_dim].template bottomRows<1>();
-            }
-        }
+        // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
+        // {
+        //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+        //     {
+        //         zeta_star[i_surf][i_dim].template topRows<1>() =
+        //             zeta[i_surf][i_dim].template bottomRows<1>();
+        //     }
+        // }
 
         // generate AIC again
         if (i_rollup%options.rollup_aic_refresh == 0)
