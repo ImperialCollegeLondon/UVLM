@@ -1,11 +1,15 @@
 #pragma once
 
 #include "EigenInclude.h"
+#include <unsupported/Eigen/Splines>
 #include "types.h"
 #include "mapping.h"
 
 #include <iostream>
 #include <cmath>
+
+#include "stdafx.h"
+#include "interpolation.h"
 
 namespace UVLM
 {
@@ -311,12 +315,104 @@ namespace UVLM
                 }
             }
         } // parabolic
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void splines
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+
+            const unsigned int splines_degree=4;
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline0 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord0, splines_degree);
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline1 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord1, splines_degree);
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline2 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord2, splines_degree);
+
+            for (uint i_m=0; i_m<M; ++i_m)
+            {
+                new_coord0(i_m) = spline0(dist_to_orig(i_m))(0);
+                new_coord1(i_m) = spline1(dist_to_orig(i_m))(0);
+                new_coord2(i_m) = spline2(dist_to_orig(i_m))(0);
+            }
+        } // splines
     } // Interpolation
     //
-    // namespace Filters
-    // {
-    //
-    //
-    // } // Filters
+    namespace Filters
+    {
+        template <typename t_coord>
+        void splines
+        (
+            uint M,
+            const t_coord& x,
+            t_coord& coord0,
+            t_coord& coord1,
+            t_coord& coord2
+        )
+        {
+            // https://www.alglib.net/translator/man/manual.cpp.html#example_lsfit_d_spline
+            // UVLM::Types::Real a_x[M], a_coord[M], a_out_coord[M];
+            alglib::real_1d_array a_x, a_coord, a_out_coord;
+
+            const uint basis_functions = 50;
+            const UVLM::Types::Real rho = 3.0; // Smoothing factor
+            alglib::ae_int_t info;
+            alglib::spline1dinterpolant s;
+            alglib::spline1dfitreport rep;
+
+            // Convert types
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                a_x[i_m] = x(i_m);
+                a_coord[i_m] = coord0(i_m);
+            }
+            // Fit splines
+            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
+            // Retrieve values
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                coord0(i_m) = alglib::spline1dcalc(s, x(i_m));
+            }
+
+            // Convert types
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                a_coord[i_m] = coord1(i_m);
+            }
+            // Fit splines
+            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
+            // Retrieve values
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                coord1(i_m) = alglib::spline1dcalc(s, x(i_m));
+            }
+
+            // Convert types
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                a_coord[i_m] = coord2(i_m);
+            }
+            // Fit splines
+            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
+            // Retrieve values
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                coord2(i_m) = alglib::spline1dcalc(s, x(i_m));
+            }
+        } // splines
+    } // Filters
 
 } // UVLM

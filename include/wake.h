@@ -287,7 +287,10 @@ namespace UVLM
                             } else if (options.filter_method == 1)
                             {
                                 // Splines
-                                continue;
+                                UVLM::Filters::splines(M + 1,
+                                                       dist_to_orig_conv,
+                                                       coord0, coord1, coord2);
+
                             } else
                             {
                                 std::cerr << "filter_method == "
@@ -309,6 +312,13 @@ namespace UVLM
                             {
                                 // Parabolic interpolation
                                 UVLM::Interpolation::parabolic(M + 1,
+                                                            dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
+                                                            coord0, coord1, coord2,
+                                                            new_coord0, new_coord1, new_coord2);
+                            } else if (options.interp_method == 2)
+                            {
+                                // Splines interpolation
+                                UVLM::Interpolation::splines(M + 1,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
