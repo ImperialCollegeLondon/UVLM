@@ -450,14 +450,21 @@ void UVLM::Steady::solve_discretised
                                     zeta_col);
 
     // copy gamma from trailing edge to wake
-    int in_n_rows = -1;
+    // int in_n_rows = -1;
     // if (!options.Steady) {in_n_rows = 1;}
     // UVLM::Wake::Horseshoe::circulation_transfer(gamma,
     //                                             gamma_star,
     //                                             in_n_rows);
-    if (options.Steady) {
-    UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+    if ((options.Steady) && (options.cfl1)) {
+        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
                                                 gamma_star,
-                                                in_n_rows);
+                                                -1);
+    } else
+    {
+        UVLM::Wake::Discretised::circulation_transfer(zeta,
+                                                  zeta_star,
+                                                  gamma,
+                                                  gamma_star,
+                                                  -1);
     }
 }

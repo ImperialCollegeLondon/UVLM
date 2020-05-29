@@ -115,54 +115,49 @@ namespace UVLM
             template <typename t_zeta,
                       typename t_zeta_star,
                       typename t_gamma,
-                      typename t_gamma_star,
-                      typename t_uext_total_col>
+                      typename t_gamma_star>
             void circulation_transfer
             (
                 const t_zeta& zeta,
                 const t_zeta_star& zeta_star,
                 const t_gamma& gamma,
                 t_gamma_star& gamma_star,
-                const t_uext_total_col& uext_total_col,
-                double dt=0.
+                const int in_n_rows = -1
             )
             {
-                uint n_cols, M;
-                double cfl;
-                UVLM::Types::Vector3 vel, dist;
+                uint N, M, Mstar, n_rows;
+                UVLM::Types::Real panel_area, te_panel_area;
 
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    n_cols = gamma[i_surf].cols();
+                    N = gamma_star[i_surf].cols();
+                    Mstar = gamma_star[i_surf].rows();
                     M = gamma[i_surf].rows();
-                    for (uint i_n=0; i_n<n_cols; ++i_n)
+                    if (in_n_rows == -1){
+                        n_rows = Mstar;
+                    } else {
+                        n_rows = in_n_rows;
+                    }
+
+                    for (uint i_n=0; i_n<N; ++i_n)
                     {
-                        dist << 0.25*(zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
-                                        - zeta[i_surf][0](M-1, i_n) - zeta[i_surf][0](M-1, i_n+1)),
-                                0.25*(zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
-                                        - zeta[i_surf][1](M-1, i_n) - zeta[i_surf][1](M-1, i_n+1)),
-                                0.25*(zeta_star[i_surf][2](1, i_n) + zeta_star[i_surf][2](1, i_n+1)
-                                        - zeta[i_surf][2](M-1, i_n) - zeta[i_surf][2](M-1, i_n+1));
-                        // delta = 0.25*pow((zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
-                        //                 - zeta[i_surf][0](-2, i_n) - zeta[i_surf][0](-2, i_n+1))*
-                        //              (zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
-                        //                 - zeta[i_surf][1](-2, i_n) - zeta[i_surf][1](-2, i_n+1))*
-                        //              (zeta_star[i_surf][2](1, i_n) + zeta_star[i_surf][2](1, i_n+1)
-                        //                 - zeta[i_surf][2](-2, i_n) - zeta[i_surf][2](-2, i_n+1)), 1./3.);
-                        vel << uext_total_col[i_surf][0](M-1, i_n),
-                               uext_total_col[i_surf][1](M-1, i_n),
-                               uext_total_col[i_surf][2](M-1, i_n);
-                        cfl = dt*vel.norm()/dist.norm();
-                        // if(cfl > 1.){
-                        //     std::cout << "WARNING: CFL=" << cfl << " > 1 at isurf:" << i_surf << " in:" << i_n << std::endl;
-                        // }
-                        // std::cout << "dist" << dist << std::endl;
-                        // std::cout << "vel" << vel << std::endl;
-                        // std::cout << "cfl" << cfl << std::endl;
-                        gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](1, i_n) +
-                                                       cfl*gamma[i_surf](M-1, i_n);
-                        // The wake has already been convected so I should use gamma_star[i_surf](1, i_n)                    }
+                        te_panel_area = UVLM::Geometry::panel_area
+                            (
+                                zeta[i_surf][0].template block<2,2>(M - 1, i_n),
+                                zeta[i_surf][1].template block<2,2>(M - 1, i_n),
+                                zeta[i_surf][2].template block<2,2>(M - 1, i_n)
+                            );
+                        for (uint i_m=0; i_m<n_rows; ++i_m)
+                        {
+                            panel_area = UVLM::Geometry::panel_area
+                                (
+                                    zeta[i_surf][0].template block<2,2>(i_m, i_n),
+                                    zeta[i_surf][1].template block<2,2>(i_m, i_n),
+                                    zeta[i_surf][2].template block<2,2>(i_m, i_n)
+                                );
+                            gamma_star[i_surf](i_m, i_n) = gamma[i_surf](M - 1, i_n)*panel_area/te_panel_area;
+                        }
                     }
                 }
             }
@@ -274,6 +269,13 @@ namespace UVLM
                                                   extra_zeta_star[i_surf][1](0, i_n)*extra_zeta_star[i_surf][1](0, i_n));
                                 coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n), extra_zeta_star[i_surf][0](0, i_n));
                                 coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n);
+                            } else
+                            {
+                                std::cerr << "interp_coords == "
+                                          << options.interp_coords
+                                          << " is not supported by the UVLM solver. \n"
+                                          << "Supported options are from [0->1]"
+                                          << std::endl;
                             }
 
                             // Filter the values
@@ -286,6 +288,13 @@ namespace UVLM
                             {
                                 // Splines
                                 continue;
+                            } else
+                            {
+                                std::cerr << "filter_method == "
+                                          << options.filter_method
+                                          << " is not supported by the UVLM solver. \n"
+                                          << "Supported options are from [0->1]"
+                                          << std::endl;
                             }
 
                             // Redefine the location of the vertices
@@ -303,6 +312,13 @@ namespace UVLM
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
+                            } else
+                            {
+                                std::cerr << "interp_method == "
+                                          << options.interp_method
+                                          << " is not supported by the UVLM solver. \n"
+                                          << "Supported options are from [0->1]"
+                                          << std::endl;
                             }
 
                             // Change the coordinates back
