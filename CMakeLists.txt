@@ -11,7 +11,6 @@ include_directories(include ALGLIB/src)
 add_library(uvlm SHARED ${SOURCES})
 
 add_subdirectory(ALGLIB)
-link_directories(/home/arturo/code/sharpy/lib/UVLM/ALGLIB/lib)
 target_link_libraries(uvlm PUBLIC alglib)
 
 set_property(TARGET uvlm PROPERTY CXX_STANDARD 14)

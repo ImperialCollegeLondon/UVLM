@@ -7,7 +7,7 @@ project(alglib)
 #endif()
 
 file(GLOB SOURCES src/*.cpp)
-add_library(alglib ${SOURCES})
+add_library(alglib SHARED ${SOURCES})
 target_include_directories (alglib PUBLIC src)
 
 set_property(TARGET alglib PROPERTY CXX_STANDARD 14)
@@ -36,8 +36,8 @@ endif()
 find_package(Eigen3 REQUIRED)
 target_link_libraries(alglib PUBLIC Eigen3::Eigen)
 
-# For all compilers
-target_compile_options(alglib PUBLIC $<$<CONFIG:RELEASE>: -fomit-frame-pointer -ffast-math> -fPIC)
+# For all compilers -fPIC
+target_compile_options(alglib PUBLIC $<$<CONFIG:RELEASE>: -fomit-frame-pointer -ffast-math>)
 
 # Dodgy thing for MacOS Catalina with anyting other than CLANG++
 # Apple has removed the /usr/include dir in the folder structure.
