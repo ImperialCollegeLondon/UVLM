@@ -147,32 +147,8 @@ void UVLM::Matrix::AIC
                                 dimensions[ii_surf].second);
             if (options.Steady)
             {
-                if (options.cfl1)
-                {
-                    dummy_gamma_star.setOnes(dimensions_star[ii_surf].first,
-                                             dimensions_star[ii_surf].second);
-                } else
-                {
-                    for (uint i_n=0; i_n<dimensions_star[ii_surf].second; ++i_n)
-                    {
-                        te_panel_area = UVLM::Geometry::panel_area
-                            (
-                                zeta[ii_surf][0].template block<2,2>(dimensions[ii_surf].first - 1, i_n),
-                                zeta[ii_surf][1].template block<2,2>(dimensions[ii_surf].first - 1, i_n),
-                                zeta[ii_surf][2].template block<2,2>(dimensions[ii_surf].first - 1, i_n)
-                            );
-                        for (uint i_m=0; i_m<dimensions_star[ii_surf].first; ++i_m)
-                        {
-                            panel_area = UVLM::Geometry::panel_area
-                                (
-                                    zeta_star[ii_surf][0].template block<2,2>(i_m, i_n),
-                                    zeta_star[ii_surf][1].template block<2,2>(i_m, i_n),
-                                    zeta_star[ii_surf][2].template block<2,2>(i_m, i_n)
-                                );
-                            dummy_gamma_star(i_m, i_n) = panel_area/te_panel_area;
-                        }
-                    }
-                }
+                dummy_gamma_star.setOnes(dimensions_star[ii_surf].first,
+                                        dimensions_star[ii_surf].second);
 
                 UVLM::BiotSavart::multisurface_steady_wake
                 (
