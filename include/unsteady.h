@@ -280,7 +280,8 @@ void UVLM::Unsteady::solver
                                                   zeta_star,
                                                   gamma,
                                                   gamma_star,
-                                                  1);
+                                                  uext_total_col,                   
+                                                  dt);
 
     if (!options.cfl1)
     {

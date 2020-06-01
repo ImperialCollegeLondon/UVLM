@@ -111,53 +111,44 @@ namespace UVLM
                 }
             }
 
-
             template <typename t_zeta,
                       typename t_zeta_star,
                       typename t_gamma,
-                      typename t_gamma_star>
+                      typename t_gamma_star,
+                      typename t_uext_total_col>
             void circulation_transfer
             (
                 const t_zeta& zeta,
                 const t_zeta_star& zeta_star,
                 const t_gamma& gamma,
                 t_gamma_star& gamma_star,
-                const int in_n_rows = -1
+                const t_uext_total_col& uext_total_col,
+                double dt=0.
             )
             {
-                uint N, M, Mstar, n_rows;
-                UVLM::Types::Real panel_area, te_panel_area;
+                uint n_cols, M;
+                double cfl;
+                UVLM::Types::Vector3 vel, dist;
 
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    N = gamma_star[i_surf].cols();
-                    Mstar = gamma_star[i_surf].rows();
+                    n_cols = gamma[i_surf].cols();
                     M = gamma[i_surf].rows();
-                    if (in_n_rows == -1){
-                        n_rows = Mstar;
-                    } else {
-                        n_rows = in_n_rows;
-                    }
-
-                    for (uint i_n=0; i_n<N; ++i_n)
+                    for (uint i_n=0; i_n<n_cols; ++i_n)
                     {
-                        te_panel_area = UVLM::Geometry::panel_area
-                            (
-                                zeta[i_surf][0].template block<2,2>(M - 1, i_n),
-                                zeta[i_surf][1].template block<2,2>(M - 1, i_n),
-                                zeta[i_surf][2].template block<2,2>(M - 1, i_n)
-                            );
-                        for (uint i_m=0; i_m<n_rows; ++i_m)
-                        {
-                            panel_area = UVLM::Geometry::panel_area
-                                (
-                                    zeta_star[i_surf][0].template block<2,2>(i_m, i_n),
-                                    zeta_star[i_surf][1].template block<2,2>(i_m, i_n),
-                                    zeta_star[i_surf][2].template block<2,2>(i_m, i_n)
-                                );
-                            gamma_star[i_surf](i_m, i_n) = gamma[i_surf](M - 1, i_n)*panel_area/te_panel_area;
-                        }
+                        dist << 0.25*(zeta_star[i_surf][0](1, i_n) + zeta_star[i_surf][0](1, i_n+1)
+                                        - zeta[i_surf][0](M-1, i_n) - zeta[i_surf][0](M-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][1](1, i_n) + zeta_star[i_surf][1](1, i_n+1)
+                                        - zeta[i_surf][1](M-1, i_n) - zeta[i_surf][1](M-1, i_n+1)),
+                                0.25*(zeta_star[i_surf][2](1, i_n) + zeta_star[i_surf][2](1, i_n+1)
+                                        - zeta[i_surf][2](M-1, i_n) - zeta[i_surf][2](M-1, i_n+1));
+                        vel << uext_total_col[i_surf][0](M-1, i_n),
+                               uext_total_col[i_surf][1](M-1, i_n),
+                               uext_total_col[i_surf][2](M-1, i_n);
+                        cfl = dt*vel.norm()/dist.norm();
+                        gamma_star[i_surf](0, i_n) = (1. - cfl)*gamma_star[i_surf](1, i_n) +
+                                                       cfl*gamma[i_surf](M-1, i_n);
                     }
                 }
             }
@@ -186,22 +177,10 @@ namespace UVLM
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
                 UVLM::Types::Vector3 point;
                 UVLM::Types::Real total_dist;
+                bool increasing;
 
                 // Allocate zeta_star_conv
                 const uint n_surf = gamma_star.size();
-                // UVLM::Types::VecVecMatrixX zeta_star_conv;
-                // zeta_star_conv.resize(n_surf);
-                // for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
-                // {
-                //     for (unsigned int i_dim=0; i_dim<3; ++i_dim)
-                //     {
-                //         zeta_star_conv[i_surf].push_back(UVLM::Types::MatrixX(gamma_star[i_surf].rows() + 1,
-                //                                                                gamma_star[i_surf].cols() + 1));
-                //     }
-                // }
-
-                // backup the wake shape
-                // UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_conv);
 
                 // Loop through the surfaces
                 for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
@@ -209,6 +188,7 @@ namespace UVLM
                     // Retrieve array sizes
                     M = gamma_star[i_surf].rows();
                     N = gamma_star[i_surf].cols();
+
                     // Allocate vectors
                     dist_to_orig_conv.resize(M + 2);
                     dist_to_orig_conv.setZero();
@@ -261,13 +241,13 @@ namespace UVLM
                                 // Cartesian coordinates
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
-                                    coord0(i_m) = zeta_star[i_surf][0](i_m, i_n);
-                                    coord1(i_m) = zeta_star[i_surf][1](i_m, i_n);
-                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n);
+                                    coord0(i_m) = zeta_star[i_surf][0](i_m, i_n) + 0.;
+                                    coord1(i_m) = zeta_star[i_surf][1](i_m, i_n) + 0.;
+                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) + 0.;
                                 }
-                                coord0(M + 1) = extra_zeta_star[i_surf][0](0, i_n);
-                                coord1(M + 1) = extra_zeta_star[i_surf][1](0, i_n);
-                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n);
+                                coord0(M + 1) = extra_zeta_star[i_surf][0](0, i_n) + 0.;
+                                coord1(M + 1) = extra_zeta_star[i_surf][1](0, i_n) + 0.;
+                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) + 0.;
 
                             }else if (options.interp_coords == 1)
                             {
@@ -277,12 +257,43 @@ namespace UVLM
                                     coord0(i_m) = std::sqrt(zeta_star[i_surf][0](i_m, i_n)*zeta_star[i_surf][0](i_m, i_n) +
                                                       zeta_star[i_surf][1](i_m, i_n)*zeta_star[i_surf][1](i_m, i_n));
                                     coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n), zeta_star[i_surf][0](i_m, i_n));
-                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n);
+                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) + 0.;
                                 }
                                 coord0(M + 1) = std::sqrt(extra_zeta_star[i_surf][0](0, i_n)*extra_zeta_star[i_surf][0](0, i_n) +
                                                   extra_zeta_star[i_surf][1](0, i_n)*extra_zeta_star[i_surf][1](0, i_n));
                                 coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n), extra_zeta_star[i_surf][0](0, i_n));
-                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n);
+                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) + 0.;
+
+                                if (coord1(2) >= coord1(1))
+                                {
+                                    increasing = true;
+                                } else {
+                                    increasing = false;
+                                }
+                                for (unsigned int i_m=0; i_m<M+1; ++i_m)
+                                {
+                                    if (increasing)
+                                    {
+                                        while (coord1(i_m + 1) < coord1(i_m)){
+                                            coord1(i_m + 1) += 2.*UVLM::Constants::PI;
+                                        }
+                                    } else
+                                    {
+                                        while (coord1(i_m + 1) > coord1(i_m)){
+                                            coord1(i_m + 1) -= 2.*UVLM::Constants::PI;
+                                        }
+                                    }
+                                    // if (az_prev*az_next < 0)
+                                    // {
+                                    //     if ((az_prev < 0) and (az_prev < -0.5*UVLM::Constants::PI))
+                                    //     {
+                                    //         az_prev += 2.*UVLM::Constants::PI;
+                                    //     } else if ((az_next < 0) and (az_next < -0.5*UVLM::Constants::PI))
+                                    //     {
+                                    //         az_next += 2.*UVLM::Constants::PI;
+                                    //     } 
+                                    // }
+                                }
                             } else
                             {
                                 std::cerr << "interp_coords == "
@@ -296,12 +307,10 @@ namespace UVLM
                             if (options.filter_method == 0)
                             {
                                 // No filter
-                                // UVLM::Filter::
-                                continue;
                             } else if (options.filter_method == 1)
                             {
                                 // Splines
-                                UVLM::Filters::splines(M + 1,
+                                UVLM::Filters::splines(M + 2,
                                                        dist_to_orig_conv,
                                                        coord0, coord1, coord2);
 
@@ -329,6 +338,9 @@ namespace UVLM
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
+                                // if (i_n == 0){
+                                //     std::cout << "coord2: " << coord2 << " new_coord2: " << new_coord2 << std::endl;
+                                // }
                             } else if (options.interp_method == 2)
                             {
                                 // Splines interpolation
@@ -351,9 +363,14 @@ namespace UVLM
                                 // Cartesian coordinates
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
-                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m);
-                                    zeta_star[i_surf][1](i_m, i_n) = new_coord1(i_m);
-                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m);
+                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m) + 0.;
+                                    zeta_star[i_surf][1](i_m, i_n) = new_coord1(i_m) + 0.;
+                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + 0.;
+                                    // if (i_n == N){
+                                    //     std::cout << "coord2: " << coord2(i_m) << " " <<
+                                    //                  "new_coord2: " << new_coord2(i_m) << " " <<
+                                    //                  "zeta " << zeta_star[i_surf][2](i_m, i_n) << std::endl;
+                                    // }
                                 }
                             }else if (options.interp_coords == 1)
                             {
@@ -362,7 +379,7 @@ namespace UVLM
                                 {
                                     zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m));
                                     zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m));
-                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m);
+                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + 0.;
                                 }
                             }
 
