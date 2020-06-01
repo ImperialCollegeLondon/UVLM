@@ -26,7 +26,8 @@ namespace UVLM
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
-                  typename t_forces>
+                  typename t_forces,
+                  typename t_rbm_vel_g>
         void solver
         (
             t_zeta& zeta,
@@ -36,6 +37,7 @@ namespace UVLM
             t_gamma& gamma,
             t_gamma_star& gamma_star,
             t_forces& forces,
+            t_rbm_vel_g& rbm_vel_g,
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
@@ -90,7 +92,8 @@ template <typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
           typename t_gamma_star,
-          typename t_forces>
+          typename t_forces,
+          typename t_rbm_vel_g>
 void UVLM::Steady::solver
 (
     t_zeta& zeta,
@@ -100,6 +103,7 @@ void UVLM::Steady::solver
     t_gamma& gamma,
     t_gamma_star& gamma_star,
     t_forces& forces,
+    t_rbm_vel_g& rbm_vel_g,
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions
 )
@@ -108,10 +112,16 @@ void UVLM::Steady::solver
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col;
     UVLM::Types::VecVecMatrixX uext_col;
+    UVLM::Types::VecVecMatrixX uext_total;
+    UVLM::Types::VecVecMatrixX uext_total_col;
 
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
     UVLM::Geometry::generate_colocationMesh(uext, uext_col);
+
+    UVLM::Types::allocate_VecVecMat(uext_total, uext);
+    UVLM::Types::copy_VecVecMat(uext, uext_total);
+    UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
 
     // panel normals
     UVLM::Types::VecVecMatrixX normals;
@@ -124,6 +134,18 @@ void UVLM::Steady::solver
                 uext[0][2](0,0);
     double delta_x = u_steady.norm()*options.dt;
 
+    // total stream velocity
+    UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+    (
+        zeta,
+        zeta_dot,
+        uext,
+        rbm_vel_g,
+        uext_total
+    );
+
+    UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
+
     // if options.horseshoe, it is finished.
     if (options.horseshoe)
     {
@@ -132,7 +154,7 @@ void UVLM::Steady::solver
         (
             zeta,
             zeta_col,
-            uext_col,
+            uext_total_col,
             zeta_star,
             gamma,
             gamma_star,
@@ -147,7 +169,7 @@ void UVLM::Steady::solver
             zeta_star,
             gamma,
             gamma_star,
-            uext,
+            uext_total,
             forces,
             options,
             flightconditions
@@ -169,7 +191,7 @@ void UVLM::Steady::solver
     (
         zeta,
         zeta_col,
-        uext_col,
+        uext_total_col,
         zeta_star,
         gamma,
         gamma_star,
@@ -181,6 +203,7 @@ void UVLM::Steady::solver
     double zeta_star_norm_first = 0.0;
     double zeta_star_norm_previous = 0.0;
     double zeta_star_norm = 0.0;
+    unsigned int N;
 
     UVLM::Types::VecVecMatrixX zeta_star_previous;
     if (options.n_rollup != 0)
@@ -208,11 +231,23 @@ void UVLM::Steady::solver
             gamma_star,
             u_ind);
         // convection velocity of the background flow
-        for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
+        // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
+        // {
+        //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+        //     {
+        //         u_ind[i_surf][i_dim].array() += u_steady(i_dim);
+        //     }
+        // }
+        // Do not move the vertices in the TE
+        for (uint i_surf=0; i_surf<zeta_star.size(); ++i_surf)
         {
-            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+            N = zeta_star[i_surf][0].cols();
+            for (uint i_n=0; i_n<N; ++i_n)
             {
-                u_ind[i_surf][i_dim].array() += u_steady(i_dim);
+                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                {
+                    u_ind[i_surf][i_dim](0, i_n) = 0.;
+                }
             }
         }
 
@@ -221,17 +256,17 @@ void UVLM::Steady::solver
                                          u_ind,
                                          options.dt);
         // move wake 1 row down and discard last row (far field)
-        UVLM::Wake::General::displace_VecVecMat(zeta_star);
-        UVLM::Wake::General::displace_VecMat(gamma_star);
+        // UVLM::Wake::General::displace_VecVecMat(zeta_star);
+        // UVLM::Wake::General::displace_VecMat(gamma_star);
         // copy trailing edge of zeta into 1st row of zeta_star
-        for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-            {
-                zeta_star[i_surf][i_dim].template topRows<1>() =
-                    zeta[i_surf][i_dim].template bottomRows<1>();
-            }
-        }
+        // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
+        // {
+        //     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+        //     {
+        //         zeta_star[i_surf][i_dim].template topRows<1>() =
+        //             zeta[i_surf][i_dim].template bottomRows<1>();
+        //     }
+        // }
 
         // generate AIC again
         if (i_rollup%options.rollup_aic_refresh == 0)
@@ -240,7 +275,7 @@ void UVLM::Steady::solver
             (
                 zeta,
                 zeta_col,
-                uext_col,
+                uext_total_col,
                 zeta_star,
                 gamma,
                 gamma_star,
@@ -266,17 +301,33 @@ void UVLM::Steady::solver
         }
     }
 
-    UVLM::PostProc::calculate_static_forces
+    // UVLM::PostProc::calculate_static_forces
+    // (
+    //     zeta,
+    //     zeta_star,
+    //     gamma,
+    //     gamma_star,
+    //     uext_total,
+    //     forces,
+    //     options,
+    //     flightconditions
+    // );
+    UVLM::PostProc::calculate_static_forces_unsteady
     (
         zeta,
+        zeta_dot,
         zeta_star,
         gamma,
         gamma_star,
         uext,
+        rbm_vel_g,
         forces,
         options,
         flightconditions
     );
+
+
+
 }
 
 
