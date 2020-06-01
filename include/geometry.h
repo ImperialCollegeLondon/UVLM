@@ -226,7 +226,7 @@ namespace UVLM
         {
             UVLM::Types::Real to_prev, to_next, prev_to_next;
             uint i_conv=0;
-            for (unsigned int i_m=0; i_m<M; ++i_m)
+            for (unsigned int i_m=0; i_m<M-1; ++i_m)
             {
                 while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
                 {i_conv++;}
@@ -260,7 +260,7 @@ namespace UVLM
             UVLM::Types::Vector3 b, abc;
             Eigen::Matrix<UVLM::Types::Real, 3, 3> Amat, Ainv;
             uint i_conv=0;
-            for (unsigned int i_m=0; i_m<M; ++i_m)
+            for (unsigned int i_m=0; i_m<M-1; ++i_m)
             {
                 while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
                 {i_conv++;}
@@ -342,7 +342,7 @@ namespace UVLM
 
             Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline2 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord2, splines_degree, dist_to_orig_conv);
 
-            for (uint i_m=0; i_m<M; ++i_m)
+            for (uint i_m=0; i_m<M-1; ++i_m)
             {
                 new_coord0(i_m) = spline0(dist_to_orig(i_m))(0);
                 new_coord1(i_m) = spline1(dist_to_orig(i_m))(0);

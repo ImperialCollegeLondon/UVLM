@@ -213,6 +213,20 @@ namespace UVLM
                     dist_to_orig_conv.resize(M + 2);
                     dist_to_orig_conv.setZero();
 
+                    coord0.resize(M + 2);
+                    coord0.setZero();
+                    coord1.resize(M + 2);
+                    coord1.setZero();
+                    coord2.resize(M + 2);
+                    coord2.setZero();
+                    
+                    new_coord0.resize(M + 1);
+                    new_coord0.setZero();
+                    new_coord1.resize(M + 1);
+                    new_coord1.setZero();
+                    new_coord2.resize(M + 1);
+                    new_coord2.setZero();
+                    
                     // Loop through streamline vortices
                     for (unsigned int i_n=0; i_n<N + 1; ++i_n)
                     {
@@ -335,7 +349,7 @@ namespace UVLM
                             if (options.interp_coords == 0)
                             {
                                 // Cartesian coordinates
-                                for (unsigned int i_m=0; i_m<M+2; ++i_m)
+                                for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
                                     zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m);
                                     zeta_star[i_surf][1](i_m, i_n) = new_coord1(i_m);
@@ -344,7 +358,7 @@ namespace UVLM
                             }else if (options.interp_coords == 1)
                             {
                                 // Cylindrical coordinates
-                                for (unsigned int i_m=0; i_m<M+2; ++i_m)
+                                for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
                                     zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m));
                                     zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m));
