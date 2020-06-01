@@ -165,9 +165,9 @@ void UVLM::Matrix::AIC
                         {
                             panel_area = UVLM::Geometry::panel_area
                                 (
-                                    zeta[ii_surf][0].template block<2,2>(i_m, i_n),
-                                    zeta[ii_surf][1].template block<2,2>(i_m, i_n),
-                                    zeta[ii_surf][2].template block<2,2>(i_m, i_n)
+                                    zeta_star[ii_surf][0].template block<2,2>(i_m, i_n),
+                                    zeta_star[ii_surf][1].template block<2,2>(i_m, i_n),
+                                    zeta_star[ii_surf][2].template block<2,2>(i_m, i_n)
                                 );
                             dummy_gamma_star(i_m, i_n) = panel_area/te_panel_area;
                         }

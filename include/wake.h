@@ -152,9 +152,9 @@ namespace UVLM
                         {
                             panel_area = UVLM::Geometry::panel_area
                                 (
-                                    zeta[i_surf][0].template block<2,2>(i_m, i_n),
-                                    zeta[i_surf][1].template block<2,2>(i_m, i_n),
-                                    zeta[i_surf][2].template block<2,2>(i_m, i_n)
+                                    zeta_star[i_surf][0].template block<2,2>(i_m, i_n),
+                                    zeta_star[i_surf][1].template block<2,2>(i_m, i_n),
+                                    zeta_star[i_surf][2].template block<2,2>(i_m, i_n)
                                 );
                             gamma_star[i_surf](i_m, i_n) = gamma[i_surf](M - 1, i_n)*panel_area/te_panel_area;
                         }
