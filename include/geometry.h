@@ -349,6 +349,55 @@ namespace UVLM
                 new_coord2(i_m) = spline2(dist_to_orig(i_m))(0);
             }
         } // splines
+        
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void slerp
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            // https://en.wikipedia.org/wiki/Slerp
+            UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+
+                mod_prev = std::sqrt(coord0(i_conv - 1)*coord0(i_conv - 1) +
+                                     coord1(i_conv - 1)*coord1(i_conv - 1));
+                                     // coord2(i_conv - 1)*coord2(i_conv - 1));
+                mod_next = std::sqrt(coord0(i_conv)*coord0(i_conv) +
+                                     coord1(i_conv)*coord1(i_conv));
+                                     // coord2(i_conv)*coord2(i_conv));
+    
+                omega = std::acos((coord0(i_conv - 1)*coord0(i_conv) +
+                                  coord1(i_conv - 1)*coord1(i_conv))/mod_prev/mod_next);
+                                  // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
+
+                coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
+                coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+                
+                new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
+                new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
+                new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
+            }
+        } // slerp
     } // Interpolation
     //
     namespace Filters
@@ -365,7 +414,9 @@ namespace UVLM
         {
             // https://www.alglib.net/translator/man/manual.cpp.html#example_lsfit_d_spline
             // UVLM::Types::Real a_x[M], a_coord[M], a_out_coord[M];
-            alglib::real_1d_array a_x, a_coord, a_out_coord;
+            alglib::real_1d_array a_x, a_coord;
+            a_x.setlength(M);
+            a_coord.setlength(M);
 
             const uint basis_functions = 50;
             const UVLM::Types::Real rho = 3.0; // Smoothing factor
