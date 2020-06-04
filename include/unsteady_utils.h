@@ -229,6 +229,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
             {
                 u_convection[i_surf][i_dim].template topRows<1>().setZero();
+                // u_convection[i_surf][i_dim].template leftCols<4>().setZero();
             }
         }
 
