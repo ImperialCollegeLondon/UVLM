@@ -221,8 +221,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             zeta_star,
             gamma,
             gamma_star,
-            u_convection
-        );
+            u_convection,
+            options.vortex_radius        );
         // remove first row of convection velocities
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {

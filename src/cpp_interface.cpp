@@ -564,7 +564,8 @@ DLLEXPORT void total_induced_velocity_at_points
                         zeta_star,
                         gamma,
                         gamma_star,
-                        options.ImageMethod);
+                        options.ImageMethod,
+                        options.vortex_radius);
         uout(ipoint, 0) = aux_uout(0);
         uout(ipoint, 1) = aux_uout(1);
         uout(ipoint, 2) = aux_uout(2);
@@ -804,7 +805,8 @@ DLLEXPORT void multisurface
         target_surface_col[0],
         uout[0],
         options.ImageMethod,
-        normal[0]
+        normal[0],
+        options.vortex_radius
     );
 }
 
@@ -815,7 +817,8 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
                     double p_DerVertices[36],// 4x9
                     double p_zetaP[3],
                     double p_ZetaPanel[12],
-                    const double& gamma )
+                    const double& gamma,
+                    double& vortex_radius)
   { /*
     To interface with python, matrices need to be mapped into 1d arrays.
     */
@@ -832,7 +835,7 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
       DerVertices.push_back( UVLMlin::map_Mat3by3(p_DerVertices+9*vv) );
     }
 
-    UVLMlin::der_biot_panel_map( DerP, DerVertices, zetaP, ZetaPanel, gamma );
+    UVLMlin::der_biot_panel_map( DerP, DerVertices, zetaP, ZetaPanel, gamma, vortex_radius );
   }
 
 
@@ -840,7 +843,8 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
 DLLEXPORT void call_biot_panel(double p_vel[3],
                   double p_zetaP[3],
                   double p_ZetaPanel[12],
-                  const double& gamma ){
+                  const double& gamma,
+                  double& vortex_radius){
     /*
     To interface Eigen based routines with python, matrices need to be mapped
     into 1d arrays.
@@ -850,7 +854,7 @@ DLLEXPORT void call_biot_panel(double p_vel[3],
     const UVLMlin::map_RowVec3 zetaP(p_zetaP);
     const UVLMlin::map_Mat4by3 ZetaPanel(p_ZetaPanel);
 
-    UVLMlin::biot_panel_map(velP, zetaP, ZetaPanel, gamma);
+    UVLMlin::biot_panel_map(velP, zetaP, ZetaPanel, gamma, vortex_radius);
   }
 
 
@@ -863,8 +867,8 @@ DLLEXPORT void call_dvinddzeta(double p_DerC[9],
                   int& M_in,
                   int& N_in,
                   bool& IsBound,
-                  int& M_in_bound // M of bound surf associated
-                   )
+                  int& M_in_bound, // M of bound surf associated
+                  double& vortex_radius)
   {
     int cc;
     int Kzeta_in=(M_in+1)*(N_in+1);
@@ -885,7 +889,8 @@ DLLEXPORT void call_dvinddzeta(double p_DerC[9],
     UVLMlin::dvinddzeta( DerC,DerV,
           zetaC,ZetaIn,GammaIn,
           M_in,N_in,Kzeta_in,
-          IsBound,M_in_bound,Kzeta_in_bound);
+          IsBound,M_in_bound,Kzeta_in_bound,
+          vortex_radius);
   }
 
 
@@ -894,7 +899,8 @@ DLLEXPORT void call_aic3(  double p_AIC3[],
                 double p_zetaC[3],
                 double p_ZetaIn[],
                 int& M_in,
-                int& N_in)
+                int& N_in,
+                double& vortex_radius)
   {
     int cc;
     int K_in=M_in*N_in;
@@ -908,7 +914,7 @@ DLLEXPORT void call_aic3(  double p_AIC3[],
       ZetaIn.push_back( UVLMlin::map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
     }
 
-    UVLMlin::aic3(AIC3, zetaC, ZetaIn, M_in, N_in);
+    UVLMlin::aic3(AIC3, zetaC, ZetaIn, M_in, N_in, vortex_radius);
   }
 
 
@@ -919,7 +925,8 @@ DLLEXPORT void call_ind_vel(
                 double p_ZetaIn[],
                 double p_GammaIn[],
                 int& M_in,
-                int& N_in)
+                int& N_in,
+                double& vortex_radius)
   {
     int cc;
 
@@ -934,5 +941,5 @@ DLLEXPORT void call_ind_vel(
       ZetaIn.push_back( UVLMlin::map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
     }
 
-    UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in);
+    UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in, vortex_radius);
   }

@@ -229,7 +229,8 @@ void UVLM::Steady::solver
             zeta_star,
             gamma,
             gamma_star,
-            u_ind);
+            u_ind,
+            options.vortex_radius);
         // convection velocity of the background flow
         // for (uint i_surf=0; i_surf<zeta.size(); ++i_surf)
         // {

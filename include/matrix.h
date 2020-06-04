@@ -160,7 +160,8 @@ void UVLM::Matrix::AIC
                     horseshoe,
                     block,
                     options.ImageMethod,
-                    normals[icol_surf]
+                    normals[icol_surf],
+                    options.vortex_radius
                 );
             } else // unsteady case
             {
@@ -176,7 +177,8 @@ void UVLM::Matrix::AIC
                     block,
                     options.ImageMethod,
                     normals[icol_surf],
-                    0
+                    0,
+                    options.vortex_radius
                 );
             }
         }
@@ -244,7 +246,8 @@ void UVLM::Matrix::RHS
                                                                       0,
                                                                       -1,
                                                                       -1,
-                                                                      options.ImageMethod);
+                                                                      options.ImageMethod,
+                                                                      options.vortex_radius);
                     }
                     u_col += v_ind;
 
