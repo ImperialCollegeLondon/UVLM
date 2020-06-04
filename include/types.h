@@ -63,6 +63,7 @@ namespace UVLM
             bool iterative_precond;
             bool cfl1;
             double vortex_radius;
+            double vortex_radius_wake_ind;
         };
 
         struct UVMopts
@@ -82,6 +83,7 @@ namespace UVLM
             bool convect_wake;
             bool cfl1;
             double vortex_radius;
+            double vortex_radius_wake_ind;
             uint interp_coords;
             uint filter_method;
             uint interp_method;
