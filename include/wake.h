@@ -172,7 +172,7 @@ namespace UVLM
             )
             {
                 unsigned int M, N;
-                double cfl, dist;
+                double cfl, dist, step;
                 UVLM::Types::VectorX dist_to_orig_conv, coord0, coord1, coord2;
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
                 UVLM::Types::Vector3 point;
@@ -213,6 +213,19 @@ namespace UVLM
                         // Recompute the geometry
                         if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
                         {
+                            
+                            // Reduce the last panel as much as the first one
+                            point << zeta_star[i_surf][0](1, i_n) - zeta_star[i_surf][0](0, i_n),
+                                     zeta_star[i_surf][1](1, i_n) - zeta_star[i_surf][1](0, i_n),
+                                     zeta_star[i_surf][2](1, i_n) - zeta_star[i_surf][2](0, i_n);
+                            step = point.norm();
+                            point << zeta_star[i_surf][0](M, i_n) - extra_zeta_star[i_surf][0](0, i_n),
+                                     zeta_star[i_surf][1](M, i_n) - extra_zeta_star[i_surf][1](0, i_n),
+                                     zeta_star[i_surf][2](M, i_n) - extra_zeta_star[i_surf][2](0, i_n);
+                            extra_zeta_star[i_surf][0](0, i_n) += step*point(0)/point.norm();                            
+                            extra_zeta_star[i_surf][1](0, i_n) += step*point(1)/point.norm();                            
+                            extra_zeta_star[i_surf][2](0, i_n) += step*point(2)/point.norm();                            
+
                             // Compute the distance of each wake vertice to the first point of the
                             dist_to_orig_conv(0) = 0.;
                             for (unsigned int i_m=1; i_m<M+1; ++i_m)
