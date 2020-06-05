@@ -390,11 +390,19 @@ namespace UVLM
                                   coord1(i_conv - 1)*coord1(i_conv))/mod_prev/mod_next);
                                   // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
 
-                coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
-                coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+               
+                if (std::abs(std::sin(omega)) > 1e-6)
+                { 
+                    coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
+                    coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+
+                    new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
+                    new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
+                } else {
+                    new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
+                    new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
+                }
                 
-                new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
-                new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
                 new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
             }
         } // slerp

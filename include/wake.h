@@ -425,6 +425,7 @@ namespace UVLM
                                 cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist/total_dist;
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
+                               
                                 wake_conv_vel[i_surf](i_m, i_n) = (1. - cfl)*wake_conv_vel[i_surf](i_m + 1, i_n) +
                                                                   cfl*wake_conv_vel[i_surf](i_m, i_n);
                             }
