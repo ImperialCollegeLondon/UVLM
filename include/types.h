@@ -103,6 +103,7 @@ namespace UVLM
             vm.horseshoe = false;
             vm.Steady = false;
             vm.vortex_radius = uvm.vortex_radius;
+            vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
             return vm;
         };
 
