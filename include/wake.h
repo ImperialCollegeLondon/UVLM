@@ -210,11 +210,10 @@ namespace UVLM
                     // Loop through streamline vortices
                     for (unsigned int i_n=0; i_n<N + 1; ++i_n)
                     {
-                        // Recompute the geometry
+                        
+                        // Reduce the last panel as much as the first one
                         if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
                         {
-                            
-                            // Reduce the last panel as much as the first one
                             point << zeta_star[i_surf][0](1, i_n) - zeta_star[i_surf][0](0, i_n),
                                      zeta_star[i_surf][1](1, i_n) - zeta_star[i_surf][1](0, i_n),
                                      zeta_star[i_surf][2](1, i_n) - zeta_star[i_surf][2](0, i_n);
@@ -225,23 +224,28 @@ namespace UVLM
                             extra_zeta_star[i_surf][0](0, i_n) += step*point(0)/point.norm();                            
                             extra_zeta_star[i_surf][1](0, i_n) += step*point(1)/point.norm();                            
                             extra_zeta_star[i_surf][2](0, i_n) += step*point(2)/point.norm();                            
+                        }
 
-                            // Compute the distance of each wake vertice to the first point of the
-                            dist_to_orig_conv(0) = 0.;
-                            for (unsigned int i_m=1; i_m<M+1; ++i_m)
-                            {
-                                point << zeta_star[i_surf][0](i_m, i_n) - zeta_star[i_surf][0](i_m - 1, i_n),
-                                         zeta_star[i_surf][1](i_m, i_n) - zeta_star[i_surf][1](i_m - 1, i_n),
-                                         zeta_star[i_surf][2](i_m, i_n) - zeta_star[i_surf][2](i_m - 1, i_n);
+                        // Compute the distance of each wake vertice to the first point of the
+                        dist_to_orig_conv(0) = 0.;
+                        for (unsigned int i_m=1; i_m<M+1; ++i_m)
+                        {
+                            point << zeta_star[i_surf][0](i_m, i_n) - zeta_star[i_surf][0](i_m - 1, i_n),
+                                     zeta_star[i_surf][1](i_m, i_n) - zeta_star[i_surf][1](i_m - 1, i_n),
+                                     zeta_star[i_surf][2](i_m, i_n) - zeta_star[i_surf][2](i_m - 1, i_n);
 
-                                dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
-                            }
-                            // Compute the last point
-                            point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star[i_surf][0](M, i_n),
-                                     extra_zeta_star[i_surf][1](0, i_n) - zeta_star[i_surf][1](M, i_n),
-                                     extra_zeta_star[i_surf][2](0, i_n) - zeta_star[i_surf][2](M, i_n);
-                            dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
-                            total_dist = dist_to_orig_conv(M+1) + 0.;
+                            dist_to_orig_conv(i_m) = point.norm() + dist_to_orig_conv(i_m - 1);
+                        }
+                        // Compute the last point
+                        point << extra_zeta_star[i_surf][0](0, i_n) - zeta_star[i_surf][0](M, i_n),
+                                 extra_zeta_star[i_surf][1](0, i_n) - zeta_star[i_surf][1](M, i_n),
+                                 extra_zeta_star[i_surf][2](0, i_n) - zeta_star[i_surf][2](M, i_n);
+                        dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
+                        total_dist = dist_to_orig_conv(M+1) + 0.;
+                        
+                        // Recompute the geometry
+                        if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
+                        {
                             // Set maximum to one
                             for (unsigned int i_m=0; i_m<M+2; ++i_m)
                             {
