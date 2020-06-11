@@ -293,6 +293,7 @@ void UVLM::Steady::solver
             // double eps = std::abs((zeta_star_norm - zeta_star_norm_previous)
             //                       /zeta_star_norm_first);
             double eps = std::abs(UVLM::Types::norm_VecVec_mat(zeta_star - zeta_star_previous))/zeta_star_norm_first;
+            std::cout << "    UVLM: Rollup iteration: " << i_rollup << ". Error: " << eps << std::endl;
             if (eps < options.rollup_tolerance)
             {
                 break;
