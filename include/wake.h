@@ -176,7 +176,7 @@ namespace UVLM
                 UVLM::Types::VectorX dist_to_orig_conv, coord0, coord1, coord2;
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
                 UVLM::Types::Vector3 point;
-                UVLM::Types::Real total_dist;
+                UVLM::Types::Real total_dist, rho;
                 bool increasing;
 
                 // Allocate zeta_star_conv
@@ -330,7 +330,11 @@ namespace UVLM
                             } else if (options.filter_method == 1)
                             {
                                 // Splines
-                                UVLM::Filters::splines(M + 2,
+                                if (i_n < 4)
+                                {
+                                    rho = (-10. - (-3.))/(3 - 0)*i_n + (-3.);
+                                    UVLM::Filters::splines(M + 2,
+                                                       rho,
                                                        dist_to_orig_conv,
                                                        coord0, coord1, coord2);
 

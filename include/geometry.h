@@ -414,6 +414,7 @@ namespace UVLM
         void splines
         (
             uint M,
+            const UVLM::Types::Real rho,
             const t_coord& x,
             t_coord& coord0,
             t_coord& coord1,
@@ -427,7 +428,7 @@ namespace UVLM
             a_coord.setlength(M);
 
             const uint basis_functions = 50;
-            const UVLM::Types::Real rho = 3.0; // Smoothing factor
+            // const UVLM::Types::Real rho = -5.0; // Smoothing factor
             alglib::ae_int_t info;
             alglib::spline1dinterpolant s;
             alglib::spline1dfitreport rep;
@@ -441,7 +442,7 @@ namespace UVLM
             // Fit splines
             alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
             // Retrieve values
-            for (uint i_m = 0; i_m < M; i_m++)
+            for (uint i_m = 1; i_m < M; i_m++)
             {
                 coord0(i_m) = alglib::spline1dcalc(s, x(i_m));
             }
@@ -454,7 +455,7 @@ namespace UVLM
             // Fit splines
             alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
             // Retrieve values
-            for (uint i_m = 0; i_m < M; i_m++)
+            for (uint i_m = 1; i_m < M; i_m++)
             {
                 coord1(i_m) = alglib::spline1dcalc(s, x(i_m));
             }
@@ -467,7 +468,7 @@ namespace UVLM
             // Fit splines
             alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
             // Retrieve values
-            for (uint i_m = 0; i_m < M; i_m++)
+            for (uint i_m = 1; i_m < M; i_m++)
             {
                 coord2(i_m) = alglib::spline1dcalc(s, x(i_m));
             }
