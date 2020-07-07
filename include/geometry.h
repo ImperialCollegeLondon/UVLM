@@ -370,8 +370,15 @@ namespace UVLM
             // https://en.wikipedia.org/wiki/Slerp
             UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
             uint i_conv=0;
+            // for (unsigned int i_m=0; i_m<180; ++i_m)
             for (unsigned int i_m=0; i_m<M; ++i_m)
             {
+                new_coord0(i_m) = coord0(i_m);
+                new_coord1(i_m) = coord1(i_m);
+                new_coord2(i_m) = coord2(i_m);
+            // }
+            // for (unsigned int i_m=180; i_m<M; ++i_m)
+            // {
                 while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
                 {i_conv++;}
 
@@ -473,6 +480,83 @@ namespace UVLM
                 coord2(i_m) = alglib::spline1dcalc(s, x(i_m));
             }
         } // splines
+        
+        template <typename t_coord>
+        void moving_average
+        (
+            uint M,
+            const unsigned int window,
+            const t_coord& x,
+            t_coord& coord0,
+            t_coord& coord1,
+            t_coord& coord2
+        )
+        {
+            unsigned int sp;
+            UVLM::Types::Real aux_coord0[M], aux_coord1[M], aux_coord2[M]; 
+
+            if (window % 2 == 1)
+            {
+                // window has to be odd
+                sp = int((window - 1)/2);
+            } else 
+            {
+                std::cerr << "window has to be odd" << std::endl;
+            }
+
+            // Copy values
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                aux_coord0[i_m] = coord0(i_m);
+                aux_coord1[i_m] = coord1(i_m);
+                aux_coord2[i_m] = coord2(i_m);
+            }
+            
+            for (uint i_m = 1; i_m < M; i_m++)
+            {
+                if (i_m < sp)
+                {
+                    // First points
+                    for (uint i_avg = 0; i_avg < i_m; i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    } 
+                    coord0(i_m) /= (2*i_m + 1);
+                    coord1(i_m) /= (2*i_m + 1);
+                    coord2(i_m) /= (2*i_m + 1);
+
+                } else if (i_m < M - sp)
+                {
+                    // Intermediate points
+                    for (uint i_avg = 0; i_avg < sp; i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    } 
+                    coord0(i_m) /= window;
+                    coord1(i_m) /= window;
+                    coord2(i_m) /= window;
+                } else 
+                {
+                    // Last points
+                    for (uint i_avg = 0; i_avg < (M - 1 - i_m); i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    } 
+                    coord0(i_m) /= (2*(M - 1 - i_m) + 1);
+                    coord1(i_m) /= (2*(M - 1 - i_m) + 1);
+                    coord2(i_m) /= (2*(M - 1 - i_m) + 1);
+                }
+            }
+        } // moving_average
     } // Filters
 
 } // UVLM

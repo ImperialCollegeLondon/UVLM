@@ -243,14 +243,15 @@ namespace UVLM
                         dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
                         total_dist = dist_to_orig_conv(M+1) + 0.;
                         
+                        // Set maximum to one
+                        for (unsigned int i_m=0; i_m<M+2; ++i_m)
+                        {
+                            dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
+                        }
+
                         // Recompute the geometry
                         if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
                         {
-                            // Set maximum to one
-                            for (unsigned int i_m=0; i_m<M+2; ++i_m)
-                            {
-                                dist_to_orig_conv(i_m) /= dist_to_orig_conv(M + 1);
-                            }
 
                             // Change of coordinates
                             if (options.interp_coords == 0)
@@ -337,13 +338,26 @@ namespace UVLM
                                                        rho,
                                                        dist_to_orig_conv,
                                                        coord0, coord1, coord2);
+                                }
+
+                            } else if (options.filter_method == 2)
+                            {
+                                // Moving average
+                                if (i_n < 4)
+                                {
+                                    //rho = (-10. - (-3.))/(3 - 0)*i_n + (-3.);
+                                    UVLM::Filters::moving_average(M + 2,
+                                                       3,
+                                                       dist_to_orig_conv,
+                                                       coord0, coord1, coord2);
+                                }
 
                             } else
                             {
                                 std::cerr << "filter_method == "
                                           << options.filter_method
                                           << " is not supported by the UVLM solver. \n"
-                                          << "Supported options are from [0->1]"
+                                          << "Supported options are from [0->2]"
                                           << std::endl;
                             }
 
