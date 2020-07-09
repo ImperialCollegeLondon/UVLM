@@ -354,7 +354,7 @@ namespace UVLM
                   typename t_dist_conv,
                   typename t_coord,
                   typename t_coord_conv>
-        void slerp
+        void slerp_z
         (
             uint M,
             const t_dist& dist_to_orig,
@@ -412,7 +412,91 @@ namespace UVLM
                 
                 new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
             }
-        } // slerp
+        } // slerp_z
+        
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void slerp_yaw
+        (
+            uint M,
+            const UVLM::Types::Real yaw,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            // https://en.wikipedia.org/wiki/Slerp
+            // This function computes the slerp interpolation around an axis on the y-z plane rotated 'yaw' degrees around x
+            UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
+            UVLM::Types::VectorX aux_coord0, aux_coord1, aux_coord2;
+            UVLM::Types::VectorX aux_new_coord0, aux_new_coord1, aux_new_coord2;
+
+            aux_coord0.resize(M + 1);
+            aux_coord1.resize(M + 1);
+            aux_coord2.resize(M + 1);
+            
+            aux_new_coord0.resize(M);
+            aux_new_coord1.resize(M);
+            aux_new_coord2.resize(M);
+            
+            // Transform the coordinates
+            for (unsigned int i_m=0; i_m<M+1; ++i_m)
+            {
+                aux_coord0(i_m) = coord0(i_m);
+                aux_coord1(i_m) = coord1(i_m)*cos(yaw) + coord2(i_m)*sin(yaw);
+                aux_coord2(i_m) = -1.0*coord1(i_m)*sin(yaw) + coord2(i_m)*cos(yaw);
+            }
+
+            // Compute the new coordinates in the yaw FoR
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+
+                mod_prev = std::sqrt(aux_coord0(i_conv - 1)*aux_coord0(i_conv - 1) +
+                                     aux_coord1(i_conv - 1)*aux_coord1(i_conv - 1));
+                mod_next = std::sqrt(aux_coord0(i_conv)*aux_coord0(i_conv) +
+                                     aux_coord1(i_conv)*aux_coord1(i_conv));
+    
+                omega = std::acos((aux_coord0(i_conv - 1)*aux_coord0(i_conv) +
+                                  aux_coord1(i_conv - 1)*aux_coord1(i_conv))/mod_prev/mod_next);
+               
+                if (std::abs(std::sin(omega)) > 1e-6)
+                { 
+                    coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
+                    coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+
+                    aux_new_coord0(i_m) = (coef_next*aux_coord0(i_conv) + coef_prev*aux_coord0(i_conv - 1));
+                    aux_new_coord1(i_m) = (coef_next*aux_coord1(i_conv) + coef_prev*aux_coord1(i_conv - 1));
+                } else {
+                    aux_new_coord0(i_m) = (to_prev*aux_coord0(i_conv) + to_next*aux_coord0(i_conv - 1))/prev_to_next;
+                    aux_new_coord1(i_m) = (to_prev*aux_coord1(i_conv) + to_next*aux_coord1(i_conv - 1))/prev_to_next;
+                }
+                
+                aux_new_coord2(i_m) = (to_prev*aux_coord2(i_conv) + to_next*aux_coord2(i_conv - 1))/prev_to_next;
+            }
+
+            // Transform back the coordinates
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                new_coord0(i_m) = aux_new_coord0(i_m);
+                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw);
+                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw);
+            }
+
+        } // slerp_yaw
     } // Interpolation
     //
     namespace Filters

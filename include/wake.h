@@ -390,7 +390,16 @@ namespace UVLM
                             {
                                 // Slerp interpolation
                                 // https://en.wikipedia.org/wiki/Slerp
-                                UVLM::Interpolation::slerp(M + 1,
+                                UVLM::Interpolation::slerp_z(M + 1,
+                                                            dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
+                                                            coord0, coord1, coord2,
+                                                            new_coord0, new_coord1, new_coord2);
+                            } else if (options.interp_method == 4)
+                            {
+                                // Slerp interpolation
+                                // https://en.wikipedia.org/wiki/Slerp
+                                UVLM::Interpolation::slerp_yaw(M + 1,
+                                                            options.yaw_slerp,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
@@ -399,7 +408,7 @@ namespace UVLM
                                 std::cerr << "interp_method == "
                                           << options.interp_method
                                           << " is not supported by the UVLM solver. \n"
-                                          << "Supported options are from [0->3]"
+                                          << "Supported options are from [0->4]"
                                           << std::endl;
                             }
 

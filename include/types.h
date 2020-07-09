@@ -87,6 +87,7 @@ namespace UVLM
             uint interp_coords;
             uint filter_method;
             uint interp_method;
+            double yaw_slerp;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
