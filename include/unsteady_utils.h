@@ -222,6 +222,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             gamma,
             gamma_star,
             u_convection,
+            options.ImageMethod,
             options.vortex_radius_wake_ind
         );
         // remove first row of convection velocities
