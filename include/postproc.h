@@ -99,7 +99,8 @@ namespace UVLM
                                     rp,
                                     options.horseshoe,
                                     temp_uout,
-                                    options.ImageMethod
+                                    options.ImageMethod,
+                                    options.vortex_radius
                                 );
                                 v_ind(0) += temp_uout[0].sum();
                                 v_ind(1) += temp_uout[1].sum();
@@ -236,7 +237,8 @@ namespace UVLM
                                                                               0,
                                                                               -1,
                                                                               -1,
-                                                                              options.ImageMethod);
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
@@ -245,7 +247,8 @@ namespace UVLM
                                                                               0,
                                                                               -1,
                                                                               -1,
-                                                                              options.ImageMethod);
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
                         }
 
                         dl = r2-r1;
@@ -292,7 +295,8 @@ namespace UVLM
                                                                               0,
                                                                               -1,
                                                                               -1,
-                                                                              options.ImageMethod);
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
@@ -301,7 +305,8 @@ namespace UVLM
                                                                               0,
                                                                               -1,
                                                                               -1,
-                                                                              options.ImageMethod);
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
                         }
 
                         dl = r2-r1;
@@ -363,7 +368,8 @@ namespace UVLM
                                                                           0,
                                                                           -1,
                                                                           -1,
-                                                                          options.ImageMethod);
+                                                                          options.ImageMethod,
+                                                                          options.vortex_radius);
 
                         v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                           gamma_star[ii_surf],
@@ -372,7 +378,8 @@ namespace UVLM
                                                                           0,
                                                                           -1,
                                                                           -1,
-                                                                          options.ImageMethod);
+                                                                          options.ImageMethod,
+                                                                          options.vortex_radius);
                     }
 
                     dl = r2-r1;
