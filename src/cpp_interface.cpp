@@ -283,11 +283,6 @@ DLLEXPORT void run_UVLM
                                    p_dist_to_orig,
                                    dist_to_orig,
                                    1);
-    // UVLM::Types::VecMapVX dist_to_orig;
-    // UVLM::CppInterface::map_VecVec1(dimensions_star,
-    //                                 p_dist_to_orig,
-    //                                 dist_to_orig,
-    //                                 1);
 
     UVLM::Types::VecMapX wake_conv_vel;
     UVLM::CppInterface::map_VecMat(dimensions_star,

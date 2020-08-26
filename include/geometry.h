@@ -367,15 +367,12 @@ namespace UVLM
             // https://en.wikipedia.org/wiki/Slerp
             UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
             uint i_conv=0;
-            // for (unsigned int i_m=0; i_m<180; ++i_m)
             for (unsigned int i_m=0; i_m<M; ++i_m)
             {
                 new_coord0(i_m) = coord0(i_m);
                 new_coord1(i_m) = coord1(i_m);
                 new_coord2(i_m) = coord2(i_m);
-            // }
-            // for (unsigned int i_m=180; i_m<M; ++i_m)
-            // {
+
                 while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
                 {i_conv++;}
 

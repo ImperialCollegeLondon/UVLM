@@ -114,8 +114,6 @@ void UVLM::Matrix::AIC
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
 
-    UVLM::Types::Real panel_area, te_panel_area;
-
     // build the offsets beforehand
     // (parallel variation)
     std::vector<uint> offset;

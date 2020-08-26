@@ -304,16 +304,6 @@ namespace UVLM
                                             coord1(i_m + 1) -= 2.*UVLM::Constants::PI;
                                         }
                                     }
-                                    // if (az_prev*az_next < 0)
-                                    // {
-                                    //     if ((az_prev < 0) and (az_prev < -0.5*UVLM::Constants::PI))
-                                    //     {
-                                    //         az_prev += 2.*UVLM::Constants::PI;
-                                    //     } else if ((az_next < 0) and (az_next < -0.5*UVLM::Constants::PI))
-                                    //     {
-                                    //         az_next += 2.*UVLM::Constants::PI;
-                                    //     }
-                                    // }
                                 }
                             } else
                             {
@@ -333,7 +323,6 @@ namespace UVLM
                                 // Moving average
                                 if (i_n < 4)
                                 {
-                                    //rho = (-10. - (-3.))/(3 - 0)*i_n + (-3.);
                                     UVLM::Filters::moving_average(M + 2,
                                                        3,
                                                        dist_to_orig_conv,
@@ -364,9 +353,6 @@ namespace UVLM
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
-                                // if (i_n == 0){
-                                //     std::cout << "coord2: " << coord2 << " new_coord2: " << new_coord2 << std::endl;
-                                // }
                             } else if (options.interp_method == 2)
                             {
                                 // Splines interpolation
@@ -409,11 +395,6 @@ namespace UVLM
                                     zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m) + 0.;
                                     zeta_star[i_surf][1](i_m, i_n) = new_coord1(i_m) + 0.;
                                     zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + 0.;
-                                    // if (i_n == N){
-                                    //     std::cout << "coord2: " << coord2(i_m) << " " <<
-                                    //                  "new_coord2: " << new_coord2(i_m) << " " <<
-                                    //                  "zeta " << zeta_star[i_surf][2](i_m, i_n) << std::endl;
-                                    // }
                                 }
                             }else if (options.interp_coords == 1)
                             {

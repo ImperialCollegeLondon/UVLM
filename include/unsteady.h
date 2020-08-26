@@ -221,21 +221,15 @@ void UVLM::Unsteady::solver
 
     UVLM::Types::VecMatrixX extra_gamma_star;
     UVLM::Types::VecVecMatrixX extra_zeta_star;
-    // extra_gamma_star.resize(n_surf);
     extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
         extra_gamma_star.push_back(UVLM::Types::MatrixX());
         extra_gamma_star[i_surf].setZero(1, gamma_star[i_surf].cols());
-        // UVLM::Types::MatrixX extra_gamma_star[i_surf](1,
-                                                      // gamma_star[i_surf].cols());
-        // extra_zeta_star[i_surf].resize(3);
         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
         {
             extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
                                                                    gamma_star[i_surf].cols() + 1));
-            // UVLM::Types::MatrixX extra_zeta_star[i_surf][i_dim](1,
-            //                                                 gamma_star[i_surf].cols() + 1));
         }
     }
 
@@ -257,7 +251,6 @@ void UVLM::Unsteady::solver
 
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
-    // std::cout << dist_to_orig[0] << std::endl;
 
     if (options.convect_wake)
     {
@@ -280,28 +273,14 @@ void UVLM::Unsteady::solver
                                                   zeta_star,
                                                   gamma,
                                                   gamma_star,
-                                                  uext_total_col,                   
+                                                  uext_total_col,
                                                   dt);
 
     if (!options.cfl1)
     {
-        // typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
-        // typedef Eigen::Map<VectorX> MapVectorX;
-        // typedef std::vector<MapVectorX> VecMapVX;
-        // typedef std::vector<MatrixX> VecMatrixX;
-        //         mat.push_back(UVLM::Types::MatrixX());
-        // UVLM::Types::MapVectorX extra_gamma_star;
-        // UVLM::CppInterface::map_VecVec1(dimensions_star,
-        //                                 p_dist_to_origin,
-        //                                 dist_to_origin,
-        //                                 1);
         UVLM::Wake::Discretised::cfl_n1(options,
                                         zeta_star,
-                                        // gamma,
                                         gamma_star,
-                                        // uext,
-                                        // uext_star,
-                                        // rbm_velocity,
                                         extra_gamma_star,
                                         extra_zeta_star,
                                         dist_to_orig,
