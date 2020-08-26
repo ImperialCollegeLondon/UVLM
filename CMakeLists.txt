@@ -7,11 +7,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 file(GLOB SOURCES src/cpp_interface.cpp)
-include_directories(include ALGLIB/src)
+include_directories(include)
 add_library(uvlm SHARED ${SOURCES})
-
-add_subdirectory(ALGLIB)
-target_link_libraries(uvlm PUBLIC alglib)
 
 set_property(TARGET uvlm PROPERTY CXX_STANDARD 14)
 

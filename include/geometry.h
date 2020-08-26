@@ -8,9 +8,6 @@
 #include <iostream>
 #include <cmath>
 
-#include "stdafx.h"
-#include "interpolation.h"
-
 namespace UVLM
 {
     namespace Geometry
@@ -349,7 +346,7 @@ namespace UVLM
                 new_coord2(i_m) = spline2(dist_to_orig(i_m))(0);
             }
         } // splines
-        
+
         template <typename t_dist,
                   typename t_dist_conv,
                   typename t_coord,
@@ -392,14 +389,14 @@ namespace UVLM
                 mod_next = std::sqrt(coord0(i_conv)*coord0(i_conv) +
                                      coord1(i_conv)*coord1(i_conv));
                                      // coord2(i_conv)*coord2(i_conv));
-    
+
                 omega = std::acos((coord0(i_conv - 1)*coord0(i_conv) +
                                   coord1(i_conv - 1)*coord1(i_conv))/mod_prev/mod_next);
                                   // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
 
-               
+
                 if (std::abs(std::sin(omega)) > 1e-6)
-                { 
+                {
                     coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
                     coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
 
@@ -409,11 +406,11 @@ namespace UVLM
                     new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
                     new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
                 }
-                
+
                 new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
             }
         } // slerp_z
-        
+
         template <typename t_dist,
                   typename t_dist_conv,
                   typename t_coord,
@@ -441,11 +438,11 @@ namespace UVLM
             aux_coord0.resize(M + 1);
             aux_coord1.resize(M + 1);
             aux_coord2.resize(M + 1);
-            
+
             aux_new_coord0.resize(M);
             aux_new_coord1.resize(M);
             aux_new_coord2.resize(M);
-            
+
             // Transform the coordinates
             for (unsigned int i_m=0; i_m<M+1; ++i_m)
             {
@@ -469,12 +466,12 @@ namespace UVLM
                                      aux_coord1(i_conv - 1)*aux_coord1(i_conv - 1));
                 mod_next = std::sqrt(aux_coord0(i_conv)*aux_coord0(i_conv) +
                                      aux_coord1(i_conv)*aux_coord1(i_conv));
-    
+
                 omega = std::acos((aux_coord0(i_conv - 1)*aux_coord0(i_conv) +
                                   aux_coord1(i_conv - 1)*aux_coord1(i_conv))/mod_prev/mod_next);
-               
+
                 if (std::abs(std::sin(omega)) > 1e-6)
-                { 
+                {
                     coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
                     coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
 
@@ -484,7 +481,7 @@ namespace UVLM
                     aux_new_coord0(i_m) = (to_prev*aux_coord0(i_conv) + to_next*aux_coord0(i_conv - 1))/prev_to_next;
                     aux_new_coord1(i_m) = (to_prev*aux_coord1(i_conv) + to_next*aux_coord1(i_conv - 1))/prev_to_next;
                 }
-                
+
                 aux_new_coord2(i_m) = (to_prev*aux_coord2(i_conv) + to_next*aux_coord2(i_conv - 1))/prev_to_next;
             }
 
@@ -502,70 +499,6 @@ namespace UVLM
     namespace Filters
     {
         template <typename t_coord>
-        void splines
-        (
-            uint M,
-            const UVLM::Types::Real rho,
-            const t_coord& x,
-            t_coord& coord0,
-            t_coord& coord1,
-            t_coord& coord2
-        )
-        {
-            // https://www.alglib.net/translator/man/manual.cpp.html#example_lsfit_d_spline
-            // UVLM::Types::Real a_x[M], a_coord[M], a_out_coord[M];
-            alglib::real_1d_array a_x, a_coord;
-            a_x.setlength(M);
-            a_coord.setlength(M);
-
-            const uint basis_functions = 50;
-            // const UVLM::Types::Real rho = -5.0; // Smoothing factor
-            alglib::ae_int_t info;
-            alglib::spline1dinterpolant s;
-            alglib::spline1dfitreport rep;
-
-            // Convert types
-            for (uint i_m = 0; i_m < M; i_m++)
-            {
-                a_x[i_m] = x(i_m);
-                a_coord[i_m] = coord0(i_m);
-            }
-            // Fit splines
-            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
-            // Retrieve values
-            for (uint i_m = 1; i_m < M; i_m++)
-            {
-                coord0(i_m) = alglib::spline1dcalc(s, x(i_m));
-            }
-
-            // Convert types
-            for (uint i_m = 0; i_m < M; i_m++)
-            {
-                a_coord[i_m] = coord1(i_m);
-            }
-            // Fit splines
-            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
-            // Retrieve values
-            for (uint i_m = 1; i_m < M; i_m++)
-            {
-                coord1(i_m) = alglib::spline1dcalc(s, x(i_m));
-            }
-
-            // Convert types
-            for (uint i_m = 0; i_m < M; i_m++)
-            {
-                a_coord[i_m] = coord2(i_m);
-            }
-            // Fit splines
-            alglib::spline1dfitpenalized(a_x, a_coord, basis_functions, rho, info, s, rep);
-            // Retrieve values
-            for (uint i_m = 1; i_m < M; i_m++)
-            {
-                coord2(i_m) = alglib::spline1dcalc(s, x(i_m));
-            }
-        } // splines
-        
-        template <typename t_coord>
         void moving_average
         (
             uint M,
@@ -577,13 +510,13 @@ namespace UVLM
         )
         {
             unsigned int sp;
-            UVLM::Types::Real aux_coord0[M], aux_coord1[M], aux_coord2[M]; 
+            UVLM::Types::Real aux_coord0[M], aux_coord1[M], aux_coord2[M];
 
             if (window % 2 == 1)
             {
                 // window has to be odd
                 sp = int((window - 1)/2);
-            } else 
+            } else
             {
                 std::cerr << "window has to be odd" << std::endl;
             }
@@ -595,7 +528,7 @@ namespace UVLM
                 aux_coord1[i_m] = coord1(i_m);
                 aux_coord2[i_m] = coord2(i_m);
             }
-            
+
             for (uint i_m = 1; i_m < M; i_m++)
             {
                 if (i_m < sp)
@@ -607,7 +540,7 @@ namespace UVLM
                         coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
                         coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
                         coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
-                    } 
+                    }
                     coord0(i_m) /= (2*i_m + 1);
                     coord1(i_m) /= (2*i_m + 1);
                     coord2(i_m) /= (2*i_m + 1);
@@ -621,11 +554,11 @@ namespace UVLM
                         coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
                         coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
                         coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
-                    } 
+                    }
                     coord0(i_m) /= window;
                     coord1(i_m) /= window;
                     coord2(i_m) /= window;
-                } else 
+                } else
                 {
                     // Last points
                     for (uint i_avg = 0; i_avg < (M - 1 - i_m); i_avg++)
@@ -634,7 +567,7 @@ namespace UVLM
                         coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
                         coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
                         coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
-                    } 
+                    }
                     coord0(i_m) /= (2*(M - 1 - i_m) + 1);
                     coord1(i_m) /= (2*(M - 1 - i_m) + 1);
                     coord2(i_m) /= (2*(M - 1 - i_m) + 1);

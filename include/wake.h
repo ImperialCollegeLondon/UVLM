@@ -199,18 +199,18 @@ namespace UVLM
                     coord1.setZero();
                     coord2.resize(M + 2);
                     coord2.setZero();
-                    
+
                     new_coord0.resize(M + 1);
                     new_coord0.setZero();
                     new_coord1.resize(M + 1);
                     new_coord1.setZero();
                     new_coord2.resize(M + 1);
                     new_coord2.setZero();
-                    
+
                     // Loop through streamline vortices
                     for (unsigned int i_n=0; i_n<N + 1; ++i_n)
                     {
-                        
+
                         // Reduce the last panel as much as the first one
                         if ((options.convection_scheme == 2) or (options.convection_scheme == 3))
                         {
@@ -221,9 +221,9 @@ namespace UVLM
                             point << zeta_star[i_surf][0](M, i_n) - extra_zeta_star[i_surf][0](0, i_n),
                                      zeta_star[i_surf][1](M, i_n) - extra_zeta_star[i_surf][1](0, i_n),
                                      zeta_star[i_surf][2](M, i_n) - extra_zeta_star[i_surf][2](0, i_n);
-                            extra_zeta_star[i_surf][0](0, i_n) += step*point(0)/point.norm();                            
-                            extra_zeta_star[i_surf][1](0, i_n) += step*point(1)/point.norm();                            
-                            extra_zeta_star[i_surf][2](0, i_n) += step*point(2)/point.norm();                            
+                            extra_zeta_star[i_surf][0](0, i_n) += step*point(0)/point.norm();
+                            extra_zeta_star[i_surf][1](0, i_n) += step*point(1)/point.norm();
+                            extra_zeta_star[i_surf][2](0, i_n) += step*point(2)/point.norm();
                         }
 
                         // Compute the distance of each wake vertice to the first point of the
@@ -242,7 +242,7 @@ namespace UVLM
                                  extra_zeta_star[i_surf][2](0, i_n) - zeta_star[i_surf][2](M, i_n);
                         dist_to_orig_conv(M + 1) = point.norm() + dist_to_orig_conv(M);
                         total_dist = dist_to_orig_conv(M+1) + 0.;
-                        
+
                         // Set maximum to one
                         for (unsigned int i_m=0; i_m<M+2; ++i_m)
                         {
@@ -274,7 +274,7 @@ namespace UVLM
                                 {
                                     coord0(i_m) = std::sqrt(zeta_star[i_surf][0](i_m, i_n)*zeta_star[i_surf][0](i_m, i_n) +
                                                       zeta_star[i_surf][1](i_m, i_n)*zeta_star[i_surf][1](i_m, i_n));
-                                    // https://math.stackexchange.com/questions/360113/how-does-one-interpolate-between-polar-coordinates                                
+                                    // https://math.stackexchange.com/questions/360113/how-does-one-interpolate-between-polar-coordinates
                                     // coord0(i_m) = 1./coord0(i_m)/coord0(i_m);
                                     coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n), zeta_star[i_surf][0](i_m, i_n));
                                     coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) + 0.;
@@ -312,7 +312,7 @@ namespace UVLM
                                     //     } else if ((az_next < 0) and (az_next < -0.5*UVLM::Constants::PI))
                                     //     {
                                     //         az_next += 2.*UVLM::Constants::PI;
-                                    //     } 
+                                    //     }
                                     // }
                                 }
                             } else
@@ -320,7 +320,7 @@ namespace UVLM
                                 std::cerr << "interp_coords == "
                                           << options.interp_coords
                                           << " is not supported by the UVLM solver. \n"
-                                          << "Supported options are from [0->1]"
+                                          << "Supported options are 0 and 2"
                                           << std::endl;
                             }
 
@@ -328,18 +328,6 @@ namespace UVLM
                             if (options.filter_method == 0)
                             {
                                 // No filter
-                            } else if (options.filter_method == 1)
-                            {
-                                // Splines
-                                if (i_n < 4)
-                                {
-                                    rho = (-10. - (-3.))/(3 - 0)*i_n + (-3.);
-                                    UVLM::Filters::splines(M + 2,
-                                                       rho,
-                                                       dist_to_orig_conv,
-                                                       coord0, coord1, coord2);
-                                }
-
                             } else if (options.filter_method == 2)
                             {
                                 // Moving average
@@ -357,7 +345,7 @@ namespace UVLM
                                 std::cerr << "filter_method == "
                                           << options.filter_method
                                           << " is not supported by the UVLM solver. \n"
-                                          << "Supported options are from [0->2]"
+                                          << "Supported options are 0 and 2"
                                           << std::endl;
                             }
 
@@ -453,7 +441,7 @@ namespace UVLM
                                 cfl = std::min(cfl, 1.0);
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
-                               
+
                                 wake_conv_vel[i_surf](i_m, i_n) = (1. - cfl)*wake_conv_vel[i_surf](i_m + 1, i_n) +
                                                                   cfl*wake_conv_vel[i_surf](i_m, i_n);
                             }
