@@ -116,14 +116,6 @@ namespace UVLM
             double c_ref = 1.0;
         };
 
-        struct SHWOptions
-        {
-            double dt = 0.0;
-            double rot_center[3];
-            double rot_vel;
-            double rot_axis[3];
-        };
-
         template <typename t_mat>
         inline void generate_dimensions
         (
