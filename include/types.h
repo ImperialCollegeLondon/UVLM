@@ -88,6 +88,7 @@ namespace UVLM
             uint filter_method;
             uint interp_method;
             double yaw_slerp;
+            bool quasi_steady;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -102,9 +103,14 @@ namespace UVLM
             vm.iterative_tol = uvm.iterative_tol;
             vm.iterative_precond = uvm.iterative_precond;
             vm.horseshoe = false;
-            vm.Steady = false;
             vm.vortex_radius = uvm.vortex_radius;
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
+            if (uvm.quasi_steady)
+            {
+                vm.Steady = true;
+            } else {
+                vm.Steady = false;
+            }
             return vm;
         };
 
