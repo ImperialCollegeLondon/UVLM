@@ -1357,7 +1357,11 @@ namespace UVLMlin{
 
     Matrix4by3d R;    // vectors P - vertex matrix
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
-    double vortex_radius_sq = vortex_radius*vortex_radius;
+    // We keep vortex_radius_sq = vortex_radius. We have found accuracy issues
+    // when vortex_radius_sq = vortex_radius*vortex_radius;
+    // We think this is a limit for numerical accuracy so it makes
+    // sense to keep it vortex_radius_sq = vortex_radius;
+    double vortex_radius_sq = vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
@@ -1406,7 +1410,11 @@ namespace UVLMlin{
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
 
     Matrix3d Array_Der_runit[Nvert]; // as a static arrays (we know size)
-    double vortex_radius_sq = vortex_radius*vortex_radius;
+    // We keep vortex_radius_sq = vortex_radius. We have found accuracy issues
+    // when vortex_radius_sq = vortex_radius*vortex_radius;
+    // We think this is a limit for numerical accuracy so it makes
+    // sense to keep it vortex_radius_sq = vortex_radius;
+    double vortex_radius_sq = vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
@@ -1497,7 +1505,11 @@ namespace UVLMlin{
     Matrix4by3d Runit;  // unit vectors P - vertex matrix
 
     Matrix3d Array_Der_runit[Nvert]; // as a static arrays (we know size)
-    double vortex_radius_sq = vortex_radius*vortex_radius;
+    // We keep vortex_radius_sq = vortex_radius. We have found accuracy issues
+    // when vortex_radius_sq = vortex_radius*vortex_radius;
+    // We think this is a limit for numerical accuracy so it makes
+    // sense to keep it vortex_radius_sq = vortex_radius;
+    double vortex_radius_sq = vortex_radius;
 
     // ----------------------------------------------- Compute common variables
     // these are constants or variables depending only on vertices and P coords
