@@ -448,7 +448,7 @@ namespace UVLM
                                             0.5*(uext_star_total[i_surf][2](i_m + 1, i_n) + uext_star_total[i_surf][2](i_m + 1, i_n + 1));
                                 conv_vel_norm = conv_vel.dot(conv_dir) - solid_vel_norm;
                                 cfl = dt*conv_vel_norm/dist/total_dist;
-                                cfl = std::min(cfl, 1.0);
+                                // cfl = std::min(cfl, 1.0);
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
 
@@ -470,7 +470,7 @@ namespace UVLM
                                         0.5*(uext_star_total[i_surf][2](M, i_n) + uext_star_total[i_surf][2](M, i_n + 1));
                             conv_vel_norm = conv_vel.dot(conv_dir) - solid_vel_norm;
                             cfl = dt*conv_vel_norm/dist/total_dist;
-                            cfl = std::min(cfl, 1.0);
+                            // cfl = std::min(cfl, 1.0);
                             gamma_star[i_surf](M - 1, i_n) = (1. - cfl)*extra_gamma_star[i_surf](0, i_n) +
                                                                   cfl*gamma_star[i_surf](M - 1, i_n);
                             // wake_conv_vel[i_surf](M - 1, i_n) = wake_conv_vel[i_surf](M - 2, i_n);
