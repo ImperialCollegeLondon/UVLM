@@ -57,7 +57,7 @@ namespace UVLM
                 t_gamma_star& gamma_star,
                 const t_uext& uext,
                 const t_uext_star& uext_star,
-                const t_uext_star_total& uext_star_total,
+                t_uext_star_total& uext_star_total,
                 const t_rbm_velocity& rbm_velocity,
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star
