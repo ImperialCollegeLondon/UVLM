@@ -207,6 +207,7 @@ DLLEXPORT void run_UVLM
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
+    double** p_wake_conv_vel,
     // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
@@ -283,6 +284,12 @@ DLLEXPORT void run_UVLM
                                    dist_to_orig,
                                    1);
 
+    UVLM::Types::VecMapX wake_conv_vel;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_wake_conv_vel,
+                                   wake_conv_vel,
+                                   0);
+
     UVLM::Types::VecVecMapX normals;
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_normals,
@@ -314,6 +321,7 @@ DLLEXPORT void run_UVLM
         gamma,
         gamma_star,
         dist_to_orig,
+        wake_conv_vel,
         normals,
         // previous_gamma,
         rbm_velocity,

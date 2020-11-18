@@ -27,6 +27,7 @@ namespace UVLM
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_dist_to_orig,
+                  typename t_wake_conv_vel,
                   typename t_normals,
                 //   typename t_previous_gamma,
                   typename t_rbm_velocity,
@@ -42,6 +43,7 @@ namespace UVLM
             t_gamma& gamma,
             t_gamma_star& gamma_star,
             t_dist_to_orig& dist_to_orig,
+            t_wake_conv_vel& wake_conv_vel,
             t_normals& normals,
             // const t_previous_gamma& previous_gamma,
             t_rbm_velocity& rbm_velocity,
@@ -147,6 +149,7 @@ template <typename t_zeta,
           typename t_gamma,
           typename t_gamma_star,
           typename t_dist_to_orig,
+          typename t_wake_conv_vel,
           typename t_normals,
         //   typename t_previous_gamma,
           typename t_rbm_velocity,
@@ -162,6 +165,7 @@ void UVLM::Unsteady::solver
     t_gamma& gamma,
     t_gamma_star& gamma_star,
     t_dist_to_orig& dist_to_orig,
+    t_wake_conv_vel& wake_conv_vel,
     t_normals& normals,
     // const t_previous_gamma& previous_gamma,
     t_rbm_velocity& rbm_velocity,
@@ -178,10 +182,8 @@ void UVLM::Unsteady::solver
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col;
     UVLM::Types::VecVecMatrixX uext_total;
-    UVLM::Types::VecVecMatrixX solid_vel;
     UVLM::Types::allocate_VecVecMat(uext_total, uext);
     UVLM::Types::copy_VecVecMat(uext, uext_total);
-    UVLM::Types::allocate_VecVecMat(solid_vel, uext);
 
     UVLM::Types::VecVecMatrixX uext_total_col;
     UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
@@ -201,14 +203,13 @@ void UVLM::Unsteady::solver
     }
 
     // total stream velocity
-    UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
+    UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     (
         zeta,
         zeta_dot,
         uext,
         rbm_velocity,
-        uext_total,
-        solid_vel
+        uext_total
     );
 
     UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
@@ -216,9 +217,6 @@ void UVLM::Unsteady::solver
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
     UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
-
-    UVLM::Types::VecVecMatrixX uext_star_total;
-    UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
 
     // panel normals
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
@@ -234,7 +232,6 @@ void UVLM::Unsteady::solver
             gamma_star,
             uext,
             uext_star,
-            uext_star_total,
             rbm_velocity,
             extra_gamma_star,
             extra_zeta_star
@@ -256,8 +253,7 @@ void UVLM::Unsteady::solver
                                         extra_gamma_star,
                                         extra_zeta_star,
                                         dist_to_orig,
-                                        uext_star_total,
-                                        solid_vel,
+                                        wake_conv_vel,
                                         dt);
     }
 
