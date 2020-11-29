@@ -276,6 +276,12 @@ void UVLM::Unsteady::solver
         flightconditions
     );
 
+    if (options.quasi_steady)
+    {
+        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+                                                    gamma_star,
+                                                    -1);
+    }
 
     // forces calculation
     // set forces to 0 just in case
