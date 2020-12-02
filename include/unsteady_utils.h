@@ -24,11 +24,27 @@ namespace UVLM
                 t_uext_out& uext_out
             );
             template <typename t_zeta,
+                      typename t_zeta_dot,
+                      typename t_uext,
+                      typename t_rbm_velocity,
+                      typename t_uext_out,
+                      typename t_solid_vel>
+            void compute_resultant_grid_velocity_solid_vel
+            (
+                t_zeta& zeta,
+                t_zeta_dot& zeta_dot,
+                t_uext& uext,
+                t_rbm_velocity& rbm_velocity,
+                t_uext_out& uext_out,
+                t_solid_vel& solid_vel
+            );
+            template <typename t_zeta,
                       typename t_zeta_star,
                       typename t_gamma,
                       typename t_gamma_star,
                       typename t_uext,
                       typename t_uext_star,
+                      typename t_uext_star_total,
                       typename t_rbm_velocity,
                       typename t_extra_gamma_star,
                       typename t_extra_zeta_star>
@@ -41,6 +57,7 @@ namespace UVLM
                 t_gamma_star& gamma_star,
                 const t_uext& uext,
                 const t_uext_star& uext_star,
+                t_uext_star_total& uext_star_total,
                 const t_rbm_velocity& rbm_velocity,
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star
@@ -94,6 +111,56 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     }
 }
 
+template <typename t_zeta,
+          typename t_zeta_dot,
+          typename t_uext,
+          typename t_rbm_velocity,
+          typename t_uext_out,
+          typename t_solid_vel>
+void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
+(
+    t_zeta& zeta,
+    t_zeta_dot& zeta_dot,
+    t_uext& uext,
+    t_rbm_velocity& rbm_velocity,
+    t_uext_out& uext_out,
+    t_solid_vel& solid_vel
+)
+{
+    const uint n_surf = zeta.size();
+    UVLM::Types::Vector3 w_cross_zeta;
+    UVLM::Types::Vector3 zeta_temp;
+    UVLM::Types::initialise_VecVecMat(uext_out);
+    UVLM::Types::initialise_VecVecMat(solid_vel);
+
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        const uint n_col = zeta[i_surf][0].cols();
+        const uint n_row = zeta[i_surf][0].rows();
+        for (uint i_col=0; i_col<n_col; ++i_col)
+        {
+            for (uint i_row=0; i_row<n_row; ++i_row)
+            {
+                zeta_temp << zeta[i_surf][0](i_row, i_col),
+                             zeta[i_surf][1](i_row, i_col),
+                             zeta[i_surf][2](i_row, i_col);
+                w_cross_zeta =
+                    rbm_velocity.template block<3,1> (3, 0).cross(zeta_temp);
+                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                {
+                    solid_vel[i_surf][i_dim](i_row, i_col) =
+                                             w_cross_zeta(i_dim)
+                                            + zeta_dot[i_surf][i_dim](i_row, i_col)
+                                            + rbm_velocity(i_dim);
+                    uext_out[i_surf][i_dim](i_row, i_col) =
+                                              uext[i_surf][i_dim](i_row, i_col)
+                                            - solid_vel[i_surf][i_dim](i_row, i_col);
+                }
+            }
+        }
+    }
+}
+
 // wake convection
 // the UVMopts flag convection_scheme determines how the
 // wake is convected.
@@ -107,6 +174,7 @@ template <typename t_zeta,
           typename t_gamma_star,
           typename t_uext,
           typename t_uext_star,
+          typename t_uext_star_total,
           typename t_rbm_velocity,
           typename t_extra_gamma_star,
           typename t_extra_zeta_star>
@@ -119,6 +187,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
     t_gamma_star& gamma_star,
     const t_uext& uext,
     const t_uext_star& uext_star,
+    t_uext_star_total& uext_star_total,
     const t_rbm_velocity& rbm_velocity,
     t_extra_gamma_star& extra_gamma_star,
     t_extra_zeta_star& extra_zeta_star
@@ -139,6 +208,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         }
 
         UVLM::Wake::General::displace_VecMat(gamma_star);
+        UVLM::Types::copy_VecVecMat(uext_star, uext_star_total);
     } else if (options.convection_scheme == 1)
     {
         std::cerr << "convection_scheme == "
@@ -147,8 +217,6 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
                   << std::endl;
     } else if (options.convection_scheme == 2)
     {
-        UVLM::Types::VecVecMatrixX uext_star_total;
-        UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
         // total stream velocity

@@ -158,7 +158,8 @@ namespace UVLM
                       typename t_extra_gamma_star,
                       typename t_extra_zeta_star,
                       typename t_dist_to_orig,
-                      typename t_wake_conv_vel>
+                      typename t_uext_star_total,
+                      typename t_solid_vel>
             void cfl_n1
             (
                 const UVLM::Types::UVMopts& options,
@@ -167,16 +168,17 @@ namespace UVLM
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star,
                 const t_dist_to_orig& dist_to_orig,
-                t_wake_conv_vel& wake_conv_vel,
+                t_uext_star_total& uext_star_total,
+                t_solid_vel& solid_vel,
                 double dt=0.
             )
             {
-                unsigned int M, N;
+                unsigned int M, N, Msolid;
                 double cfl, dist, step;
                 UVLM::Types::VectorX dist_to_orig_conv, coord0, coord1, coord2;
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
-                UVLM::Types::Vector3 point;
-                UVLM::Types::Real total_dist, rho;
+                UVLM::Types::Vector3 point, conv_dir, conv_vel, solid_vel_vec;
+                UVLM::Types::Real total_dist, rho, norm, conv_vel_norm, solid_vel_norm;
                 bool increasing;
 
                 // Allocate zeta_star_conv
@@ -410,26 +412,65 @@ namespace UVLM
 
                         } // end if convection schemes
 
-                        // Convect circulation and velocities
+                        // Convect circulation
                         if (i_n < N)
                         {
+                            // Compute the solid velocity in the direction of shedding
+                            Msolid = solid_vel[i_surf][0].rows() - 1;
+                            solid_vel_vec << 0.5*(solid_vel[i_surf][0](Msolid, i_n) + solid_vel[i_surf][0](Msolid, i_n + 1)),
+                                             0.5*(solid_vel[i_surf][1](Msolid, i_n) + solid_vel[i_surf][1](Msolid, i_n + 1)),
+                                             0.5*(solid_vel[i_surf][2](Msolid, i_n) + solid_vel[i_surf][2](Msolid, i_n + 1));
+                            conv_dir << 0.25*(zeta_star[i_surf][0](1, i_n + 1) + zeta_star[i_surf][0](1, i_n) -
+                                              zeta_star[i_surf][0](0, i_n + 1) - zeta_star[i_surf][0](0, i_n)),
+                                        0.25*(zeta_star[i_surf][1](1, i_n + 1) + zeta_star[i_surf][1](1, i_n) -
+                                              zeta_star[i_surf][1](0, i_n + 1) - zeta_star[i_surf][1](0, i_n)),
+                                        0.25*(zeta_star[i_surf][2](1, i_n + 1) + zeta_star[i_surf][2](1, i_n) -
+                                              zeta_star[i_surf][2](0, i_n + 1) - zeta_star[i_surf][2](0, i_n));
+                            norm = conv_dir.norm();
+                            conv_dir << conv_dir(0)/norm, conv_dir(1)/norm, conv_dir(2)/norm;
+                            solid_vel_norm = solid_vel_vec.dot(conv_dir);
+
                             // The first value (i_m=0) has already been adequately assigned in the convection step
                             for (unsigned int i_m=1; i_m<M-1; ++i_m)
                             {
                                 dist = 0.25*(dist_to_orig[i_surf](i_m + 1, i_n) - dist_to_orig[i_surf](i_m - 1, i_n) +
                                              dist_to_orig[i_surf](i_m + 1, i_n + 1) - dist_to_orig[i_surf](i_m - 1, i_n + 1));
-                                cfl = dt*wake_conv_vel[i_surf](i_m, i_n)/dist/total_dist;
-                                cfl = std::min(cfl, 1.0);
+                                conv_dir << 0.25*(zeta_star[i_surf][0](i_m + 1, i_n + 1) + zeta_star[i_surf][0](i_m + 1, i_n) -
+                                                  zeta_star[i_surf][0](i_m - 1, i_n + 1) - zeta_star[i_surf][0](i_m - 1, i_n)),
+                                            0.25*(zeta_star[i_surf][1](i_m + 1, i_n + 1) + zeta_star[i_surf][1](i_m + 1, i_n) -
+                                                  zeta_star[i_surf][1](i_m - 1, i_n + 1) - zeta_star[i_surf][1](i_m - 1, i_n)),
+                                            0.25*(zeta_star[i_surf][2](i_m + 1, i_n + 1) + zeta_star[i_surf][2](i_m + 1, i_n) -
+                                                  zeta_star[i_surf][2](i_m - 1, i_n + 1) - zeta_star[i_surf][2](i_m - 1, i_n));
+                                norm = conv_dir.norm();
+                                conv_dir << conv_dir(0)/norm, conv_dir(1)/norm, conv_dir(2)/norm;
+                                conv_vel << 0.5*(uext_star_total[i_surf][0](i_m + 1, i_n) + uext_star_total[i_surf][0](i_m + 1, i_n + 1)),
+                                            0.5*(uext_star_total[i_surf][1](i_m + 1, i_n) + uext_star_total[i_surf][1](i_m + 1, i_n + 1)),
+                                            0.5*(uext_star_total[i_surf][2](i_m + 1, i_n) + uext_star_total[i_surf][2](i_m + 1, i_n + 1));
+                                conv_vel_norm = conv_vel.dot(conv_dir) - solid_vel_norm;
+                                cfl = dt*conv_vel_norm/dist/total_dist;
+                                // cfl = std::min(cfl, 1.0);
                                 gamma_star[i_surf](i_m, i_n) = (1. - cfl)*gamma_star[i_surf](i_m + 1, i_n) +
                                                                   cfl*gamma_star[i_surf](i_m, i_n);
 
-                                wake_conv_vel[i_surf](i_m, i_n) = (1. - cfl)*wake_conv_vel[i_surf](i_m + 1, i_n) +
-                                                                  cfl*wake_conv_vel[i_surf](i_m, i_n);
+                                // wake_conv_vel[i_surf](i_m, i_n) = (1. - cfl)*wake_conv_vel[i_surf](i_m + 1, i_n) +
+                                //                                   cfl*wake_conv_vel[i_surf](i_m, i_n);
                             }
                             dist = 0.25*(dist_to_orig[i_surf](M, i_n) - dist_to_orig[i_surf](M - 1, i_n) +
                                          dist_to_orig[i_surf](M, i_n + 1) - dist_to_orig[i_surf](M - 1, i_n + 1));
-                            cfl = dt*wake_conv_vel[i_surf](M - 1, i_n)/dist/total_dist;
-                            cfl = std::min(cfl, 1.0);
+                            conv_dir << 0.25*(zeta_star[i_surf][0](M    , i_n + 1) + zeta_star[i_surf][0](M    , i_n) -
+                                              zeta_star[i_surf][0](M - 2, i_n + 1) - zeta_star[i_surf][0](M - 2, i_n)),
+                                        0.25*(zeta_star[i_surf][1](M    , i_n + 1) + zeta_star[i_surf][1](M    , i_n) -
+                                              zeta_star[i_surf][1](M - 2, i_n + 1) - zeta_star[i_surf][1](M - 2, i_n)),
+                                        0.25*(zeta_star[i_surf][2](M    , i_n + 1) + zeta_star[i_surf][2](M    , i_n) -
+                                              zeta_star[i_surf][2](M - 2, i_n + 1) - zeta_star[i_surf][2](M - 2, i_n));
+                            norm = conv_dir.norm();
+                            conv_dir << conv_dir(0)/norm, conv_dir(1)/norm, conv_dir(2)/norm;
+                            conv_vel << 0.5*(uext_star_total[i_surf][0](M, i_n) + uext_star_total[i_surf][0](M, i_n + 1)),
+                                        0.5*(uext_star_total[i_surf][1](M, i_n) + uext_star_total[i_surf][1](M, i_n + 1)),
+                                        0.5*(uext_star_total[i_surf][2](M, i_n) + uext_star_total[i_surf][2](M, i_n + 1));
+                            conv_vel_norm = conv_vel.dot(conv_dir) - solid_vel_norm;
+                            cfl = dt*conv_vel_norm/dist/total_dist;
+                            // cfl = std::min(cfl, 1.0);
                             gamma_star[i_surf](M - 1, i_n) = (1. - cfl)*extra_gamma_star[i_surf](0, i_n) +
                                                                   cfl*gamma_star[i_surf](M - 1, i_n);
                             // wake_conv_vel[i_surf](M - 1, i_n) = wake_conv_vel[i_surf](M - 2, i_n);
