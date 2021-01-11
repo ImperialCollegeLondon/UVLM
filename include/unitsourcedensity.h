@@ -67,5 +67,31 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 	UVLM::Types::Vector4 panel_coordinates_z;
     UVLM::Types::Vector4 delta_epsilon_vec;
     UVLM::Types::Vector4 delta_eta_vec;
+    UVLM::Types::Vector3 normal_panel;
+    UVLM::Types::Vector3 longitudinal_panel;
+    UVLM::Types::Vector3 perpendicular_panel;
 
+    //PANELS
+    uint panel_id = 0;
+    uint collocation_id = 0;
+    for (unsigned int i_panel=0; i_panel<rows_collocation; ++i_panel)
+    {
+        for (unsigned int j_panel=0; j_panel<cols_collocation; ++j_panel)
+        {
+            collocation_id = 0;
+            longitudinal_panel = UVLM::Types::Vector3(longitudinal[0](i_panel, j_panel), longitudinal[1](i_panel, j_panel), longitudinal[2](i_panel, j_panel));
+            perpendicular_panel = UVLM::Types::Vector3(perpendicular[0](i_panel, j_panel), perpendicular[1](i_panel, j_panel), perpendicular[2](i_panel, j_panel));
+            normal_panel = UVLM::Types::Vector3(normal[0](i_panel, j_panel), normal[1](i_panel, j_panel), normal[2](i_panel, j_panel));
+            UVLM::Geometry::convert_to_panel_coordinate_system(zeta[0].template block<2,2>(i_panel, j_panel),
+                                                        zeta[1].template block<2,2>(i_panel, j_panel),
+                                                        zeta[2].template block<2,2>(i_panel, j_panel),
+                                                        longitudinal_panel,
+                                                        perpendicular_panel,
+                                                        normal_panel,
+                                                        panel_coordinates_epsilon,
+                                                        panel_coordinates_eta,
+                                                        panel_coordinates_z
+                                                        );
+        }
+    }
 }

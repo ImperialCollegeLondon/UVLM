@@ -245,6 +245,27 @@ namespace UVLM
             }
         }
 
+        template <typename type>
+        void convert_to_panel_coordinate_system(const type& x_G,
+                                                const type& y_G,
+                                                const type& z_G,
+                                                const UVLM::Types::Vector3& chordwise_vec,
+                                                const UVLM::Types::Vector3& tangential_vec,
+                                                const UVLM::Types::Vector3& normal_vec,
+                                                UVLM::Types::Vector4& x_transf,
+                                                UVLM::Types::Vector4& y_transf,
+                                                UVLM::Types::Vector4& z_transf
+                                                )
+        {
+            UVLM::Types::Vector4 x = UVLM::Types::Vector4(x_G(0,0), x_G(1, 0), x_G(1, 1), x_G(0, 1));
+            UVLM::Types::Vector4 y = UVLM::Types::Vector4(y_G(0,0), y_G(1, 0), y_G(1, 1), y_G(0, 1));
+            UVLM::Types::Vector4 z = UVLM::Types::Vector4(z_G(0,0), z_G(1, 0), z_G(1, 1), z_G(0, 1));
+            x_transf = x *chordwise_vec[0] + y *chordwise_vec[1] + z *chordwise_vec[2];
+            y_transf = x *tangential_vec[0] + y *tangential_vec[1] + z *tangential_vec[2];
+            z_transf = x *normal_vec[0] + y *normal_vec[1] + z * normal_vec[2];
+        }
+
+
         template <typename t_in,
                   typename t_out>
         void generate_colocationMesh
