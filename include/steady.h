@@ -390,6 +390,20 @@ void UVLM::Steady::solver_nonlifting_body
         options,
         flightconditions
     );
+
+    UVLM::PostProc::calculate_static_forces_nonlifting_body
+    (
+        zeta,
+        sigma,
+        normals,
+        longitudinals,
+        perpendiculars,
+        uext_col,
+        u_induced_col,
+        forces,
+        options,
+        flightconditions
+    );
 }
 
 /*-----------------------------------------------------------------------------
