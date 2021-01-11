@@ -282,6 +282,22 @@ namespace UVLM
             z_transf = x *normal_vec[0] + y *normal_vec[1] + z * normal_vec[2];
         }
 
+        template <typename type>
+        void convert_to_panel_coordinate_system(const type& x_G,
+                                                const type& y_G,
+                                                const type& z_G,
+                                                const UVLM::Types::Vector3& chordwise_vec,
+                                                const UVLM::Types::Vector3& tangential_vec,
+                                                const UVLM::Types::Vector3& normal_vec,
+                                                UVLM::Types::Vector3& point_transf
+                                                )
+        {
+            point_transf[0] = x_G *chordwise_vec[0] + y_G *chordwise_vec[1] + z_G *chordwise_vec[2];
+            point_transf[1] = x_G *tangential_vec[0] + y_G *tangential_vec[1] + z_G *tangential_vec[2];
+            point_transf[2] = x_G *normal_vec[0] + y_G *normal_vec[1] + z_G * normal_vec[2];
+        }
+		
+
 
         template <typename t_in,
                   typename t_out>
