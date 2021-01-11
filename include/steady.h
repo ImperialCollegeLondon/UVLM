@@ -621,6 +621,19 @@ void UVLM::Steady::solve_discretised_nonlifting_body
                               rhs,
                               Ktotal,
                               n_surf);
+    // AIC generation
+    UVLM::Matrix::AIC_sources(Ktotal,
+                              zeta,
+                              zeta_col,
+                              uext_col,
+                              longitudinals,
+                              perpendiculars,
+                              normals,
+                              options,
+							  u_induced_x,
+							  u_induced_y,
+							  u_induced_z,
+                              aic_sources);
 
 
 }

@@ -33,6 +33,31 @@ namespace UVLM
         );
 
 
+        template <typename t_zeta,
+                  typename t_zeta_col,
+                //   typename t_zeta_star_col,
+                  typename t_uext_col,
+                  typename t_longitudinals,
+                  typename t_perpendiculars,
+                  typename t_normals,
+                  typename t_u_induced_col,
+                  typename t_aic>
+        void AIC_sources
+        (
+            const uint& Ktotal,
+            const t_zeta& zeta,
+            const t_zeta_col& zeta_col,
+            // const t_zeta_star_col& zeta_star_col,
+            const t_uext_col& uext_col,
+            const t_longitudinals& longitudinals,
+            const t_perpendiculars& perpendiculars,
+            const t_normals& normals,
+            const UVLM::Types::VMopts& options,
+	        t_u_induced_col& u_induced_col,
+            t_aic& aic
+        );
+
+
         template <typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_uext_col,
@@ -190,6 +215,84 @@ void UVLM::Matrix::AIC
                     0,
                     options.vortex_radius
                 );
+            }
+        }
+    }
+}
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
+template <typename t_zeta,
+          typename t_zeta_col,
+        //   typename t_zeta_star_col,
+          typename t_uext_col,
+          typename t_longitudinals,
+          typename t_perpendiculars,
+          typename t_normals,
+          typename t_u_induced_col,
+          typename t_aic>
+void UVLM::Matrix::AIC_sources
+(
+    const uint& Ktotal,
+    const t_zeta& zeta,
+    const t_zeta_col& zeta_col,
+    const t_uext_col& uext_col,
+    const t_longitudinals& longitudinals,
+    const t_perpendiculars& perpendiculars,
+    const t_normals& normals,
+    const UVLM::Types::VMopts& options,
+	t_u_induced_col& u_induced_col_x,
+	t_u_induced_col& u_induced_col_y,
+	t_u_induced_col& u_induced_col_z,
+    t_aic& aic_sources
+)
+{
+    const uint n_surf = options.NumSurfaces;
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::Types::generate_dimensions(zeta, dimensions, - 1);
+
+
+    // build the offsets beforehand
+    // (parallel variation)
+    std::vector<uint> offset;
+    uint i_offset = 0;
+    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    {
+        offset.push_back(i_offset);
+        uint k_surf = dimensions[icol_surf].first*
+                      dimensions[icol_surf].second;
+        i_offset += k_surf;
+    }
+
+    UVLM::Types::MatrixX panel_corner_points(3, 4);
+    // fill up AIC
+    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    {
+        uint k_surf = dimensions[icol_surf].first*
+                      dimensions[icol_surf].second;
+
+        // uint ii_offset = 0;
+        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+        {
+            uint kk_surf = dimensions[ii_surf].first*
+                           dimensions[ii_surf].second;
+            UVLM::Types::Block block_u_induced_x = u_induced_col_x.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+            UVLM::Types::Block block_u_induced_y = u_induced_col_y.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+            UVLM::Types::Block block_u_induced_z = u_induced_col_z.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+            UVLM::Types::Block block_aic = aic_sources.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+
+            if (options.Steady)
+            {
+                UVLM::UnitSourceDensity::get_influence_coefficient(zeta[ii_surf],
+                                                                zeta_col[icol_surf],
+																block_u_induced_x,
+																block_u_induced_y,
+																block_u_induced_z,
+                                                                block_aic,
+                                                                longitudinals[icol_surf],
+                                                                perpendiculars[icol_surf],
+                                                                normals[icol_surf]
+                                                                );
             }
         }
     }
