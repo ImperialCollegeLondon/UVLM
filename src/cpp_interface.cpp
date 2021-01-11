@@ -89,6 +89,60 @@ DLLEXPORT void run_VLM
                          flightconditions);
 }
 
+DLLEXPORT void run_VLM_nonlifting_body
+(
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    double** p_zeta,
+    double** p_u_ext,
+    double** p_sigma,
+    double** p_forces
+)
+{
+#if defined(_OPENMP)
+    omp_set_num_threads(options.NumCores);
+#endif
+
+    unsigned int n_surf;
+    n_surf = options.NumSurfaces;
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX u_ext;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_u_ext,
+                                      u_ext,
+                                      1);
+
+    UVLM::Types::VecMapX sigma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_sigma,
+                                   sigma,
+                                   0);
+
+    UVLM::Types::VecVecMapX forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_forces,
+                                      forces,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+
+    UVLM::Steady::solver_nonlifting_body(zeta,
+                                         u_ext,
+                                         sigma,
+                                         forces,
+                                         options,
+                                         flightconditions);
+}
 
 DLLEXPORT void init_UVLM
 (

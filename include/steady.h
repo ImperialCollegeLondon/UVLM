@@ -41,7 +41,19 @@ namespace UVLM
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
-
+        template <typename t_zeta,
+                  typename t_uext,
+                  typename t_sigma,
+                  typename t_forces>
+        void solver_nonlifting_body
+        (
+            t_zeta& zeta,
+            t_uext& uext,
+            t_sigma& sigma,
+            t_forces& forces,
+            const UVLM::Types::VMopts& options,
+            const UVLM::Types::FlightConditions& flightconditions
+        );
         template <typename t_zeta,
                   typename t_zeta_col,
                   typename t_uext_col,
@@ -299,7 +311,50 @@ void UVLM::Steady::solver
     );
 }
 
+/*-----------------------------------------------------------------------------
 
+-----------------------------------------------------------------------------*/
+template <typename t_zeta,
+          typename t_zeta_col,
+          typename t_uext,
+          typename t_sigma,
+          typename t_forces>
+void UVLM::Steady::solver_nonlifting_body
+(
+    t_zeta& zeta,
+    t_uext& uext,
+    t_sigma& sigma,
+    t_forces& forces,
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions
+)
+{
+    // Generate collocation points info
+	
+    //  Declaration
+    UVLM::Types::VecVecMatrixX zeta_col;
+    UVLM::Types::VecVecMatrixX uext_col;
+    UVLM::Types::VecVecMatrixX uext_total;
+    UVLM::Types::VecVecMatrixX uext_total_col;
+    UVLM::Types::VecVecMatrixX u_induced_col;
+
+    //  Allocation and mapping
+    UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
+    UVLM::Geometry::generate_colocationMesh(uext, uext_col);
+	
+    UVLM::Types::allocate_VecVecMat(uext_total, uext);
+    UVLM::Types::copy_VecVecMat(uext, uext_total);
+    UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
+	UVLM::Types::allocate_VecVecMat(u_induced_col, uext_col);
+
+    // panel normals, longitudinal and perpendicular vectors
+    UVLM::Types::VecVecMatrixX normals;
+    UVLM::Types::allocate_VecVecMat(normals, zeta_col);
+    UVLM::Types::VecVecMatrixX longitudinals;
+    UVLM::Types::allocate_VecVecMat(longitudinals, zeta_col);
+    UVLM::Types::VecVecMatrixX perpendiculars;
+    UVLM::Types::allocate_VecVecMat(perpendiculars, zeta_col);
+}
 
 /*-----------------------------------------------------------------------------
 
