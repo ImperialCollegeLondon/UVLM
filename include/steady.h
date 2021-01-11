@@ -635,5 +635,23 @@ void UVLM::Steady::solve_discretised_nonlifting_body
 							  u_induced_z,
                               aic_sources);
 
+    // linear system solution
+    UVLM::Types::VectorX sigma_flat;
+    UVLM::Matrix::deconstruct_gamma(sigma,
+                                    sigma_flat,
+                                    zeta_col);
+
+    UVLM::LinearSolver::solve_system
+    (
+        aic_sources,
+        rhs,
+        options,
+        sigma_flat
+    );
+
+    // probably could be done better with a Map
+    UVLM::Matrix::reconstruct_gamma(sigma_flat,
+                                    sigma,
+                                    uext_col);
 
 }
