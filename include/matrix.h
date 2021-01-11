@@ -53,6 +53,18 @@ namespace UVLM
         );
 
 
+        template <typename t_uext_col,
+                  typename t_normal>
+        void RHS_nonlifting_body
+        (
+            const t_uext_col& uinc_col,
+            const t_normal& normal,
+            UVLM::Types::VectorX& rhs,
+            const uint& Ktotal,
+            const uint n_surf
+        );
+
+
         void generate_assembly_offset
         (
             const UVLM::Types::VecDimensions& dimensions,
@@ -276,6 +288,49 @@ void UVLM::Matrix::RHS
         }
     }
 }
+
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
+template <typename t_uext_col,
+          typename t_normal>
+void UVLM::Matrix:: RHS_nonlifting_body
+(
+    const t_uext_col& uinc_col,
+    const t_normal& normal,
+    UVLM::Types::VectorX& rhs,
+    const uint& Ktotal,
+    const uint n_surf
+)
+{
+    rhs.setZero(Ktotal);
+
+    // filling up RHS
+    int ii = -1;
+    int istart = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uinc_col[i_surf][0].rows();
+        uint N = uinc_col[i_surf][0].cols();
+        for (uint i=0; i<M; ++i)
+        {
+            for (uint j=0; j<N; ++j)
+            {
+                rhs(++ii) =
+                -(
+                    uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                    uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                    uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                );
+            }
+        }
+    }
+}
+
+
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
 
 void UVLM::Matrix::generate_assembly_offset
 (

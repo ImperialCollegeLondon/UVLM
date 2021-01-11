@@ -615,6 +615,12 @@ void UVLM::Steady::solve_discretised_nonlifting_body
     UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
     UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
     UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    // RHS generation
+    UVLM::Matrix::RHS_nonlifting_body(uext_col,
+                              normals,
+                              rhs,
+                              Ktotal,
+                              n_surf);
 
 
 }
