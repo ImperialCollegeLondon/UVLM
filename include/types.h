@@ -387,6 +387,24 @@ namespace UVLM
             return vec;
         }
 
+		UVLM::Types::Vector3 remove_row
+		(
+		UVLM::Types::Vector4& vector_in,
+		 int rowToRemove
+		)
+		{
+			int counter_idx = 0;
+			UVLM::Types::Vector3 vector_out;
+			for (uint i_row = 0;i_row<4;++i_row)
+			{
+				if (i_row!=rowToRemove)
+				{
+					vector_out[counter_idx] = vector_in[i_row];
+					counter_idx++;
+				}
+			}
+			return vector_out;
+		}
         // inline void allocate_VecVecVecMat
         // (
         //     UVLM::Types::VecVecVecMatrixX& mat,
