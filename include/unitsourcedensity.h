@@ -243,18 +243,18 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					i_panel,
 					j_panel
 				);
-
-        panel_id += 1;
+			}
+        panel_id++;
         }
     }
 }
 
 
-	template <typename t_panel_z,
-			  typename vector_in,
-			  typename t_tsurface,
-			  typename t_u_induced_col,
-			  typename t_uout>
+template <typename t_panel_z,
+		  typename vector_in,
+		  typename t_tsurface,
+		  typename t_u_induced_col,
+		  typename t_uout>
 void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 (
 	const vector_in& panel_coordinates_epsilon,
@@ -316,7 +316,7 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 			if (i_panel == i_col && j_panel == j_col)
 			{
 				induced_velocity_vec[2] = 2*UVLM::Constants::PI;
-#			}
+			}
 			else
 			{
 				induced_velocity_vec[2] = 0;
