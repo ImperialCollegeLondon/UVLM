@@ -258,6 +258,7 @@ namespace UVLM
                             perpendicular_vec[i_surf][1](iM,jN) = temp_perpendicular_vec[1];
                             perpendicular_vec[i_surf][2](iM,jN) = temp_perpendicular_vec[2];
                         }
+                    }
                 }
             }
         }

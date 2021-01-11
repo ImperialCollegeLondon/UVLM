@@ -649,6 +649,18 @@ void UVLM::Steady::solve_discretised_nonlifting_body
         sigma_flat
     );
 
+	UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal);
+	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+												   u_induced_x,
+												   u_induced_y,
+												   u_induced_z,
+												   u_induced_col_flat);
+
+	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+						              u_induced_col,
+						              uext_col);
+
+
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     sigma,

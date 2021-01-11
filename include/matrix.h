@@ -3,6 +3,7 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include "biotsavart.h"
+#include "unitsourcedensity.h"
 
 #include <fstream>
 
@@ -117,6 +118,15 @@ namespace UVLM
             UVLM::Types::VectorX& gamma_flat,
             const t_zeta_col& zeta_col
         );
+		
+		template <typename t_vec_mat,
+		          typename t_zeta_col>
+		void reconstruct_MatrixX
+		(
+			const UVLM::Types::MatrixX& mat_flat,
+			t_vec_mat& vec_mat,
+			const t_zeta_col& zeta_col
+		);
     }
 }
 // SOURCE CODE
@@ -489,7 +499,36 @@ void UVLM::Matrix::reconstruct_gamma
     }
 
 }
+template <typename t_vec_mat,
+		  typename t_zeta_col>
+void UVLM::Matrix::reconstruct_MatrixX
+(
+    const UVLM::Types::MatrixX& mat_flat,
+    t_vec_mat& vec_mat,
+    const t_zeta_col& zeta_col
+)
+{
+    const uint n_surf = zeta_col.size();
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::Types::generate_dimensions(zeta_col, dimensions);
 
+    uint i_flat = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        for (uint i=0; i<dimensions[i_surf].first; ++i)
+        {
+            for (uint j=0; j<dimensions[i_surf].second; ++j)
+            {
+				for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; i_dim++)
+				{
+					vec_mat[i_surf][i_dim](i, j) = mat_flat(i_dim,i_flat);
+				}
+				i_flat++;
+            }
+        }
+    }
+
+}
 template <typename t_gamma,
           typename t_zeta_col>
 void UVLM::Matrix::deconstruct_gamma
