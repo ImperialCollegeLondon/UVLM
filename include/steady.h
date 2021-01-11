@@ -92,6 +92,27 @@ namespace UVLM
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
+        template <typename t_zeta,
+                  typename t_zeta_col,
+                  typename t_uext_col,
+                  typename t_sigma,
+                  typename t_u_induced_col,
+                  typename t_longitudinals,
+                  typename t_perpendiculars,
+                  typename t_normals>
+        void solve_discretised_nonlifting_body
+        (
+            t_zeta& zeta,
+            t_zeta_col zeta_col,
+            t_uext_col& uext_col,
+            t_sigma& sigma,
+			t_u_induced_col&u_induced_col,
+            t_longitudinals& longitudinals,
+            t_perpendiculars& perpendiculars,
+            t_normals& normals,
+            const UVLM::Types::VMopts& options,
+            const UVLM::Types::FlightConditions& flightconditions
+        );
     }
 }
 
@@ -355,6 +376,20 @@ void UVLM::Steady::solver_nonlifting_body
     UVLM::Types::VecVecMatrixX perpendiculars;
     UVLM::Types::allocate_VecVecMat(perpendiculars, zeta_col);
     UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
+
+    UVLM::Steady::solve_discretised_nonlifting_body
+    (
+        zeta,
+        zeta_col,
+        uext_col,
+        sigma,
+        u_induced_col,
+        longitudinals,
+        perpendiculars,
+        normals,
+        options,
+        flightconditions
+    );
 }
 
 /*-----------------------------------------------------------------------------
@@ -536,4 +571,50 @@ void UVLM::Steady::solve_discretised
                                                 gamma_star,
                                                 in_n_rows);
     }
+}
+
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
+template <typename t_zeta,
+          typename t_zeta_col,
+          typename t_uext_col,
+          typename t_sigma,
+          typename t_u_induced_col,
+          typename t_longitudinals,
+          typename t_perpendiculars,
+          typename t_normals>
+void UVLM::Steady::solve_discretised_nonlifting_body
+(
+    t_zeta& zeta,
+    t_zeta_col zeta_col,
+    t_uext_col& uext_col,
+    t_sigma& sigma,
+    t_u_induced_col&u_induced_col,
+    t_longitudinals& longitudinals,
+    t_perpendiculars& perpendiculars,
+    t_normals& normals,
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions
+)
+{
+    const uint n_surf = options.NumSurfaces;
+    // size of rhs
+    uint ii = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uext_col[i_surf][0].rows();
+        uint N = uext_col[i_surf][0].cols();
+
+
+        ii += M*N;
+    }
+    const uint Ktotal = ii;
+    UVLM::Types::VectorX rhs;
+    UVLM::Types::MatrixX aic_sources = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+
+
 }
