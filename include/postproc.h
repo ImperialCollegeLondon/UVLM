@@ -9,6 +9,22 @@ namespace UVLM
 {
     namespace PostProc
     {
+        template <typename t_normal,
+				  typename t_longitudinal,
+				  typename t_perpendicular,
+				  typename t_uext_col,
+				  typename t_u_induced,
+				  typename t_u_total_panel>
+		void get_local_panel_velocity
+		(
+		const t_normal& normal,
+		const t_longitudinal& longitudinal,
+		const t_perpendicular& perpendicular,
+        const t_uext_col& uext_col,
+        const t_u_induced& u_induced_col,
+        t_u_total_panel& u_total_panel
+		);
+		
         template <typename t_zeta,
                   typename t_zeta_star,
                   typename t_gamma,
@@ -134,6 +150,85 @@ namespace UVLM
                 }
             }
         }
+		
+        template <typename t_zeta,
+                  typename t_sigma,
+                  typename t_normal,
+                  typename t_longitudinal,
+                  typename t_perpendicular,
+                  typename t_u_induced,
+                  typename t_uext_col,
+                  typename t_forces>
+        void calculate_static_forces_nonlifting_body
+        (
+            const t_zeta& zeta,
+            const t_sigma& sigma,
+            const t_normal& normals,
+            const t_longitudinal& longitudinals,
+            const t_perpendicular& perpendiculars,
+            const t_uext_col uext_col,
+            const t_u_induced u_induced_col,
+            t_forces&  forces,
+            const UVLM::Types::VMopts options,
+            const UVLM::Types::FlightConditions& flightconditions
+        )
+		{
+            // Set forces to 0
+            UVLM::Types::initialise_VecVecMat(forces);
+
+            // allocate 
+            UVLM::Types::VecVecMatrixX velocities;
+            UVLM::Types::VecMatrixX pressure_coefficients;
+            UVLM::Types::allocate_VecVecMat(velocities, uext_col);
+			double freestream_velocity_squared;
+			double induced_velocity_squared;
+            UVLM::Types::allocate_VecMat(pressure_coefficients, sigma);
+
+			UVLM::PostProc::get_local_panel_velocity(normals,
+													 longitudinals,
+													 perpendiculars,
+													 uext_col,
+													 u_induced_col,
+													 velocities
+													 );
+
+			const uint n_surf = zeta.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                const uint M = sigma[i_surf].rows();
+                const uint N = sigma[i_surf].cols();
+				
+                for (uint i_M=0; i_M<M; ++i_M)
+                {
+                    for (uint i_N=0; i_N<N; ++i_N)
+                    {
+						freestream_velocity_squared = (uext_col[i_surf][0](i_M, i_N)*uext_col[i_surf][0](i_M, i_N)
+													  + uext_col[i_surf][1](i_M, i_N)*uext_col[i_surf][1](i_M, i_N)
+													  + uext_col[i_surf][2](i_M, i_N)*uext_col[i_surf][2](i_M, i_N));
+						induced_velocity_squared = (velocities[i_surf][0](i_M, i_N)*velocities[i_surf][0](i_M, i_N) 
+													+ velocities[i_surf][1](i_M, i_N)*velocities[i_surf][1](i_M, i_N)
+												    + velocities[i_surf][2](i_M, i_N)*velocities[i_surf][2](i_M, i_N));
+						
+						pressure_coefficients[i_surf](i_M, i_N) = 1.0 - induced_velocity_squared/freestream_velocity_squared;
+						
+						UVLM::Types::Real area = 0;
+                        area = UVLM::Geometry::panel_area
+                        (
+                            zeta[i_surf][0].template block<2,2>(i_M, i_N),
+                            zeta[i_surf][1].template block<2,2>(i_M, i_N),
+                            zeta[i_surf][2].template block<2,2>(i_M, i_N)
+                        );
+						// no moments considered 
+						for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+						{
+							forces[i_surf][i_dim](i_M, i_N) = -0.5*flightconditions.rho*freestream_velocity_squared
+							                                  *pressure_coefficients[i_surf](i_M, i_N)
+															  *area*normals[i_surf][i_dim](i_M, i_N);
+						}
+					}
+				}
+			}
+		}
 
         template <typename t_zeta,
                   typename t_zeta_dot,
@@ -671,5 +766,80 @@ namespace UVLM
                 }
             }
         }
+
+
+        template <typename t_sigma_flat,
+                  typename t_u_induced>
+        void calculate_induced_velocity_col
+        (
+            const t_sigma_flat& sigma_flat,
+            const t_u_induced& u_induced_x,
+            const t_u_induced& u_induced_y,
+            const t_u_induced& u_induced_z,
+			UVLM::Types::MatrixX& u_induced_col_flat
+        )
+		{
+			uint n_rows = u_induced_x.rows();
+			uint n_cols = u_induced_x.cols();
+			for (uint i_col=0; i_col<n_rows; i_col++)
+			{
+				for (uint j_col=0; j_col<n_cols; j_col++)
+				{
+					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_col);
+					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_col);
+					u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_col);
+				}
+				for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
+				{
+					u_induced_col_flat(dim,i_col) *= sigma_flat(i_col);
+				}
+			}
+		}
+		
+        template <typename t_normal,
+				  typename t_longitudinal,
+				  typename t_perpendicular,
+				  typename t_uext_col,
+				  typename t_u_induced,
+				  typename t_u_total_panel>
+		void get_local_panel_velocity
+		(
+		const t_normal& normal,
+		const t_longitudinal& longitudinal,
+		const t_perpendicular& perpendicular,
+        const t_uext_col& uext_col,
+        const t_u_induced& u_induced_col,
+        t_u_total_panel& u_total_panel
+		)
+		{
+			const uint n_surf = uext_col.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+			{
+				const uint M = uext_col[i_surf][0].rows();
+                const uint N = uext_col[i_surf][0].cols();
+                for (uint i_col=0; i_col<M; ++i_col)
+                {
+	                for (uint j_col=0; j_col<N; ++j_col)
+					{
+			            UVLM::Types::Vector3 vector_trans_tmp;
+						UVLM::Types::Vector3 longitudinal_panel = UVLM::Types::Vector3(longitudinal[i_surf][0](i_col, j_col), longitudinal[i_surf][1](i_col, j_col), longitudinal[i_surf][2](i_col, j_col));
+						UVLM::Types::Vector3 perpendicular_panel = UVLM::Types::Vector3(perpendicular[i_surf][0](i_col, j_col), perpendicular[i_surf][1](i_col, j_col), perpendicular[i_surf][2](i_col, j_col));
+			            UVLM::Types::Vector3 normal_panel = UVLM::Types::Vector3(normal[i_surf][0](i_col, j_col), normal[i_surf][1](i_col, j_col), normal[i_surf][2](i_col, j_col));
+						UVLM::Geometry::convert_to_panel_coordinate_system(uext_col[i_surf][0](i_col, j_col),
+																			uext_col[i_surf][1](i_col, j_col),
+																			uext_col[i_surf][2](i_col, j_col),
+																			longitudinal_panel,
+																			perpendicular_panel,
+																			normal_panel,
+																			vector_trans_tmp);
+						for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
+						{
+							u_total_panel[i_surf][dim](i_col, j_col)= u_induced_col[i_surf][dim](i_col, j_col) + vector_trans_tmp(dim);
+						}
+						
+					}
+				}
+			}
+		}
     }
 }
