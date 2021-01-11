@@ -339,6 +339,15 @@ namespace UVLM
                                             vec[3]-vec[2],
                                             vec[0]-vec[3]);
         }
+        void get_vector_diff(const UVLM::Types::Vector3& vec,
+                             UVLM::Types::Vector3& diff_vec)
+        {
+            // Calcualtes difference between adjascent vector scalars
+            diff_vec = UVLM::Types::Vector3(vec[1]-vec[0],
+                                            vec[2]-vec[1],
+                                            vec[0]-vec[2]);
+        }
+
     } // geometry
 
     namespace Interpolation
