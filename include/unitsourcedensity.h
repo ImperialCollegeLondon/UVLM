@@ -153,6 +153,8 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
             UVLM::Geometry::check_for_quadrilateral_panel(delta_epsilon_vec, delta_eta_vec, flag_triangle, ignore_index);
 			if (flag_triangle)
 			{
+				UVLM::Types::Vector3 panel_coordinates_epsilon_triangle =UVLM::Types::remove_row(panel_coordinates_epsilon, ignore_index);
+				UVLM::Types::Vector3 panel_coordinates_eta_triangle =UVLM::Types::remove_row(panel_coordinates_eta, ignore_index);
 
 			}
 			else
