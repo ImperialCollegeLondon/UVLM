@@ -92,6 +92,12 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
                                                         panel_coordinates_eta,
                                                         panel_coordinates_z
                                                         );
+            UVLM::Geometry::get_vector_diff(panel_coordinates_epsilon,
+                                            delta_epsilon_vec);
+            UVLM::Geometry::get_vector_diff(panel_coordinates_eta,
+                                            delta_eta_vec);
+            UVLM::Geometry::check_for_quadrilateral_panel(delta_epsilon_vec, delta_eta_vec, flag_triangle, ignore_index);
+
         }
     }
 }

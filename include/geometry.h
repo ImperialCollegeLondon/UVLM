@@ -193,6 +193,23 @@ namespace UVLM
                 }
             }
         }
+		template <typename type_in>
+		void check_for_quadrilateral_panel(const type_in& delta_vec_1,
+										   const type_in& delta_vec_2,
+										   bool& flag_triangle,
+										   int& ignored_index)
+		{
+			for (int i=0; i<delta_vec_1.size(); ++i)
+			{
+				flag_triangle = false;
+				if ((abs(delta_vec_1[i]) < 0.00001) && (abs(delta_vec_2[i]) < 0.00001))
+				{
+					flag_triangle = true;
+					ignored_index = i;
+					break;
+				}
+			}
+		}
         template <typename type_in,
                   typename type_out>
         void generate_surface_vectors(const type_in& zeta,
@@ -296,6 +313,15 @@ namespace UVLM
                 UVLM::Mapping::BilinearMapping(vortex_mesh[i_surf],
                                                collocation_mesh[i_surf]);
             }
+        }
+        void get_vector_diff(const UVLM::Types::Vector4& vec,
+                             UVLM::Types::Vector4& diff_vec)
+        {
+            // Calcualtes difference between adjascent vector scalars
+            diff_vec = UVLM::Types::Vector4(vec[1]-vec[0],
+                                            vec[2]-vec[1],
+                                            vec[3]-vec[2],
+                                            vec[0]-vec[3]);
         }
     } // geometry
 
