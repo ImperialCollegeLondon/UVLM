@@ -336,7 +336,7 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 					induced_velocity_vec[2] *= -1;
 				}
 			}
-			uout(panel_id, collocation_id) = UVLM::UnitSourceDensity::dot_product(normal_panel, induced_velocity_vec);
+			uout(panel_id, collocation_id) = induced_velocity_vec[2];
 			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
 			u_induced_col_surface_y(panel_id, collocation_id) = induced_velocity_vec[1];
 			u_induced_col_surface_z(panel_id, collocation_id) = induced_velocity_vec[2];
@@ -431,7 +431,7 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 					induced_velocity_vec[2] *= -1;
 				}
 			}
-			uout(panel_id, collocation_id) = UVLM::UnitSourceDensity::dot_product(normal_panel, induced_velocity_vec);
+			uout(panel_id, collocation_id) = induced_velocity_vec[2];
 			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
 			u_induced_col_surface_y(panel_id, collocation_id) = induced_velocity_vec[1];
 			u_induced_col_surface_z(panel_id, collocation_id) = induced_velocity_vec[2];
