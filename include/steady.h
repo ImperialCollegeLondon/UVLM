@@ -336,7 +336,6 @@ void UVLM::Steady::solver
 
 -----------------------------------------------------------------------------*/
 template <typename t_zeta,
-          typename t_zeta_col,
           typename t_uext,
           typename t_sigma,
           typename t_forces>
