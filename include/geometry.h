@@ -252,7 +252,7 @@ namespace UVLM
                             normal[i_surf][2](iM,jN) = temp_normal_vec[2];
 
                             UVLM::Types::Vector3 temp_perpendicular_vec;
-                            temp_perpendicular_vec = temp_long_vec.cross(temp_normal_vec);
+                            temp_perpendicular_vec = temp_normal_vec.cross(temp_long_vec);
                             temp_perpendicular_vec.normalize();
                             perpendicular_vec[i_surf][0](iM,jN) = temp_perpendicular_vec[0];
                             perpendicular_vec[i_surf][1](iM,jN) = temp_perpendicular_vec[1];
