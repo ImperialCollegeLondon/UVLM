@@ -72,6 +72,29 @@ namespace UVLM
             UVLM::Types::Vector3& Q_vec
         );
 
+
+		void get_j_vec_katz
+		(
+			const UVLM::Types::Vector3& radius_vec,
+			const UVLM::Types::Vector3& diff_epsilon,
+			const UVLM::Types::Vector3& diff_eta,
+			const UVLM::Types::Vector3& delta_epsilon_x_vec,
+			const UVLM::Types::Vector3& delta_eta_y_vec,
+			const double z,
+			UVLM::Types::Vector3& J_vec
+		);
+
+		void get_j_vec_katz
+		(
+			const UVLM::Types::Vector4& radius_vec,
+			const UVLM::Types::Vector4& diff_epsilon,
+			const UVLM::Types::Vector4& diff_eta,
+			const UVLM::Types::Vector4& delta_epsilon_x_vec,
+			const UVLM::Types::Vector4& delta_eta_y_vec,
+			const double z,
+			UVLM::Types::Vector4& J_vec
+		);
+		
         template <typename vector>
         double dot_product
         (
@@ -320,20 +343,19 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 			else
 			{
 				induced_velocity_vec[2] = 0;
-			}
-			if (abs(collocation_point_transf[2]) > 0.00001)
-			{
-				UVLM::UnitSourceDensity::get_j_vec(radius_vec,
-					S_vec,
-					C_vec,
-					delta_epsilon_x_vec,
-					delta_eta_y_vec,
-					collocation_point_transf[2],
-					J_vec);
-				induced_velocity_vec[2] -= J_vec[0]+J_vec[1]+J_vec[2]+J_vec[3];
-				if (collocation_point_transf[2] < 0.0)
+				if (abs(collocation_point_transf[2])!=0.0)
 				{
-					induced_velocity_vec[2] *= -1;
+				UVLM::UnitSourceDensity::get_j_vec_katz
+					(
+						radius_vec,
+						delta_epsilon_vec,
+						delta_eta_vec,
+						delta_epsilon_x_vec,
+						delta_eta_y_vec,
+						collocation_point_transf[2],
+						J_vec
+					);
+					induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]+J_vec[3]);///(4.0*UVLM::Constants::PI);
 				}
 			}
 			uout(panel_id, collocation_id) = induced_velocity_vec[2];
@@ -415,27 +437,27 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 			else
 			{
 				induced_velocity_vec[2] = 0;
-			}
-			if (abs(collocation_point_transf[2]) > 0.00001)
-			{
-				UVLM::UnitSourceDensity::get_j_vec(radius_vec,
-					S_vec,
-					C_vec,
+				if (abs(collocation_point_transf[2])!= 0.0)
+				{
+				UVLM::UnitSourceDensity::get_j_vec_katz
+				(
+					radius_vec,
+					delta_epsilon_vec,
+					delta_eta_vec,
 					delta_epsilon_x_vec,
 					delta_eta_y_vec,
 					collocation_point_transf[2],
-					J_vec);
-				induced_velocity_vec[2] -= J_vec[0]+J_vec[1]+J_vec[2];
-				if (collocation_point_transf[2] < 0.0)
-				{
-					induced_velocity_vec[2] *= -1;
+					J_vec
+				);
+				induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]);///(4.0*UVLM::Constants::PI);
+				
 				}
 			}
 			uout(panel_id, collocation_id) = induced_velocity_vec[2];
 			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
 			u_induced_col_surface_y(panel_id, collocation_id) = induced_velocity_vec[1];
 			u_induced_col_surface_z(panel_id, collocation_id) = induced_velocity_vec[2];
-			collocation_id += 1;
+			collocation_id++;
 		}
 	}
 }
