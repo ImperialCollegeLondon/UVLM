@@ -243,12 +243,14 @@ namespace UVLM
                             long_vec[i_surf][0](iM,jN) = temp_long_vec[0];
                             long_vec[i_surf][1](iM,jN) = temp_long_vec[1];
                             long_vec[i_surf][2](iM,jN) = temp_long_vec[2];
+                            temp_long_vec.normalize();
 
                             UVLM::Types::Vector3 temp_tangential_vec;
                             panel_tangential_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
                                                     zeta[i_surf][1].template block<2,2>(iM,jN),
                                                     zeta[i_surf][2].template block<2,2>(iM,jN),
                                                     temp_tangential_vec);
+                            temp_tangential_vec.normalize();
 
                             UVLM::Types::Vector3 temp_normal_vec;
                             temp_normal_vec = temp_tangential_vec.cross(temp_long_vec);
