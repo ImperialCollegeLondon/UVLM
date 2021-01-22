@@ -399,6 +399,10 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 																  normal_col
 																  );
 			}
+			uout(collocation_id,panel_id) = induced_velocity_vec[2];
+			u_induced_col_surface_x(collocation_id,panel_id) = induced_velocity_vec[0];
+			u_induced_col_surface_y(collocation_id,panel_id) = induced_velocity_vec[1];
+			u_induced_col_surface_z(collocation_id,panel_id) = induced_velocity_vec[2];
 			collocation_id += 1;
 		}
 	}
@@ -521,10 +525,10 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 																  normal_col
 																  );
 			}
-			uout(panel_id, collocation_id) = induced_velocity_vec[2];
-			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
-			u_induced_col_surface_y(panel_id, collocation_id) = induced_velocity_vec[1];
-			u_induced_col_surface_z(panel_id, collocation_id) = induced_velocity_vec[2];
+			uout(collocation_id,panel_id) = induced_velocity_vec[2];
+			u_induced_col_surface_x(collocation_id,panel_id) = induced_velocity_vec[0];
+			u_induced_col_surface_y(collocation_id,panel_id) = induced_velocity_vec[1];
+			u_induced_col_surface_z(collocation_id,panel_id) = induced_velocity_vec[2];
 			collocation_id++;
 		}
 	}
