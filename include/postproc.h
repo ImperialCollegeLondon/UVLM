@@ -829,12 +829,6 @@ namespace UVLM
 															longitudinal_panel,
 															perpendicular_panel,
 															normal_panel);
-																			uext_col[i_surf][1](i_col, j_col),
-																			uext_col[i_surf][2](i_col, j_col),
-																			longitudinal_panel,
-																			perpendicular_panel,
-																			normal_panel,
-																			vector_trans_tmp);*/
 						for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
 						{
 							u_total_panel[i_surf][dim](i_col, j_col)= u_induced_col_global[dim] + uext_col[i_surf][dim](i_col, j_col);
