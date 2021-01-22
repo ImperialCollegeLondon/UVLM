@@ -359,9 +359,8 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 			UVLM::UnitSourceDensity::get_q_vec(radius_vec,
 											   d_vec,
 											   Q_vec);
-
-			induced_velocity_vec[0] = -UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
-			induced_velocity_vec[1] = UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);
+			induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
+			induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);
 
 			if (i_panel == i_col && j_panel == j_col)
 			{
@@ -391,7 +390,6 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 				UVLM::Types::Vector3 perpendicular_col = UVLM::Types::Vector3(perpendicular[0](i_col, j_col), perpendicular[1](i_col, j_col), perpendicular[2](i_col, j_col));
 				UVLM::Types::Vector3 normal_col = UVLM::Types::Vector3(normal[0](i_col, j_col), normal[1](i_col, j_col), normal[2](i_col, j_col));
 			}
-			uout(panel_id, collocation_id) = induced_velocity_vec[2];
 				UVLM::Geometry::convert_from_panel_A_to_panel_B_coordinate_system(induced_velocity_vec,
 																  longitudinal_panel,
 																  perpendicular_panel,
@@ -487,10 +485,10 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 			UVLM::UnitSourceDensity::get_q_vec(radius_vec,
 											   d_vec,
 											   Q_vec);
+			induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
+			induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);
 
-			induced_velocity_vec[0] = -UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
-			induced_velocity_vec[1] = UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);
-
+			
 			if (i_panel == i_col && j_panel == j_col)
 			{
 
@@ -548,8 +546,8 @@ void UVLM::UnitSourceDensity::get_q_vec(
     std::vector<int> combinations = {0, 1, 2, 3, 0};
     for (uint i_row=0; i_row < 4; ++i_row)
     {
-        Q_vec[i_row] = radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]];
-        Q_vec[i_row] = log((Q_vec[i_row]+ d_vec[i_row])/(Q_vec[i_row] - d_vec[i_row]));
+        Q_vec[i_row] = log((radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]]-d_vec[i_row])
+						  /(radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]]+d_vec[i_row]));
     }
 }
 
@@ -562,8 +560,8 @@ void UVLM::UnitSourceDensity::get_q_vec(
     std::vector<int> combinations = {0, 1, 2, 0};
     for (uint i_row=0; i_row < 3; ++i_row)
     {
-        Q_vec[i_row] = radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]];
-        Q_vec[i_row] = log((Q_vec[i_row]+ d_vec[i_row])/(Q_vec[i_row] - d_vec[i_row]));
+        Q_vec[i_row] = log((radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]]-d_vec[i_row])
+						  /(radius_vec[combinations[i_row]]+radius_vec[combinations[i_row+1]]+d_vec[i_row]));
     }
 }
 
