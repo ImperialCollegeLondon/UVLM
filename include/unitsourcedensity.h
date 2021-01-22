@@ -365,6 +365,8 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 
 			if (i_panel == i_col && j_panel == j_col)
 			{
+				induced_velocity_vec[0] = 0; //2*UVLM::Constants::PI;
+				induced_velocity_vec[1] = 0; //2*UVLM::Constants::PI;
 				induced_velocity_vec[2] = 2*UVLM::Constants::PI;
 			}
 			else
@@ -491,6 +493,9 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 
 			if (i_panel == i_col && j_panel == j_col)
 			{
+
+				induced_velocity_vec[0] = 0; //2*UVLM::Constants::PI;
+				induced_velocity_vec[1] = 0; //2*UVLM::Constants::PI;
 				induced_velocity_vec[2] = 2*UVLM::Constants::PI;
 			}
 			else
