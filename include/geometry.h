@@ -305,7 +305,79 @@ namespace UVLM
         }
 		
 
-
+        template <typename type>
+        template <typename type>
+        void convert_to_global_coordinate_system(type& x_panel,
+                                                type& y_panel,
+                                                type& z_panel,
+                                                const UVLM::Types::Vector3& chordwise_vec,
+                                                const UVLM::Types::Vector3& tangential_vec,
+                                                const UVLM::Types::Vector3& normal_vec
+                                                )
+        {
+		    UVLM::Types::Vector3 panel_coordinates =UVLM::Types::Vector3(x_panel, y_panel, z_panel);
+			UVLM::Types::MatrixX transformation_matrix = UVLM::Types::MatrixX::Zero(3,3);
+			transformation_matrix << chordwise_vec[0], chordwise_vec[1], chordwise_vec[2],
+									 tangential_vec[0], tangential_vec[1], tangential_vec[2],
+									 normal_vec[0], normal_vec[1], normal_vec[2];
+            UVLM::Types::Vector3 global_coordinates = transformation_matrix.inverse()*panel_coordinates;
+			x_panel = global_coordinates[0];
+			y_panel = global_coordinates[1];
+			z_panel = global_coordinates[2];
+		}
+        void convert_to_global_coordinate_system(UVLM::Types::Vector3& coordinates_vec,
+                                                const UVLM::Types::Vector3& chordwise_vec,
+                                                const UVLM::Types::Vector3& tangential_vec,
+                                                const UVLM::Types::Vector3& normal_vec
+                                                )
+        {
+			UVLM::Types::MatrixX transformation_matrix = UVLM::Types::MatrixX::Zero(3,3);
+			transformation_matrix << chordwise_vec[0], chordwise_vec[1], chordwise_vec[2],
+									 tangential_vec[0], tangential_vec[1], tangential_vec[2],
+									 normal_vec[0], normal_vec[1], normal_vec[2];
+			// std::cout << "\n Transformationmatrix = " <<transformation_matrix << std::endl;
+			// std::cout << "\n Normal Vector \n " <<normal_vec << std::endl;
+			// std::cout << "\n det(R) = " <<transformation_matrix.determinant() << std::endl;
+			// std::cout << "\n R^-1 = " <<transformation_matrix.inverse() << std::endl;
+			// std::cout << "\n R^T = " <<transformation_matrix.transpose() << std::endl;
+            coordinates_vec = transformation_matrix.inverse()*coordinates_vec;
+		}
+		
+        void convert_to_panel_coordinate_system(UVLM::Types::Vector3& coordinates_vec,
+                                                const UVLM::Types::Vector3& chordwise_vec,
+                                                const UVLM::Types::Vector3& tangential_vec,
+                                                const UVLM::Types::Vector3& normal_vec
+                                                )
+        {
+			UVLM::Types::MatrixX transformation_matrix = UVLM::Types::MatrixX::Zero(3,3);
+			transformation_matrix << chordwise_vec[0], chordwise_vec[1], chordwise_vec[2],
+									 tangential_vec[0], tangential_vec[1], tangential_vec[2],
+									 normal_vec[0], normal_vec[1], normal_vec[2];
+            coordinates_vec = transformation_matrix*coordinates_vec;
+		}
+        void convert_from_panel_A_to_panel_B_coordinate_system(UVLM::Types::Vector3& vector_to_be_converted,
+																const UVLM::Types::Vector3& chordwise_vec_A,
+																const UVLM::Types::Vector3& tangential_vec_A,
+																const UVLM::Types::Vector3& normal_vec_A,
+																const UVLM::Types::Vector3& chordwise_vec_B,
+																const UVLM::Types::Vector3& tangential_vec_B,
+																const UVLM::Types::Vector3& normal_vec_B
+																)
+        {
+			//std::cout << "Panel A Frame: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
+			UVLM::Geometry::convert_to_global_coordinate_system(vector_to_be_converted,
+																chordwise_vec_A,
+																tangential_vec_A,
+																normal_vec_A
+																);
+			//std::cout << "Global: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
+			UVLM::Geometry::convert_to_panel_coordinate_system(vector_to_be_converted,
+																chordwise_vec_B,
+																tangential_vec_B,
+																normal_vec_B
+																);
+			//std::cout << "Panel B Frame: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
+		}
         template <typename t_in,
                   typename t_out>
         void generate_colocationMesh
