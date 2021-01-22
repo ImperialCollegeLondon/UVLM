@@ -105,7 +105,10 @@ namespace UVLM
 				  typename vector_in,
 				  typename t_tsurface,
 				  typename t_u_induced_col,
-				  typename t_uout>
+				  typename t_uout,
+                  typename t_longitudinals,
+                  typename t_perpendiculars,
+                  typename t_normals>
 		void get_Aij_quadrilateral
 		(
 			const vector_in& panel_coordinates_epsilon,
@@ -126,13 +129,19 @@ namespace UVLM
 			const uint panel_id,
 			uint& collocation_id,
 			const unsigned int i_panel,
-			const unsigned int j_panel
+			const unsigned int j_panel,
+			const t_longitudinals&    longitudinal,
+			const t_perpendiculars&    perpendicular,
+			const t_normals&    normal
 		);
 		template <typename t_panel_z,
 				  typename vector_in,
 				  typename t_tsurface,
 				  typename t_u_induced_col,
-				  typename t_uout>
+				  typename t_uout,
+                  typename t_longitudinals,
+                  typename t_perpendiculars,
+                  typename t_normals>
 		void get_Aij_triangle
 		(
 			const vector_in& panel_coordinates_epsilon,
@@ -151,7 +160,10 @@ namespace UVLM
 			const uint panel_id,
 			uint& collocation_id,
 			const unsigned int i_panel,
-			const unsigned int j_panel
+			const unsigned int j_panel,
+            const t_longitudinals&    longitudinal = NULL,
+            const t_perpendiculars&    perpendicular = NULL,
+            const t_normals&    normal = NULL
 		);
     }
 }
@@ -199,6 +211,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
         for (unsigned int j_panel=0; j_panel<cols_collocation; ++j_panel)
         {
             collocation_id = 0;
+			UVLM::Types::Vector3 collocation_point_i = UVLM::Types::Vector3(target_surface[0](i_panel, j_panel),
+													   target_surface[1](i_panel, j_panel),
+													   target_surface[2](i_panel, j_panel));
             longitudinal_panel = UVLM::Types::Vector3(longitudinal[0](i_panel, j_panel), longitudinal[1](i_panel, j_panel), longitudinal[2](i_panel, j_panel));
             perpendicular_panel = UVLM::Types::Vector3(perpendicular[0](i_panel, j_panel), perpendicular[1](i_panel, j_panel), perpendicular[2](i_panel, j_panel));
             normal_panel = UVLM::Types::Vector3(normal[0](i_panel, j_panel), normal[1](i_panel, j_panel), normal[2](i_panel, j_panel));
@@ -239,7 +254,10 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					panel_id,
 					collocation_id,
 					i_panel,
-					j_panel
+					j_panel,
+					longitudinal,
+					perpendicular,
+					normal
 				);
 			}
 			else
@@ -264,7 +282,10 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					panel_id,
 					collocation_id,
 					i_panel,
-					j_panel
+					j_panel,
+					longitudinal,
+					perpendicular,
+					normal
 				);
 			}
         panel_id++;
@@ -277,7 +298,10 @@ template <typename t_panel_z,
 		  typename vector_in,
 		  typename t_tsurface,
 		  typename t_u_induced_col,
-		  typename t_uout>
+		  typename t_uout,
+			  typename t_longitudinals,
+			  typename t_perpendiculars,
+			  typename t_normals>
 void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 (
 	const vector_in& panel_coordinates_epsilon,
@@ -298,7 +322,10 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 	const uint panel_id,
 	uint& collocation_id,
 	const unsigned int i_panel,
-	const unsigned int j_panel
+	const unsigned int j_panel,
+    const t_longitudinals&    longitudinal,
+    const t_perpendiculars&    perpendicular,
+    const t_normals&    normal
 )
 {
 	UVLM::Types::Vector4 d_vec = (delta_epsilon_vec.array().pow(2) + delta_eta_vec.array().pow(2)).sqrt();
@@ -357,11 +384,21 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 					);
 					induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]+J_vec[3]);///(4.0*UVLM::Constants::PI);
 				}
+				// convert induced panel velocity from panel coordinate system to collocation point coorindate system 
+				UVLM::Types::Vector3 longitudinal_col = UVLM::Types::Vector3(longitudinal[0](i_col, j_col), longitudinal[1](i_col, j_col), longitudinal[2](i_col, j_col));
+				UVLM::Types::Vector3 perpendicular_col = UVLM::Types::Vector3(perpendicular[0](i_col, j_col), perpendicular[1](i_col, j_col), perpendicular[2](i_col, j_col));
+				UVLM::Types::Vector3 normal_col = UVLM::Types::Vector3(normal[0](i_col, j_col), normal[1](i_col, j_col), normal[2](i_col, j_col));
 			}
 			uout(panel_id, collocation_id) = induced_velocity_vec[2];
-			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
-			u_induced_col_surface_y(panel_id, collocation_id) = induced_velocity_vec[1];
-			u_induced_col_surface_z(panel_id, collocation_id) = induced_velocity_vec[2];
+				UVLM::Geometry::convert_from_panel_A_to_panel_B_coordinate_system(induced_velocity_vec,
+																  longitudinal_panel,
+																  perpendicular_panel,
+																  normal_panel,
+																  longitudinal_col,
+																  perpendicular_col,
+																  normal_col
+																  );
+			}
 			collocation_id += 1;
 		}
 	}
@@ -371,7 +408,10 @@ template <typename t_panel_z,
 		  typename vector_in,
 		  typename t_tsurface,
 		  typename t_u_induced_col,
-          typename t_uout>
+          typename t_uout,
+			  typename t_longitudinals,
+			  typename t_perpendiculars,
+			  typename t_normals>
 void UVLM::UnitSourceDensity::get_Aij_triangle
 (
 	const vector_in& panel_coordinates_epsilon,
@@ -390,16 +430,31 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 	const uint panel_id,
 	uint& collocation_id,
 	const unsigned int i_panel,
-	const unsigned int j_panel
+	const unsigned int j_panel,
+    const t_longitudinals&    longitudinal,
+    const t_perpendiculars&    perpendicular,
+    const t_normals&    normal
 )
 {
 	UVLM::Types::Vector3 delta_epsilon_vec;
 	UVLM::Types::Vector3 delta_eta_vec;
 	UVLM::Geometry::get_vector_diff(panel_coordinates_epsilon, delta_epsilon_vec);
 	UVLM::Geometry::get_vector_diff(panel_coordinates_eta, delta_eta_vec);
+	for (uint i_point = 0; i_point < 4; i_point++)
+	{
+		if ((delta_epsilon_vec[i_point]< 0) && (delta_epsilon_vec[i_point]> -0.00000001))
+		{
+			delta_epsilon_vec[i_point] = 0.0;
+		}
+	}
 	UVLM::Types::Vector3 d_vec = (delta_epsilon_vec.array().pow(2) + delta_eta_vec.array().pow(2)).sqrt();
 	UVLM::Types::Vector3 S_vec = delta_eta_vec.array()/d_vec.array();
 	UVLM::Types::Vector3 C_vec = delta_epsilon_vec.array()/d_vec.array();
+	// std::cout << "\n delta eps: \n" << delta_epsilon_vec << "\n delta eta: \n" << delta_eta_vec << std::endl;
+	// std::cout << "\n d_vec: \n" << d_vec << std::endl;
+	// std::cout << "\n S_vec: \n" << S_vec << std::endl;
+	// std::cout << "\n C_vec: \n" << C_vec << std::endl;
+	
 	UVLM::Types::Vector3 Q_vec;
 	UVLM::Types::Vector3 J_vec;
 	UVLM::Types::Vector3 radius_vec;
@@ -452,6 +507,19 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 				induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]);///(4.0*UVLM::Constants::PI);
 				
 				}
+				// convert induced panel velocity from panel coordinate system to collocation point coorindate system 
+				UVLM::Types::Vector3 longitudinal_col = UVLM::Types::Vector3(longitudinal[0](i_col, j_col), longitudinal[1](i_col, j_col), longitudinal[2](i_col, j_col));
+				UVLM::Types::Vector3 perpendicular_col = UVLM::Types::Vector3(perpendicular[0](i_col, j_col), perpendicular[1](i_col, j_col), perpendicular[2](i_col, j_col));
+				UVLM::Types::Vector3 normal_col = UVLM::Types::Vector3(normal[0](i_col, j_col), normal[1](i_col, j_col), normal[2](i_col, j_col));
+
+				UVLM::Geometry::convert_from_panel_A_to_panel_B_coordinate_system(induced_velocity_vec,
+																  longitudinal_panel,
+																  perpendicular_panel,
+																  normal_panel,
+																  longitudinal_col,
+																  perpendicular_col,
+																  normal_col
+																  );
 			}
 			uout(panel_id, collocation_id) = induced_velocity_vec[2];
 			u_induced_col_surface_x(panel_id, collocation_id) = induced_velocity_vec[0];
