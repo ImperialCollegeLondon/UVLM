@@ -783,11 +783,11 @@ namespace UVLM
 			uint n_cols = u_induced_x.cols();
 			for (uint i_col=0; i_col<n_rows; i_col++)
 			{
-				for (uint j_col=0; j_col<n_cols; j_col++)
+				for (uint j_source=0; j_source<n_cols; j_source++)
 				{
-					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_col)* sigma_flat(j_col);
-					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_col)* sigma_flat(j_col);
-					u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_col)* sigma_flat(j_col);
+					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_source)* sigma_flat(j_source);
+					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_source)* sigma_flat(j_source);
+					u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_source)* sigma_flat(j_source);
 				}
 
 			}
