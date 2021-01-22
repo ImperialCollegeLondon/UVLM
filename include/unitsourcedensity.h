@@ -609,6 +609,81 @@ void UVLM::UnitSourceDensity::get_j_vec
           /(radius_vec.array()*radius_2_vec.array()*R_vec.array()*R_vec.array() + z*z*s_2_vec.array()*s_1_vec.array()));
 }
 
+
+
+void UVLM::UnitSourceDensity::get_j_vec_katz
+(
+    const UVLM::Types::Vector4& radius_vec,
+    const UVLM::Types::Vector4& diff_epsilon,
+    const UVLM::Types::Vector4& diff_eta,
+    const UVLM::Types::Vector4& delta_epsilon_x_vec,
+    const UVLM::Types::Vector4& delta_eta_y_vec,
+    const double z,
+    UVLM::Types::Vector4& J_vec
+)
+{
+
+    UVLM::Types::Vector4 m_vec = diff_eta.array()/diff_epsilon.array();
+	//std::cout << "M_VEC =  \n" << m_vec << std::endl;
+    UVLM::Types::Vector4 e_vec = delta_epsilon_x_vec.array().pow(2)+z*z;
+    UVLM::Types::Vector4 h_vec = delta_epsilon_x_vec.array()* delta_eta_y_vec.array();
+    //UVLM::Types::Vector4 s_1_vec = delta_epsilon_x_vec.array()*C_vec.array() + delta_eta_y_vec.array()*S_vec.array();
+    //UVLM::Types::Vector4 s_2_vec = UVLM::Types::Vector4(delta_epsilon_x_vec[1], delta_epsilon_x_vec[2], delta_epsilon_x_vec[3], delta_epsilon_x_vec[0]).array()*C_vec.array()
+    //                             + UVLM::Types::Vector4(delta_eta_y_vec[1], delta_eta_y_vec[2], delta_eta_y_vec[3], delta_eta_y_vec[0]).array()*S_vec.array();
+    //UVLM::Types::Vector4 R_vec = - delta_epsilon_x_vec.array()*S_vec.array() + delta_eta_y_vec.array()*C_vec.array();
+    UVLM::Types::Vector4 e_2_vec =UVLM::Types::Vector4(e_vec[1], e_vec[2], e_vec[3], e_vec[0]);
+    UVLM::Types::Vector4 h_2_vec =UVLM::Types::Vector4(h_vec[1], h_vec[2], h_vec[3], h_vec[0]);
+    UVLM::Types::Vector4 r_2_vec =UVLM::Types::Vector4(radius_vec[1], radius_vec[2], radius_vec[3], radius_vec[0]);
+
+    for (uint i_point = 0; i_point < 4; i_point++)
+	{
+		J_vec[i_point] = atan((m_vec[i_point]*e_vec[i_point]-h_vec[i_point])
+		                      /(z*radius_vec[i_point])
+							 ) -atan((m_vec[i_point]*e_2_vec[i_point]-h_2_vec[i_point])
+		                      /(z*r_2_vec[i_point]));
+	        
+	}
+//	std::cout << "\nPoint z = " << z << ",  |z| = " << abs(z) << std::endl;
+//	J_vec = atan(R_vec.array()*abs(z)*(radius_vec.array()*s_2_vec.array()-radius_2_vec.array()*s_1_vec.array())
+//          /(radius_vec.array()*radius_2_vec.array()*R_vec.array()*R_vec.array() + z*z*s_2_vec.array()*s_1_vec.array()));
+}
+
+void UVLM::UnitSourceDensity::get_j_vec_katz
+(
+    const UVLM::Types::Vector3& radius_vec,
+    const UVLM::Types::Vector3& diff_epsilon,
+    const UVLM::Types::Vector3& diff_eta,
+    const UVLM::Types::Vector3& delta_epsilon_x_vec,
+    const UVLM::Types::Vector3& delta_eta_y_vec,
+    const double z,
+    UVLM::Types::Vector3& J_vec
+)
+{
+    UVLM::Types::Vector3 m_vec = diff_eta.array()/diff_epsilon.array();
+    UVLM::Types::Vector3 e_vec = delta_epsilon_x_vec.array().pow(2)+z*z;
+    UVLM::Types::Vector3 h_vec = delta_epsilon_x_vec.array()* delta_eta_y_vec.array();
+
+    //UVLM::Types::Vector4 s_1_vec = delta_epsilon_x_vec.array()*C_vec.array() + delta_eta_y_vec.array()*S_vec.array();
+    //UVLM::Types::Vector4 s_2_vec = UVLM::Types::Vector4(delta_epsilon_x_vec[1], delta_epsilon_x_vec[2], delta_epsilon_x_vec[3], delta_epsilon_x_vec[0]).array()*C_vec.array()
+    //                             + UVLM::Types::Vector4(delta_eta_y_vec[1], delta_eta_y_vec[2], delta_eta_y_vec[3], delta_eta_y_vec[0]).array()*S_vec.array();
+    //UVLM::Types::Vector4 R_vec = - delta_epsilon_x_vec.array()*S_vec.array() + delta_eta_y_vec.array()*C_vec.array();
+    UVLM::Types::Vector3 e_2_vec =UVLM::Types::Vector3(e_vec[1], e_vec[2], e_vec[0]);
+    UVLM::Types::Vector3 h_2_vec =UVLM::Types::Vector3(h_vec[1], h_vec[2], h_vec[0]);
+    UVLM::Types::Vector3 r_2_vec =UVLM::Types::Vector3(radius_vec[1], radius_vec[2], radius_vec[0]);
+
+    for (uint i_point = 0; i_point < 3; i_point++)
+	{
+		J_vec[i_point] = atan((m_vec[i_point]*e_vec[i_point]-h_vec[i_point])
+		                      /(z*radius_vec[i_point])
+							 ) -atan((m_vec[i_point]*e_2_vec[i_point]-h_2_vec[i_point])
+		                      /(z*r_2_vec[i_point]));
+	        
+	}
+//	std::cout << "\nPoint z = " << z << ",  |z| = " << abs(z) << std::endl;
+//	J_vec = atan(R_vec.array()*abs(z)*(radius_vec.array()*s_2_vec.array()-radius_2_vec.array()*s_1_vec.array())
+//          /(radius_vec.array()*radius_2_vec.array()*R_vec.array()*R_vec.array() + z*z*s_2_vec.array()*s_1_vec.array()));
+}
+
 template <typename vector>
 double UVLM::UnitSourceDensity::dot_product
 (
