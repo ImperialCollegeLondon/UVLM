@@ -819,19 +819,25 @@ namespace UVLM
 	                for (uint j_col=0; j_col<N; ++j_col)
 					{
 			            UVLM::Types::Vector3 vector_trans_tmp;
+			            UVLM::Types::Vector3 u_induced_col_global = UVLM::Types::Vector3(u_induced_col[i_surf][0](i_col, j_col),
+																						 u_induced_col[i_surf][1](i_col, j_col),
+																						 u_induced_col[i_surf][2](i_col, j_col));
 						UVLM::Types::Vector3 longitudinal_panel = UVLM::Types::Vector3(longitudinal[i_surf][0](i_col, j_col), longitudinal[i_surf][1](i_col, j_col), longitudinal[i_surf][2](i_col, j_col));
 						UVLM::Types::Vector3 perpendicular_panel = UVLM::Types::Vector3(perpendicular[i_surf][0](i_col, j_col), perpendicular[i_surf][1](i_col, j_col), perpendicular[i_surf][2](i_col, j_col));
 			            UVLM::Types::Vector3 normal_panel = UVLM::Types::Vector3(normal[i_surf][0](i_col, j_col), normal[i_surf][1](i_col, j_col), normal[i_surf][2](i_col, j_col));
-						UVLM::Geometry::convert_to_panel_coordinate_system(uext_col[i_surf][0](i_col, j_col),
+						UVLM::Geometry::convert_to_global_coordinate_system(u_induced_col_global,
+															longitudinal_panel,
+															perpendicular_panel,
+															normal_panel);
 																			uext_col[i_surf][1](i_col, j_col),
 																			uext_col[i_surf][2](i_col, j_col),
 																			longitudinal_panel,
 																			perpendicular_panel,
 																			normal_panel,
-																			vector_trans_tmp);
+																			vector_trans_tmp);*/
 						for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
 						{
-							u_total_panel[i_surf][dim](i_col, j_col)= u_induced_col[i_surf][dim](i_col, j_col) + vector_trans_tmp(dim);
+							u_total_panel[i_surf][dim](i_col, j_col)= u_induced_col_global[dim] + uext_col[i_surf][dim](i_col, j_col);
 						}
 						
 					}
