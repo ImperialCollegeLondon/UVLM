@@ -306,7 +306,6 @@ namespace UVLM
 		
 
         template <typename type>
-        template <typename type>
         void convert_to_global_coordinate_system(type& x_panel,
                                                 type& y_panel,
                                                 type& z_panel,
