@@ -128,6 +128,12 @@ namespace UVLM
 			t_vec_mat& vec_mat,
 			const t_zeta_col& zeta_col
 		);
+		void build_offsets
+		(
+			const uint& n_surf,
+			const UVLM::Types::VecDimensions& dimensions,
+			std::vector<uint>& offset
+		);
     }
 }
 // SOURCE CODE
@@ -233,6 +239,28 @@ void UVLM::Matrix::AIC
 /*-----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------*/
+
+void UVLM::Matrix::build_offsets
+(
+    const uint& n_surf,
+    const UVLM::Types::VecDimensions& dimensions,
+    std::vector<uint>& offset
+)
+{
+    uint i_offset = 0;
+    uint k_surf;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        offset.push_back(i_offset);
+        k_surf = dimensions[i_surf].first*
+                 dimensions[i_surf].second;
+       i_offset += k_surf;
+    }
+}
+/*-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------*/
+
 template <typename t_zeta,
           typename t_zeta_col,
           typename t_uext_col,
@@ -240,6 +268,7 @@ template <typename t_zeta,
           typename t_surf_vec_col,
           typename t_u_induced_col,
           typename t_aic>
+
 void UVLM::Matrix::AIC_sources
 (
     const uint& Ktotal,
@@ -270,24 +299,12 @@ void UVLM::Matrix::AIC_sources
     // (parallel variation)
     std::vector<uint> offset_panel;
     std::vector<uint> offset_col;
-    uint i_offset = 0;
-    for (uint ipanel_surf=0; ipanel_surf<n_surf_panel; ++ipanel_surf)
-    {
-        offset_panel.push_back(i_offset);
-        uint k_surf = dimensions_panel[ipanel_surf].first*
-                      dimensions_panel[ipanel_surf].second;
-       i_offset += k_surf;
-    }
-
-    i_offset = 0;
-    for (uint icol_surf=0; icol_surf<n_surf_col; ++icol_surf)
-    {
-        offset_col.push_back(i_offset);
-        uint k_surf = dimensions_col[icol_surf].first*
-                      dimensions_col[icol_surf].second;
-       i_offset += k_surf;
-    }
-
+	UVLM::Matrix::build_offsets(n_surf_panel,
+								dimensions_panel,
+								offset_panel);
+	UVLM::Matrix::build_offsets(n_surf_col,
+								dimensions_col,
+								offset_col);
 
     // fill up AIC
     for (uint icol_surf=0; icol_surf<n_surf_col; ++icol_surf)
