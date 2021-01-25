@@ -144,6 +144,140 @@ DLLEXPORT void run_VLM_nonlifting_body
                                          flightconditions);
 }
 
+DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
+(
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_zeta_dot,
+    double** p_u_ext,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_forces,
+    double* p_rbm_vel_g,
+    const UVLM::Types::VMopts& options_nonlifting,
+    unsigned int** p_dimensions_nonlifting,
+    double** p_zeta_nonlifting,
+    double** p_u_ext_nonlifting,
+    double** p_sigma_nonlifting,
+    double** p_forces_nonlifting
+)
+{
+#if defined(_OPENMP)
+    omp_set_num_threads(options.NumCores);
+#endif
+    // Setup Lifting Surfaces
+    unsigned int n_surf;
+    n_surf = options.NumSurfaces;
+    UVLM::Types::VecDimensions dimensions;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions,
+                                             dimensions);
+    UVLM::Types::VecDimensions dimensions_star;
+    UVLM::CppInterface::transform_dimensions(n_surf,
+                                             p_dimensions_star,
+                                             dimensions_star);
+
+    UVLM::Types::VecVecMapX zeta;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta,
+                                      zeta,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_star;
+    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+                                      p_zeta_star,
+                                      zeta_star,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta_dot,
+                                      zeta_dot,
+                                      1);
+
+    UVLM::Types::VecVecMapX u_ext;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_u_ext,
+                                      u_ext,
+                                      1);
+
+    UVLM::Types::VecMapX gamma;
+    UVLM::CppInterface::map_VecMat(dimensions,
+                                   p_gamma,
+                                   gamma,
+                                   0);
+
+    UVLM::Types::VecMapX gamma_star;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_gamma_star,
+                                   gamma_star,
+                                   0);
+
+    UVLM::Types::VecVecMapX forces;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_forces,
+                                      forces,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+
+    UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
+
+    // Setup Nonlifting Body
+    unsigned int n_surf_nonlifting;
+    n_surf_nonlifting = options.NumSurfaces;
+    UVLM::Types::VecDimensions dimensions_nonlifting;
+    UVLM::CppInterface::transform_dimensions(n_surf_nonlifting,
+                                             p_dimensions_nonlifting,
+                                             dimensions_nonlifting);
+
+    UVLM::Types::VecVecMapX zeta_nonlifting;
+    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
+                                      p_zeta_nonlifting,
+                                      zeta_nonlifting,
+                                      1);
+
+    UVLM::Types::VecVecMapX u_ext_nonlifting;
+    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
+                                      p_u_ext_nonlifting,
+                                      u_ext_nonlifting,
+                                      1);
+
+    UVLM::Types::VecMapX sigma_nonlifting;
+    UVLM::CppInterface::map_VecMat(dimensions_nonlifting,
+                                   p_sigma_nonlifting,
+                                   sigma_nonlifting,
+                                   0);
+
+    UVLM::Types::VecVecMapX forces_nonlifting;
+    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
+                                      p_forces_nonlifting,
+                                      forces_nonlifting,
+                                      1,
+                                      2*UVLM::Constants::NDIM);
+    //Start solver
+	UVLM::Steady::solver_lifting_and_nonlifting_bodies
+	(
+		zeta,
+		zeta_dot,
+		u_ext,
+		zeta_star,
+		gamma,
+		gamma_star,
+		forces,
+		rbm_vel_g,
+		options,
+		flightconditions,
+		zeta_nonlifting,
+		u_ext_nonlifting,
+		sigma_nonlifting,
+		forces_nonlifting,
+		options_nonlifting
+	);
+}
 DLLEXPORT void init_UVLM
 (
     const UVLM::Types::VMopts& options,
