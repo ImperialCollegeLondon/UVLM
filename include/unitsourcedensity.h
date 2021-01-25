@@ -20,9 +20,8 @@ namespace UVLM
                   typename t_tsurface,
                   typename t_u_induced_col,
                   typename t_uout,
-                  typename t_longitudinals,
-                  typename t_perpendiculars,
-                  typename t_normals>
+                  typename t_surf_vec_panel,
+                  typename t_surf_vec_col>
         void get_influence_coefficient
         (
             const t_zeta&       zeta,
@@ -31,11 +30,13 @@ namespace UVLM
 			t_u_induced_col&   u_induced_col_surface_y,
 			t_u_induced_col&   u_induced_col_surface_z,
             t_uout&             uout,
-            const t_longitudinals&    longitudinal = NULL,
-            const t_perpendiculars&    perpendicular = NULL,
-            const t_normals&    normal = NULL
+            const t_surf_vec_panel&    longitudinal_panel = NULL,
+            const t_surf_vec_panel&    perpendicular_panel = NULL,
+            const t_surf_vec_panel&    normal_panel = NULL,
+            const t_surf_vec_col&    longitudinal_col = NULL,
+            const t_surf_vec_col&    perpendicular_col = NULL,
+            const t_surf_vec_col&    normal_col = NULL
         );
-
 
         void get_q_vec
         (
@@ -167,14 +168,13 @@ namespace UVLM
 		);
     }
 }
-
 template <typename t_zeta,
-          typename t_tsurface,
-          typename t_u_induced_col,
-          typename t_uout,
-          typename t_longitudinals,
-          typename t_perpendiculars,
-          typename t_normals>
+		  typename t_tsurface,
+		  typename t_u_induced_col,
+		  typename t_uout,
+		  typename t_surf_vec_panel,
+		  typename t_surf_vec_col>
+
 void UVLM::UnitSourceDensity::get_influence_coefficient
     (
     const t_zeta&       zeta,
@@ -183,50 +183,56 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
     t_u_induced_col&   u_induced_col_surface_y,
     t_u_induced_col&   u_induced_col_surface_z,
     t_uout&             uout,
-    const t_longitudinals&    longitudinal,
-    const t_perpendiculars&    perpendicular,
-    const t_normals&    normal
+	const t_surf_vec_panel&    longitudinal_panel,
+	const t_surf_vec_panel&    perpendicular_panel,
+	const t_surf_vec_panel&    normal_panel,
+	const t_surf_vec_col&    longitudinal_col,
+	const t_surf_vec_col&    perpendicular_col,
+	const t_surf_vec_col&    normal_col
     )
     {
 
     const unsigned int rows_collocation = target_surface[0].rows();
     const unsigned int cols_collocation = target_surface[0].cols();
+    const unsigned int rows_panel = zeta[0].rows()-1;
+    const unsigned int cols_panel = zeta[0].cols()-1;
 
 	UVLM::Types::Vector4 panel_coordinates_epsilon;
 	UVLM::Types::Vector4 panel_coordinates_eta;
 	UVLM::Types::Vector4 panel_coordinates_z;
     UVLM::Types::Vector4 delta_epsilon_vec;
     UVLM::Types::Vector4 delta_eta_vec;
-    UVLM::Types::Vector3 normal_panel;
-    UVLM::Types::Vector3 longitudinal_panel;
-    UVLM::Types::Vector3 perpendicular_panel;
+    UVLM::Types::Vector3 normal_panel_vec;
+    UVLM::Types::Vector3 longitudinal_panel_vec;
+    UVLM::Types::Vector3 perpendicular_panel_vec;
 
 	bool flag_triangle = false;
 	int ignore_index;
     //PANELS
     uint panel_id = 0;
     uint collocation_id = 0;
-    for (unsigned int i_panel=0; i_panel<rows_collocation; ++i_panel)
+    for (unsigned int i_panel=0; i_panel<rows_panel; ++i_panel)
     {
-        for (unsigned int j_panel=0; j_panel<cols_collocation; ++j_panel)
+        for (unsigned int j_panel=0; j_panel<cols_panel; ++j_panel)
         {
             collocation_id = 0;
 			UVLM::Types::Vector3 collocation_point_i = UVLM::Types::Vector3(target_surface[0](i_panel, j_panel),
 													   target_surface[1](i_panel, j_panel),
 													   target_surface[2](i_panel, j_panel));
-            longitudinal_panel = UVLM::Types::Vector3(longitudinal[0](i_panel, j_panel), longitudinal[1](i_panel, j_panel), longitudinal[2](i_panel, j_panel));
-            perpendicular_panel = UVLM::Types::Vector3(perpendicular[0](i_panel, j_panel), perpendicular[1](i_panel, j_panel), perpendicular[2](i_panel, j_panel));
-            normal_panel = UVLM::Types::Vector3(normal[0](i_panel, j_panel), normal[1](i_panel, j_panel), normal[2](i_panel, j_panel));
+            longitudinal_panel_vec = UVLM::Types::Vector3(longitudinal_panel[0](i_panel, j_panel), longitudinal_panel[1](i_panel, j_panel), longitudinal_panel[2](i_panel, j_panel));
+            perpendicular_panel_vec = UVLM::Types::Vector3(perpendicular_panel[0](i_panel, j_panel), perpendicular_panel[1](i_panel, j_panel), perpendicular_panel[2](i_panel, j_panel));
+            normal_panel_vec = UVLM::Types::Vector3(normal_panel[0](i_panel, j_panel), normal_panel[1](i_panel, j_panel), normal_panel[2](i_panel, j_panel));
             UVLM::Geometry::convert_to_panel_coordinate_system(zeta[0].template block<2,2>(i_panel, j_panel),
                                                         zeta[1].template block<2,2>(i_panel, j_panel),
                                                         zeta[2].template block<2,2>(i_panel, j_panel),
-                                                        longitudinal_panel,
-                                                        perpendicular_panel,
-                                                        normal_panel,
+                                                        longitudinal_panel_vec,
+                                                        perpendicular_panel_vec,
+                                                        normal_panel_vec,
                                                         panel_coordinates_epsilon,
                                                         panel_coordinates_eta,
                                                         panel_coordinates_z
                                                         );
+
             UVLM::Geometry::get_vector_diff(panel_coordinates_epsilon,
                                             delta_epsilon_vec);
             UVLM::Geometry::get_vector_diff(panel_coordinates_eta,
@@ -244,9 +250,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					rows_collocation,
 					cols_collocation,
 					target_surface,
-					longitudinal_panel,
-					perpendicular_panel,
-					normal_panel,
+					longitudinal_panel_vec,
+					perpendicular_panel_vec,
+					normal_panel_vec,
 					u_induced_col_surface_x,
 					u_induced_col_surface_y,
 					u_induced_col_surface_z,
@@ -255,9 +261,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					collocation_id,
 					i_panel,
 					j_panel,
-					longitudinal,
-					perpendicular,
-					normal
+					longitudinal_col,
+					perpendicular_col,
+					normal_col
 				);
 			}
 			else
@@ -270,9 +276,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					rows_collocation,
 					cols_collocation,
 					target_surface,
-					longitudinal_panel,
-					perpendicular_panel,
-					normal_panel,
+					longitudinal_panel_vec,
+					perpendicular_panel_vec,
+					normal_panel_vec,
 					delta_epsilon_vec,
 					delta_eta_vec,
 					u_induced_col_surface_x,
@@ -283,9 +289,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					collocation_id,
 					i_panel,
 					j_panel,
-					longitudinal,
-					perpendicular,
-					normal
+					longitudinal_col,
+					perpendicular_col,
+					normal_col
 				);
 			}
         panel_id++;

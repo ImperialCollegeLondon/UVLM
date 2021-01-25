@@ -33,31 +33,32 @@ namespace UVLM
             t_aic& aic
         );
 
-
         template <typename t_zeta,
                   typename t_zeta_col,
-                //   typename t_zeta_star_col,
                   typename t_uext_col,
-                  typename t_longitudinals,
-                  typename t_perpendiculars,
-                  typename t_normals,
+                  typename t_surf_vec_panel,
+                  typename t_surf_vec_col,
                   typename t_u_induced_col,
                   typename t_aic>
-        void AIC_sources
+
+        void UVLM::Matrix::AIC_sources
         (
             const uint& Ktotal,
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
-            // const t_zeta_star_col& zeta_star_col,
             const t_uext_col& uext_col,
-            const t_longitudinals& longitudinals,
-            const t_perpendiculars& perpendiculars,
-            const t_normals& normals,
+            const t_surf_vec_panel& longitudinals_panel,
+            const t_surf_vec_panel& perpendiculars_panel,
+            const t_surf_vec_panel& normals_panel,
+            const t_surf_vec_col& longitudinals_col,
+            const t_surf_vec_col& perpendiculars_col,
+            const t_surf_vec_col& normals_col,
             const UVLM::Types::VMopts& options,
-	        t_u_induced_col& u_induced_col,
-            t_aic& aic
+	        t_u_induced_col& u_induced_col_x,
+	        t_u_induced_col& u_induced_col_y,
+	        t_u_induced_col& u_induced_col_z,
+            t_aic& aic_sources
         );
-
 
         template <typename t_zeta_col,
                   typename t_zeta_star,
@@ -234,11 +235,9 @@ void UVLM::Matrix::AIC
 -----------------------------------------------------------------------------*/
 template <typename t_zeta,
           typename t_zeta_col,
-        //   typename t_zeta_star_col,
           typename t_uext_col,
-          typename t_longitudinals,
-          typename t_perpendiculars,
-          typename t_normals,
+          typename t_surf_vec_panel,
+          typename t_surf_vec_col,
           typename t_u_induced_col,
           typename t_aic>
 void UVLM::Matrix::AIC_sources
@@ -247,9 +246,12 @@ void UVLM::Matrix::AIC_sources
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_uext_col& uext_col,
-    const t_longitudinals& longitudinals,
-    const t_perpendiculars& perpendiculars,
-    const t_normals& normals,
+    const t_surf_vec_panel& longitudinals_panel,
+    const t_surf_vec_panel& perpendiculars_panel,
+    const t_surf_vec_panel& normals_panel,
+    const t_surf_vec_col& longitudinals_col,
+    const t_surf_vec_col& perpendiculars_col,
+    const t_surf_vec_col& normals_col,
     const UVLM::Types::VMopts& options,
 	t_u_induced_col& u_induced_col_x,
 	t_u_induced_col& u_induced_col_y,
@@ -257,51 +259,66 @@ void UVLM::Matrix::AIC_sources
     t_aic& aic_sources
 )
 {
-    const uint n_surf = options.NumSurfaces;
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::Types::generate_dimensions(zeta, dimensions, - 1);
+    const uint n_surf_panel = zeta.size();
+    const uint n_surf_col = zeta_col.size();
+    UVLM::Types::VecDimensions dimensions_panel, dimensions_col;
+    UVLM::Types::generate_dimensions(zeta, dimensions_panel, - 1);
+    UVLM::Types::generate_dimensions(zeta_col, dimensions_col, 0);
 
 
     // build the offsets beforehand
     // (parallel variation)
-    std::vector<uint> offset;
+    std::vector<uint> offset_panel;
+    std::vector<uint> offset_col;
     uint i_offset = 0;
-    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    for (uint ipanel_surf=0; ipanel_surf<n_surf_panel; ++ipanel_surf)
     {
-        offset.push_back(i_offset);
-        uint k_surf = dimensions[icol_surf].first*
-                      dimensions[icol_surf].second;
-        i_offset += k_surf;
+        offset_panel.push_back(i_offset);
+        uint k_surf = dimensions_panel[ipanel_surf].first*
+                      dimensions_panel[ipanel_surf].second;
+       i_offset += k_surf;
     }
 
-    UVLM::Types::MatrixX panel_corner_points(3, 4);
-    // fill up AIC
-    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    i_offset = 0;
+    for (uint icol_surf=0; icol_surf<n_surf_col; ++icol_surf)
     {
-        uint k_surf = dimensions[icol_surf].first*
-                      dimensions[icol_surf].second;
+        offset_col.push_back(i_offset);
+        uint k_surf = dimensions_col[icol_surf].first*
+                      dimensions_col[icol_surf].second;
+       i_offset += k_surf;
+    }
+
+
+    // fill up AIC
+    for (uint icol_surf=0; icol_surf<n_surf_col; ++icol_surf)
+    {
+        uint k_surf_col_i = dimensions_col[icol_surf].first*
+                            dimensions_col[icol_surf].second;
 
         // uint ii_offset = 0;
-        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+        for (uint jpanel_surf=0; jpanel_surf<n_surf_panel; ++jpanel_surf)
         {
-            uint kk_surf = dimensions[ii_surf].first*
-                           dimensions[ii_surf].second;
-            UVLM::Types::Block block_u_induced_x = u_induced_col_x.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
-            UVLM::Types::Block block_u_induced_y = u_induced_col_y.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
-            UVLM::Types::Block block_u_induced_z = u_induced_col_z.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
-            UVLM::Types::Block block_aic = aic_sources.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+            uint k_surf_panel_j = dimensions_panel[jpanel_surf].first*
+                                  dimensions_panel[jpanel_surf].second;
+            UVLM::Types::Block block_u_induced_x = u_induced_col_x.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_u_induced_y = u_induced_col_y.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_u_induced_z = u_induced_col_z.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_aic = aic_sources.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
 
             if (options.Steady)
             {
-                UVLM::UnitSourceDensity::get_influence_coefficient(zeta[ii_surf],
+                UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
                                                                 zeta_col[icol_surf],
 																block_u_induced_x,
 																block_u_induced_y,
 																block_u_induced_z,
                                                                 block_aic,
-                                                                longitudinals[icol_surf],
-                                                                perpendiculars[icol_surf],
-                                                                normals[icol_surf]
+                                                                longitudinals_panel[jpanel_surf],
+                                                                perpendiculars_panel[jpanel_surf],
+                                                                normals_panel[jpanel_surf],
+                                                                longitudinals_col[icol_surf],
+                                                                perpendiculars_col[icol_surf],
+                                                                normals_col[icol_surf]
                                                                 );
             }
         }
