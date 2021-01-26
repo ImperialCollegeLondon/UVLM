@@ -630,6 +630,17 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                               aic_nonlifting);
 
     // Lifting on nonlifting surfaces
+	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
+    // UVLM::Types::Block block_aic_nonlifting_on_lifting = aic.block(Ktotal_lifting, Ktotal_nonlifting, 0, Ktotal_lifting);
+    UVLM::Matrix::AIC(Ktotal,
+                      zeta,
+                      zeta_col_nonlifting,
+                      zeta_star,
+                      uext_col_nonlifting,
+                      normals_nonlifting,
+                      options,
+                      false,
+                      aic_lifting_on_nonlifting);
 
     // Nonlifting on lifting surfaces
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
