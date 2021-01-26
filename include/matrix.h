@@ -140,6 +140,7 @@ namespace UVLM
 /*-----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------*/
+
 template <typename t_zeta,
           typename t_zeta_col,
           typename t_zeta_star,
@@ -161,51 +162,50 @@ void UVLM::Matrix::AIC
     t_aic& aic
 )
 {
-    const uint n_surf = options.NumSurfaces;
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::Types::generate_dimensions(zeta, dimensions, - 1);
-
-    UVLM::Types::VecDimensions dimensions_star;
+    const uint n_surf_panel = zeta.size();
+    const uint n_surf_col = zeta_col.size();
+    UVLM::Types::VecDimensions dimensions_panel, dimensions_col, dimensions_star;
+    UVLM::Types::generate_dimensions(zeta, dimensions_panel, - 1);
     UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
+    UVLM::Types::generate_dimensions(zeta_col, dimensions_col, 0);
 
     // build the offsets beforehand
     // (parallel variation)
-    std::vector<uint> offset;
-    uint i_offset = 0;
-    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
-    {
-        offset.push_back(i_offset);
-        uint k_surf = dimensions[icol_surf].first*
-                      dimensions[icol_surf].second;
-        i_offset += k_surf;
-    }
+    std::vector<uint> offset_panel;
+    std::vector<uint> offset_col;
+	UVLM::Matrix::build_offsets(n_surf_panel,
+								dimensions_panel,
+								offset_panel);
+	UVLM::Matrix::build_offsets(n_surf_col,
+								dimensions_col,
+								offset_col);
 
     // fill up AIC
-    for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
+    for (uint icol_surf=0; icol_surf<n_surf_col; ++icol_surf)
     {
-        uint k_surf = dimensions[icol_surf].first*
-                      dimensions[icol_surf].second;
+        uint k_surf_col = dimensions_col[icol_surf].first*
+                          dimensions_col[icol_surf].second;
 
         // uint ii_offset = 0;
-        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+        for (uint jpanel_surf=0; jpanel_surf<n_surf_panel; ++jpanel_surf)
         {
-            uint kk_surf = dimensions[ii_surf].first*
-                           dimensions[ii_surf].second;
+            uint k_surf_panel = dimensions_panel[jpanel_surf].first*
+								dimensions_panel[jpanel_surf].second;
             UVLM::Types::MatrixX dummy_gamma;
             UVLM::Types::MatrixX dummy_gamma_star;
-            UVLM::Types::Block block = aic.block(offset[icol_surf], offset[ii_surf], k_surf, kk_surf);
+            UVLM::Types::Block block = aic.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col, k_surf_panel);
             // steady wake coefficients
-            dummy_gamma.setOnes(dimensions[ii_surf].first,
-                                dimensions[ii_surf].second);
+            dummy_gamma.setOnes(dimensions_panel[jpanel_surf].first,
+                                dimensions_panel[jpanel_surf].second);
             if (options.Steady)
             {
-                dummy_gamma_star.setOnes(dimensions_star[ii_surf].first,
-                                        dimensions_star[ii_surf].second);
+                dummy_gamma_star.setOnes(dimensions_star[jpanel_surf].first,
+                                        dimensions_star[jpanel_surf].second);
 
                 UVLM::BiotSavart::multisurface_steady_wake
                 (
-                    zeta[ii_surf],
-                    zeta_star[ii_surf],
+                    zeta[jpanel_surf],
+                    zeta_star[jpanel_surf],
                     dummy_gamma,
                     dummy_gamma_star,
                     zeta_col[icol_surf],
@@ -218,11 +218,11 @@ void UVLM::Matrix::AIC
             } else // unsteady case
             {
                 dummy_gamma_star.setOnes(1,
-                                         dimensions_star[ii_surf].second);
+                                         dimensions_star[jpanel_surf].second);
                 UVLM::BiotSavart::multisurface_unsteady_wake
                 (
-                    zeta[ii_surf],
-                    zeta_star[ii_surf],
+                    zeta[jpanel_surf],
+                    zeta_star[jpanel_surf],
                     dummy_gamma,
                     dummy_gamma_star,
                     zeta_col[icol_surf],
