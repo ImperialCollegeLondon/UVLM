@@ -605,6 +605,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                       options,
                       false,
                       aic_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);
 
     
     // Lifting on nonlifting surfaces
@@ -629,7 +630,8 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
 							  u_induced_y_nonlifting_on_nonlifting,
 							  u_induced_z_nonlifting_on_nonlifting,
                               aic_nonlifting);
-
+    
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting, aic, Ktotal_lifting, Ktotal_lifting);
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
     // UVLM::Types::Block block_aic_nonlifting_on_lifting = aic.block(Ktotal_lifting, Ktotal_nonlifting, 0, Ktotal_lifting);
@@ -642,7 +644,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                       options,
                       false,
                       aic_lifting_on_nonlifting);
-
+    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
     // Nonlifting on lifting surfaces
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
     //UVLM::Types::Block block_aic_nonlifting_on_lifting= aic.block(Ktotal_lifting, Ktotal_nonlifting, 0, Ktotal_lifting);
@@ -664,6 +666,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
 							  u_induced_y_nonlifting_on_nonlifting,
 							  u_induced_z_nonlifting_on_nonlifting,
                               aic_nonlifting_on_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting, aic, 0, Ktotal_lifting);
 
 
     // linear system solution
