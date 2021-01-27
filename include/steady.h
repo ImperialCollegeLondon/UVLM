@@ -589,6 +589,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                                       rhs_nonlifting,
                                       Ktotal_nonlifting,
                                       n_surf_nonlifting);
+    UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
 
     // AIC generation
     // Lifting on lifting surfaces
