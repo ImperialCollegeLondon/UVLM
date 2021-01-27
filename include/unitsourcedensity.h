@@ -389,13 +389,13 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 					{
 					induced_velocity_vec[0] = 0;
 					induced_velocity_vec[1] = 0; 
-					induced_velocity_vec[2] = 2.0*UVLM::Constants::PI;
+					induced_velocity_vec[2] = 0.5;
 				}
 			}
 			if (!flag_if_col_on_panel)
 			{
-				induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
-				induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);;
+				induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)/(4.0*UVLM::Constants::PI);
+				induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)/(4.0*UVLM::Constants::PI);
 				induced_velocity_vec[2] = 0;
 				if (abs(collocation_point_transf[2])!=0.0)
 				{
@@ -409,7 +409,7 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 						collocation_point_transf[2],
 						J_vec
 					);
-					induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]+J_vec[3]);
+					induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]+J_vec[3])/(4.0*UVLM::Constants::PI);
 				}
 				// convert induced panel velocity from panel coordinate system to collocation point coorindate system 
 				UVLM::Types::Vector3 longitudinal_col = UVLM::Types::Vector3(longitudinal[0](i_col, j_col), longitudinal[1](i_col, j_col), longitudinal[2](i_col, j_col));
@@ -527,13 +527,13 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 					{
 					induced_velocity_vec[0] = 0;
 					induced_velocity_vec[1] = 0; 
-					induced_velocity_vec[2] = 2.0*UVLM::Constants::PI;
+					induced_velocity_vec[2] = 0.5;
 				}
 			}
 			if (!flag_if_col_on_panel)
 			{
-				induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec);
-				induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec);
+				induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)/(4.0*UVLM::Constants::PI);
+				induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)/(4.0*UVLM::Constants::PI);
 				induced_velocity_vec[2] = 0;
 				if (abs(collocation_point_transf[2])!= 0.0)
 				{
@@ -547,7 +547,7 @@ void UVLM::UnitSourceDensity::get_Aij_triangle
 					collocation_point_transf[2],
 					J_vec
 				);
-				induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2]);
+				induced_velocity_vec[2] = (J_vec[0]+J_vec[1]+J_vec[2])/(4.0*UVLM::Constants::PI);
 				
 				}
 				// convert induced panel velocity from panel coordinate system to collocation point coorindate system 
