@@ -668,9 +668,29 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                               aic_nonlifting_on_lifting);
     UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting, aic, 0, Ktotal_lifting);
 
+    // linear system solution
+    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
 
     // linear system solution
 
+    UVLM::LinearSolver::solve_system
+    (
+        aic,
+        rhs,
+        options,
+        gamma_and_sigma_flat
+    );
+    
+    // gamma flat to gamma
+    // probably could be done better with a Map
+    UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(Ktotal_lifting);
+    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);
+    UVLM::Matrix::reconstruct_gamma(gamma_flat,
+                                    gamma,
+                                    zeta_col);
+    UVLM::Matrix::reconstruct_gamma(sigma_flat,
+                                    sigma_nonlifting,
+                                    zeta_col_nonlifting);
 }
 /*-----------------------------------------------------------------------------
 
