@@ -49,3 +49,15 @@ void raise_segfault()
     int *foo = (int*)-1;        // make a bad pointer
     printf("%d\n", *foo);       // causes segfault
 }
+template<typename t_file_name,
+         typename t_data>
+void export_data_to_csv_file
+(
+    const t_file_name& file_name,
+    const t_data& data
+)
+{
+    std::ofstream outfile;
+	outfile.open(file_name);
+	outfile << data<<std::endl;
+}
