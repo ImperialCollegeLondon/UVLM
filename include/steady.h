@@ -583,7 +583,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
                       normals,
                       options,
                       rhs_lifting,
-                      Ktotal);
+                      Ktotal_lifting);
     UVLM::Matrix::RHS_nonlifting_body(uext_col_nonlifting,
                                       normals_nonlifting,
                                       rhs_nonlifting,
