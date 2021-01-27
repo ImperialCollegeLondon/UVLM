@@ -395,15 +395,16 @@ void UVLM::UnitSourceDensity::get_Aij_quadrilateral
 				UVLM::Types::Vector3 longitudinal_col = UVLM::Types::Vector3(longitudinal[0](i_col, j_col), longitudinal[1](i_col, j_col), longitudinal[2](i_col, j_col));
 				UVLM::Types::Vector3 perpendicular_col = UVLM::Types::Vector3(perpendicular[0](i_col, j_col), perpendicular[1](i_col, j_col), perpendicular[2](i_col, j_col));
 				UVLM::Types::Vector3 normal_col = UVLM::Types::Vector3(normal[0](i_col, j_col), normal[1](i_col, j_col), normal[2](i_col, j_col));
-			}
-				UVLM::Geometry::convert_from_panel_A_to_panel_B_coordinate_system(induced_velocity_vec,
-																  longitudinal_panel,
-																  perpendicular_panel,
-																  normal_panel,
-																  longitudinal_col,
-																  perpendicular_col,
-																  normal_col
-																  );
+				UVLM::Geometry::convert_from_panel_A_to_panel_B_coordinate_system
+				(
+					induced_velocity_vec,
+					longitudinal_panel,
+					perpendicular_panel,
+					normal_panel,
+					longitudinal_col,
+					perpendicular_col,
+					normal_col
+				);
 			}
 			uout(collocation_id,panel_id) = induced_velocity_vec[2];
 			u_induced_col_surface_x(collocation_id,panel_id) = induced_velocity_vec[0];

@@ -40,8 +40,7 @@ namespace UVLM
                   typename t_surf_vec_col,
                   typename t_u_induced_col,
                   typename t_aic>
-
-        void UVLM::Matrix::AIC_sources
+        void AIC_sources
         (
             const uint& Ktotal,
             const t_zeta& zeta,
