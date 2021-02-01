@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EigenInclude.h"
+#include <unsupported/Eigen/Splines>
 #include "types.h"
 #include "mapping.h"
 
@@ -199,5 +200,377 @@ namespace UVLM
                                                collocation_mesh[i_surf]);
             }
         }
-    }
-}
+    } // geometry
+
+    namespace Interpolation
+    {
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void linear
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            UVLM::Types::Real to_prev, to_next, prev_to_next;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+                new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
+                new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
+                new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
+            }
+        } // linear
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void parabolic
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            UVLM::Types::Vector3 b, abc;
+            Eigen::Matrix<UVLM::Types::Real, 3, 3> Amat, Ainv;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                if (i_conv == 1)
+                {
+                    Amat << dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.,
+                            dist_to_orig_conv(i_conv + 1)*dist_to_orig_conv(i_conv + 1), dist_to_orig_conv(i_conv + 1), 1.;
+                    Ainv = Amat.inverse();
+
+                    b << coord0(i_conv - 1), coord0(i_conv), coord0(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord0(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord1(i_conv - 1), coord1(i_conv), coord1(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord1(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord2(i_conv - 1), coord2(i_conv), coord2(i_conv + 1);
+                    abc = Ainv*b;
+                    new_coord2(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+                } else {
+                    Amat << dist_to_orig_conv(i_conv - 2)*dist_to_orig_conv(i_conv - 2), dist_to_orig_conv(i_conv - 2), 1.,
+                            dist_to_orig_conv(i_conv - 1)*dist_to_orig_conv(i_conv - 1), dist_to_orig_conv(i_conv - 1), 1.,
+                            dist_to_orig_conv(i_conv    )*dist_to_orig_conv(i_conv    ), dist_to_orig_conv(i_conv    ), 1.;
+                    Ainv = Amat.inverse();
+
+                    b << coord0(i_conv - 2), coord0(i_conv - 1), coord0(i_conv);
+                    abc = Ainv*b;
+                    new_coord0(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord1(i_conv - 2), coord1(i_conv - 1), coord1(i_conv);
+                    abc = Ainv*b;
+                    new_coord1(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+
+                    b << coord2(i_conv - 2), coord2(i_conv - 1), coord2(i_conv);
+                    abc = Ainv*b;
+                    new_coord2(i_m) = abc(0)*dist_to_orig(i_m)*dist_to_orig(i_m) +
+                                      abc(1)*dist_to_orig(i_m) +
+                                      abc(2);
+                }
+            }
+        } // parabolic
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void splines
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+
+            const unsigned int splines_degree=4;
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline0 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord0, splines_degree, dist_to_orig_conv);
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline1 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord1, splines_degree, dist_to_orig_conv);
+
+            Eigen::Spline<UVLM::Types::Real, 1, splines_degree> spline2 = Eigen::SplineFitting<Eigen::Spline<UVLM::Types::Real, 1, splines_degree>>::Interpolate(coord2, splines_degree, dist_to_orig_conv);
+
+            for (uint i_m=0; i_m<M; ++i_m)
+            {
+                new_coord0(i_m) = spline0(dist_to_orig(i_m))(0);
+                new_coord1(i_m) = spline1(dist_to_orig(i_m))(0);
+                new_coord2(i_m) = spline2(dist_to_orig(i_m))(0);
+            }
+        } // splines
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void slerp_z
+        (
+            uint M,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            // https://en.wikipedia.org/wiki/Slerp
+            UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                new_coord0(i_m) = coord0(i_m);
+                new_coord1(i_m) = coord1(i_m);
+                new_coord2(i_m) = coord2(i_m);
+
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+
+                mod_prev = std::sqrt(coord0(i_conv - 1)*coord0(i_conv - 1) +
+                                     coord1(i_conv - 1)*coord1(i_conv - 1));
+                                     // coord2(i_conv - 1)*coord2(i_conv - 1));
+                mod_next = std::sqrt(coord0(i_conv)*coord0(i_conv) +
+                                     coord1(i_conv)*coord1(i_conv));
+                                     // coord2(i_conv)*coord2(i_conv));
+
+                omega = std::acos((coord0(i_conv - 1)*coord0(i_conv) +
+                                  coord1(i_conv - 1)*coord1(i_conv))/mod_prev/mod_next);
+                                  // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
+
+
+                if (std::abs(std::sin(omega)) > 1e-6)
+                {
+                    coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
+                    coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+
+                    new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
+                    new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
+                } else {
+                    new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
+                    new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
+                }
+
+                new_coord2(i_m) = (to_prev*coord2(i_conv) + to_next*coord2(i_conv - 1))/prev_to_next;
+            }
+        } // slerp_z
+
+        template <typename t_dist,
+                  typename t_dist_conv,
+                  typename t_coord,
+                  typename t_coord_conv>
+        void slerp_yaw
+        (
+            uint M,
+            const UVLM::Types::Real yaw,
+            const t_dist& dist_to_orig,
+            const t_dist_conv& dist_to_orig_conv,
+            const t_coord_conv& coord0,
+            const t_coord_conv& coord1,
+            const t_coord_conv& coord2,
+            t_coord& new_coord0,
+            t_coord& new_coord1,
+            t_coord& new_coord2
+        )
+        {
+            // https://en.wikipedia.org/wiki/Slerp
+            // This function computes the slerp interpolation around an axis on the y-z plane rotated 'yaw' degrees around x
+            UVLM::Types::Real to_prev, to_next, prev_to_next, omega, coef_prev, coef_next, mod_next, mod_prev;
+            UVLM::Types::VectorX aux_coord0, aux_coord1, aux_coord2;
+            UVLM::Types::VectorX aux_new_coord0, aux_new_coord1, aux_new_coord2;
+
+            aux_coord0.resize(M + 1);
+            aux_coord1.resize(M + 1);
+            aux_coord2.resize(M + 1);
+
+            aux_new_coord0.resize(M);
+            aux_new_coord1.resize(M);
+            aux_new_coord2.resize(M);
+
+            // Transform the coordinates
+            for (unsigned int i_m=0; i_m<M+1; ++i_m)
+            {
+                aux_coord0(i_m) = coord0(i_m);
+                aux_coord1(i_m) = coord1(i_m)*cos(yaw) + coord2(i_m)*sin(yaw);
+                aux_coord2(i_m) = -1.0*coord1(i_m)*sin(yaw) + coord2(i_m)*cos(yaw);
+            }
+
+            // Compute the new coordinates in the yaw FoR
+            uint i_conv=0;
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                while ((dist_to_orig_conv(i_conv) <= dist_to_orig(i_m)) and (i_conv < M))
+                {i_conv++;}
+
+                to_prev = dist_to_orig(i_m) - dist_to_orig_conv(i_conv - 1);
+                to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
+                prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
+
+                mod_prev = std::sqrt(aux_coord0(i_conv - 1)*aux_coord0(i_conv - 1) +
+                                     aux_coord1(i_conv - 1)*aux_coord1(i_conv - 1));
+                mod_next = std::sqrt(aux_coord0(i_conv)*aux_coord0(i_conv) +
+                                     aux_coord1(i_conv)*aux_coord1(i_conv));
+
+                omega = std::acos((aux_coord0(i_conv - 1)*aux_coord0(i_conv) +
+                                  aux_coord1(i_conv - 1)*aux_coord1(i_conv))/mod_prev/mod_next);
+
+                if (std::abs(std::sin(omega)) > 1e-6)
+                {
+                    coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
+                    coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
+
+                    aux_new_coord0(i_m) = (coef_next*aux_coord0(i_conv) + coef_prev*aux_coord0(i_conv - 1));
+                    aux_new_coord1(i_m) = (coef_next*aux_coord1(i_conv) + coef_prev*aux_coord1(i_conv - 1));
+                } else {
+                    aux_new_coord0(i_m) = (to_prev*aux_coord0(i_conv) + to_next*aux_coord0(i_conv - 1))/prev_to_next;
+                    aux_new_coord1(i_m) = (to_prev*aux_coord1(i_conv) + to_next*aux_coord1(i_conv - 1))/prev_to_next;
+                }
+
+                aux_new_coord2(i_m) = (to_prev*aux_coord2(i_conv) + to_next*aux_coord2(i_conv - 1))/prev_to_next;
+            }
+
+            // Transform back the coordinates
+            for (unsigned int i_m=0; i_m<M; ++i_m)
+            {
+                new_coord0(i_m) = aux_new_coord0(i_m);
+                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw);
+                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw);
+            }
+
+        } // slerp_yaw
+    } // Interpolation
+    //
+    namespace Filters
+    {
+        template <typename t_coord>
+        void moving_average
+        (
+            uint M,
+            const unsigned int window,
+            const t_coord& x,
+            t_coord& coord0,
+            t_coord& coord1,
+            t_coord& coord2
+        )
+        {
+            unsigned int sp;
+            UVLM::Types::Real aux_coord0[M], aux_coord1[M], aux_coord2[M];
+
+            if (window % 2 == 1)
+            {
+                // window has to be odd
+                sp = int((window - 1)/2);
+            } else
+            {
+                std::cerr << "window has to be odd" << std::endl;
+            }
+
+            // Copy values
+            for (uint i_m = 0; i_m < M; i_m++)
+            {
+                aux_coord0[i_m] = coord0(i_m);
+                aux_coord1[i_m] = coord1(i_m);
+                aux_coord2[i_m] = coord2(i_m);
+            }
+
+            for (uint i_m = 1; i_m < M; i_m++)
+            {
+                if (i_m < sp)
+                {
+                    // First points
+                    for (uint i_avg = 0; i_avg < i_m; i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    }
+                    coord0(i_m) /= (2*i_m + 1);
+                    coord1(i_m) /= (2*i_m + 1);
+                    coord2(i_m) /= (2*i_m + 1);
+
+                } else if (i_m < M - sp)
+                {
+                    // Intermediate points
+                    for (uint i_avg = 0; i_avg < sp; i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    }
+                    coord0(i_m) /= window;
+                    coord1(i_m) /= window;
+                    coord2(i_m) /= window;
+                } else
+                {
+                    // Last points
+                    for (uint i_avg = 0; i_avg < (M - 1 - i_m); i_avg++)
+                    {
+                        // At coord0(i_m) I already have the value at that point
+                        coord0(i_m) += aux_coord0[i_m - i_avg - 1] + coord0[i_m + i_avg + 1];
+                        coord1(i_m) += aux_coord1[i_m - i_avg - 1] + coord1[i_m + i_avg + 1];
+                        coord2(i_m) += aux_coord2[i_m - i_avg - 1] + coord2[i_m + i_avg + 1];
+                    }
+                    coord0(i_m) /= (2*(M - 1 - i_m) + 1);
+                    coord1(i_m) /= (2*(M - 1 - i_m) + 1);
+                    coord2(i_m) /= (2*(M - 1 - i_m) + 1);
+                }
+            }
+        } // moving_average
+    } // Filters
+
+} // UVLM

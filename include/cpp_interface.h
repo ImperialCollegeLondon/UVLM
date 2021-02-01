@@ -6,9 +6,10 @@
 #include "steady.h"
 #include "unsteady.h"
 
-// #include "omp.h"
-
 #include <iostream>
+//#ifdef _OPENMP
+    //#include "omp.h"
+//#endif
 
 #define DLLEXPORT extern "C"
 #pragma warning disable 1017
@@ -51,6 +52,23 @@ namespace UVLM
                                                        dimensions[i_surf].second + correction));
             }
         }
+
+        void map_VecVec1(const UVLM::Types::VecDimensions& dimensions,
+                        double** in,
+                        UVLM::Types::VecMapVX& map,
+                        //UVLM::Types::MapVectorX& map,
+                        const int& correction=0)
+        {
+            // Generates a variable that will be indexed as map[i_surf](i_m)
+            const unsigned int n_surf = dimensions.size();
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                map.push_back(UVLM::Types::MapVectorX (in[i_surf],
+                                                       dimensions[i_surf].first + correction));
+                                                      // dimensions[i_surf].second + correction));
+            }
+        }
+
         void transform_dimensions(unsigned int& n_surf,
                                   unsigned int** dimensions_in,
                                   UVLM::Types::VecDimensions& dimensions)
@@ -72,11 +90,13 @@ namespace UVLMlin{
                     double p_DerVertices[36],
                     double p_zetaP[3],
                     double p_ZetaPanel[12],
-                    const double& gamma );
+                    const double& gamma,
+                    double& vortex_radius);
 
 
   extern "C" void call_biot_panel(double p_vel[3],
                   double p_zetaP[3],
                   double p_ZetaPanel[12],
-                  const double& gamma );
+                  const double& gamma,
+                  double& vortex_radius);
 }

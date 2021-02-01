@@ -10,16 +10,17 @@ DLLEXPORT void run_VLM
     unsigned int** p_dimensions_star,
     double** p_zeta,
     double** p_zeta_star,
+    double** p_zeta_dot,
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_forces
+    double** p_forces,
+    double* p_rbm_vel_g
 )
 {
-    // std::cout << options.n_rollup << std::endl;
-    // feenableexcept(FE_INVALID | FE_OVERFLOW);
-    // omp_set_nested(1);
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     unsigned int n_surf;
     n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
@@ -41,6 +42,12 @@ DLLEXPORT void run_VLM
     UVLM::CppInterface::map_VecVecMat(dimensions_star,
                                       p_zeta_star,
                                       zeta_star,
+                                      1);
+
+    UVLM::Types::VecVecMapX zeta_dot;
+    UVLM::CppInterface::map_VecVecMat(dimensions,
+                                      p_zeta_dot,
+                                      zeta_dot,
                                       1);
 
     UVLM::Types::VecVecMapX u_ext;
@@ -68,10 +75,7 @@ DLLEXPORT void run_VLM
                                       1,
                                       2*UVLM::Constants::NDIM);
 
-    // zeta_dot is zero for VLM simulations
-    UVLM::Types::VecVecMatrixX zeta_dot;
-    UVLM::Types::allocate_VecVecMat(zeta_dot,
-                                    zeta);
+    UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
 
     UVLM::Steady::solver(zeta,
                          zeta_dot,
@@ -80,6 +84,7 @@ DLLEXPORT void run_VLM
                          gamma,
                          gamma_star,
                          forces,
+                         rbm_vel_g,
                          options,
                          flightconditions);
 }
@@ -103,7 +108,9 @@ DLLEXPORT void init_UVLM
     double** p_forces
 )
 {
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -199,13 +206,16 @@ DLLEXPORT void run_UVLM
     double*  p_rbm_vel,
     double** p_gamma,
     double** p_gamma_star,
+    double** p_dist_to_orig,
     // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
     double** p_dynamic_forces
 )
 {
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
 
     UVLM::Types::VecDimensions dimensions;
@@ -267,6 +277,12 @@ DLLEXPORT void run_UVLM
                                    gamma_star,
                                    0);
 
+    UVLM::Types::VecMapX dist_to_orig;
+    UVLM::CppInterface::map_VecMat(dimensions_star,
+                                   p_dist_to_orig,
+                                   dist_to_orig,
+                                   1);
+
     UVLM::Types::VecVecMapX normals;
     UVLM::CppInterface::map_VecVecMat(dimensions,
                                       p_normals,
@@ -297,6 +313,7 @@ DLLEXPORT void run_UVLM
         zeta_star,
         gamma,
         gamma_star,
+        dist_to_orig,
         normals,
         // previous_gamma,
         rbm_velocity,
@@ -306,6 +323,7 @@ DLLEXPORT void run_UVLM
         flightconditions
     );
 }
+
 
 DLLEXPORT void calculate_unsteady_forces
 (
@@ -323,7 +341,9 @@ DLLEXPORT void calculate_unsteady_forces
     double** p_dynamic_forces
 )
 {
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -473,7 +493,9 @@ DLLEXPORT void total_induced_velocity_at_points
     unsigned int npoints
 )
 {
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -529,137 +551,13 @@ DLLEXPORT void total_induced_velocity_at_points
                         zeta_star,
                         gamma,
                         gamma_star,
-                        options.ImageMethod);
+                        options.ImageMethod,
+                        options.vortex_radius);
         uout(ipoint, 0) = aux_uout(0);
         uout(ipoint, 1) = aux_uout(1);
         uout(ipoint, 2) = aux_uout(2);
     }
 
-}
-
-DLLEXPORT void run_SHW
-(
-    const UVLM::Types::UVMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions,
-    const UVLM::Types::SHWOptions& shwoptions,
-    unsigned int** p_dimensions,
-    unsigned int** p_dimensions_star,
-    unsigned int i_iter,
-    double** p_uext,
-    double** p_uext_star,
-    double** p_zeta,
-    double** p_zeta_star,
-    double** p_zeta_dot,
-    double*  p_rbm_vel,
-    double** p_gamma,
-    double** p_gamma_star,
-    // double** p_previous_gamma,
-    double** p_normals,
-    double** p_forces,
-    double** p_dynamic_forces
-)
-{
-    omp_set_num_threads(options.NumCores);
-    uint n_surf = options.NumSurfaces;
-
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions,
-                                             dimensions);
-    UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions_star,
-                                             dimensions_star);
-
-    UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta,
-                                      zeta,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star,
-                                      zeta_star,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta_dot,
-                                      zeta_dot,
-                                      1);
-
-    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
-
-    UVLM::Types::VecVecMapX uext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_uext,
-                                      uext,
-                                      1);
-
-    UVLM::Types::VecVecMapX uext_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_uext_star,
-                                      uext_star,
-                                      1);
-
-    UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_gamma,
-                                   gamma,
-                                   0);
-    //
-    // UVLM::Types::VecMapX previous_gamma;
-    // UVLM::CppInterface::map_VecMat(dimensions,
-    //                                p_previous_gamma,
-    //                                previous_gamma,
-    //                                0);
-
-    UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_gamma_star,
-                                   gamma_star,
-                                   0);
-
-    UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_normals,
-                                      normals,
-                                      0);
-
-    UVLM::Types::VecVecMapX forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_forces,
-                                      forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Types::VecVecMapX dynamic_forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_dynamic_forces,
-                                      dynamic_forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Unsteady::shw_solver
-    (
-        i_iter,
-        zeta,
-        zeta_dot,
-        uext,
-        uext_star,
-        zeta_star,
-        gamma,
-        gamma_star,
-        normals,
-        // previous_gamma,
-        rbm_velocity,
-        forces,
-        dynamic_forces,
-        options,
-        flightconditions,
-        shwoptions
-    );
 }
 
 DLLEXPORT void multisurface
@@ -675,7 +573,9 @@ DLLEXPORT void multisurface
     // double  vortex_radius
 )
 {
+#if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
+#endif
     uint n_surf = options.NumSurfaces;
     uint n_surf_target = 1;
 
@@ -765,7 +665,8 @@ DLLEXPORT void multisurface
         target_surface_col[0],
         uout[0],
         options.ImageMethod,
-        normal[0]
+        normal[0],
+        options.vortex_radius
     );
 }
 
@@ -776,7 +677,8 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
                     double p_DerVertices[36],// 4x9
                     double p_zetaP[3],
                     double p_ZetaPanel[12],
-                    const double& gamma )
+                    const double& gamma,
+                    double& vortex_radius)
   { /*
     To interface with python, matrices need to be mapped into 1d arrays.
     */
@@ -793,7 +695,7 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
       DerVertices.push_back( UVLMlin::map_Mat3by3(p_DerVertices+9*vv) );
     }
 
-    UVLMlin::der_biot_panel_map( DerP, DerVertices, zetaP, ZetaPanel, gamma );
+    UVLMlin::der_biot_panel_map( DerP, DerVertices, zetaP, ZetaPanel, gamma, vortex_radius );
   }
 
 
@@ -801,7 +703,8 @@ DLLEXPORT void call_der_biot_panel(double p_DerP[9],
 DLLEXPORT void call_biot_panel(double p_vel[3],
                   double p_zetaP[3],
                   double p_ZetaPanel[12],
-                  const double& gamma ){
+                  const double& gamma,
+                  double& vortex_radius){
     /*
     To interface Eigen based routines with python, matrices need to be mapped
     into 1d arrays.
@@ -811,7 +714,7 @@ DLLEXPORT void call_biot_panel(double p_vel[3],
     const UVLMlin::map_RowVec3 zetaP(p_zetaP);
     const UVLMlin::map_Mat4by3 ZetaPanel(p_ZetaPanel);
 
-    UVLMlin::biot_panel_map(velP, zetaP, ZetaPanel, gamma);
+    UVLMlin::biot_panel_map(velP, zetaP, ZetaPanel, gamma, vortex_radius);
   }
 
 
@@ -824,8 +727,8 @@ DLLEXPORT void call_dvinddzeta(double p_DerC[9],
                   int& M_in,
                   int& N_in,
                   bool& IsBound,
-                  int& M_in_bound // M of bound surf associated
-                   )
+                  int& M_in_bound, // M of bound surf associated
+                  double& vortex_radius)
   {
     int cc;
     int Kzeta_in=(M_in+1)*(N_in+1);
@@ -846,7 +749,8 @@ DLLEXPORT void call_dvinddzeta(double p_DerC[9],
     UVLMlin::dvinddzeta( DerC,DerV,
           zetaC,ZetaIn,GammaIn,
           M_in,N_in,Kzeta_in,
-          IsBound,M_in_bound,Kzeta_in_bound);
+          IsBound,M_in_bound,Kzeta_in_bound,
+          vortex_radius);
   }
 
 
@@ -855,7 +759,8 @@ DLLEXPORT void call_aic3(  double p_AIC3[],
                 double p_zetaC[3],
                 double p_ZetaIn[],
                 int& M_in,
-                int& N_in)
+                int& N_in,
+                double& vortex_radius)
   {
     int cc;
     int K_in=M_in*N_in;
@@ -869,7 +774,7 @@ DLLEXPORT void call_aic3(  double p_AIC3[],
       ZetaIn.push_back( UVLMlin::map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
     }
 
-    UVLMlin::aic3(AIC3, zetaC, ZetaIn, M_in, N_in);
+    UVLMlin::aic3(AIC3, zetaC, ZetaIn, M_in, N_in, vortex_radius);
   }
 
 
@@ -880,7 +785,8 @@ DLLEXPORT void call_ind_vel(
                 double p_ZetaIn[],
                 double p_GammaIn[],
                 int& M_in,
-                int& N_in)
+                int& N_in,
+                double& vortex_radius)
   {
     int cc;
 
@@ -895,5 +801,5 @@ DLLEXPORT void call_ind_vel(
       ZetaIn.push_back( UVLMlin::map_Mat(p_ZetaIn+cc*Kzeta_in, M_in+1, N_in+1) );
     }
 
-    UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in);
+    UVLMlin::ind_vel(velC, zetaC, ZetaIn, GammaIn, M_in, N_in, vortex_radius);
   }

@@ -35,6 +35,7 @@ namespace UVLM
         typedef Eigen::Matrix<Real, 6, 1> Vector6;
         typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> VectorX;
         typedef Eigen::Map<VectorX> MapVectorX;
+        typedef std::vector<MapVectorX> VecMapVX;
 
         // std custom containers
         typedef std::pair<unsigned int, unsigned int> IntPair;
@@ -60,6 +61,9 @@ namespace UVLM
             bool iterative_solver;
             double iterative_tol;
             bool iterative_precond;
+            bool cfl1;
+            double vortex_radius;
+            double vortex_radius_wake_ind;
         };
 
         struct UVMopts
@@ -77,6 +81,14 @@ namespace UVLM
             double iterative_tol;
             bool iterative_precond;
             bool convect_wake;
+            bool cfl1;
+            double vortex_radius;
+            double vortex_radius_wake_ind;
+            uint interp_coords;
+            uint filter_method;
+            uint interp_method;
+            double yaw_slerp;
+            bool quasi_steady;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -91,8 +103,14 @@ namespace UVLM
             vm.iterative_tol = uvm.iterative_tol;
             vm.iterative_precond = uvm.iterative_precond;
             vm.horseshoe = false;
-            vm.Steady = false;
-
+            vm.vortex_radius = uvm.vortex_radius;
+            vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
+            if (uvm.quasi_steady)
+            {
+                vm.Steady = true;
+            } else {
+                vm.Steady = false;
+            }
             return vm;
         };
 
@@ -102,14 +120,6 @@ namespace UVLM
             double uinf_direction[3];
             double rho = 1.225;
             double c_ref = 1.0;
-        };
-
-        struct SHWOptions
-        {
-            double dt = 0.0;
-            double rot_center[3];
-            double rot_vel;
-            double rot_axis[3];
         };
 
         template <typename t_mat>
@@ -181,6 +191,22 @@ namespace UVLM
                     initial_value
                 );
             }
+        }
+
+        inline void allocate_VecMat
+        (
+             UVLM::Types::VecMatrixX& mat,
+             const unsigned int& n_surf,
+             const unsigned int& M,
+             const unsigned int& N
+        )
+        {
+             mat.resize(n_surf);
+             for (auto& surf: mat)
+             {
+                 surf.resize(M, N);
+                 surf.setZero(M, N);
+             }
         }
 
         inline void initialise_VecMat
@@ -294,13 +320,22 @@ namespace UVLM
             t_out& out
         )
         {
+            uint M, N;
             uint n_surf = in.size();
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 uint n_dim = in[i_surf].size();
+                M = in[i_surf][0].rows();
+                N = in[i_surf][0].cols();
                 for (uint i_dim=0; i_dim<n_dim; ++i_dim)
                 {
-                    out[i_surf][i_dim] = in[i_surf][i_dim];
+                    for (uint i_m=0; i_m<M; ++i_m)
+                    {
+                        for (uint i_n=0; i_n<N; ++i_n)
+                        {
+                            out[i_surf][i_dim](i_m, i_n) = in[i_surf][i_dim](i_m, i_n);
+                        }
+                    }
                 }
             }
         }
@@ -349,7 +384,7 @@ namespace UVLM
             vec.setZero();
             return vec;
         }
-        
+
         // inline void allocate_VecVecVecMat
         // (
         //     UVLM::Types::VecVecVecMatrixX& mat,
