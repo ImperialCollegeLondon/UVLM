@@ -133,6 +133,8 @@ namespace UVLM
 			const UVLM::Types::VecDimensions& dimensions,
 			std::vector<uint>& offset
 		);
+        
+        uint get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in);
     }
 }
 // SOURCE CODE
@@ -594,4 +596,18 @@ void UVLM::Matrix::deconstruct_gamma
         }
     }
 
+}
+
+uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
+{
+    uint n_surf = mat_in.size();
+    uint ii = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = mat_in[i_surf][0].rows();
+        uint N = mat_in[i_surf][0].cols();
+
+        ii += M*N;
+    }
+    return ii;
 }

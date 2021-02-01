@@ -551,27 +551,9 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     const uint n_surf = options.NumSurfaces;
     const uint n_surf_nonlifting = options_nonlifting.NumSurfaces;
     // size of rhs lifting surface 
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
-        ii += M*N;
-    }
- 
-    uint ii_nonlifting = 0;
-    for (uint i_surf=0; i_surf<n_surf_nonlifting; ++i_surf)
-    {
-        uint M = uext_col_nonlifting[i_surf][0].rows();
-        uint N = uext_col_nonlifting[i_surf][0].cols();
-
-        ii_nonlifting += M*N;
-    }
-
-    const uint Ktotal_lifting = ii;
-    const uint Ktotal_nonlifting = ii_nonlifting;
-    const uint Ktotal = ii + ii_nonlifting;
+    uint Ktotal_lifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
+    uint Ktotal_nonlifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col_nonlifting);
+    uint Ktotal = Ktotal_lifting + Ktotal_nonlifting;
 
     // RHS generation
     UVLM::Types::VectorX rhs_lifting;
@@ -594,6 +576,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     // AIC generation
     // Lifting on lifting surfaces
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    
     UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
     //UVLM::Types::Block block_aic_lifting = aic.block(Ktotal_lifting, Ktotal_lifting, 0, 0);
     UVLM::Matrix::AIC(Ktotal,
@@ -722,16 +705,7 @@ void UVLM::Steady::solve_horseshoe
 
     const uint n_surf = options.NumSurfaces;
     // size of rhs
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
-        ii += M*N;
-    }
-
-    const uint Ktotal = ii;
+    uint Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
     // RHS generation
     UVLM::Types::VectorX rhs;
     UVLM::Matrix::RHS(zeta_col,
@@ -806,15 +780,7 @@ void UVLM::Steady::solve_discretised
 {
     const uint n_surf = options.NumSurfaces;
     // size of rhs
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
-        ii += M*N;
-    }
-    const uint Ktotal = ii;
+    uint Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
 
     UVLM::Types::VectorX rhs;
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
@@ -900,16 +866,7 @@ void UVLM::Steady::solve_discretised_nonlifting_body
 {
     const uint n_surf = options.NumSurfaces;
     // size of rhs
-    uint ii = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
-
-        ii += M*N;
-    }
-    const uint Ktotal = ii;
+    uint Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
     UVLM::Types::VectorX rhs;
     UVLM::Types::MatrixX aic_sources = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
     UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
