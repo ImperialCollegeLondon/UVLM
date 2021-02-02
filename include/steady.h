@@ -144,6 +144,49 @@ namespace UVLM
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
+
+
+        template <typename t_zeta_lifting,
+                  typename t_zeta_col_lifting,
+                  typename t_zeta_star_lifting,
+                  typename t_gamma_lifting,
+                  typename t_gamma_star_lifting,
+                  typename t_uext_col_lifting,
+                  typename t_surface_vec_lifting,
+                  typename t_zeta_nonlifting,
+                  typename t_zeta_col_nonlifting,
+                  typename t_uext_col_nonlifting,
+                  typename t_u_induced_col_nonlifting,
+                  typename t_sigma_nonlifting,
+                  typename t_surface_vec_nonlifting>
+        void solve_discretised_lifting_and_nonlifting
+        (
+            const UVLM::Types::VMopts& options,
+            const UVLM::Types::VMopts& options_nonlifting,
+            const UVLM::Types::FlightConditions& flightconditions,
+            const uint n_surf,
+            const uint n_surf_nonlifting,
+            const uint Ktotal,
+            const uint Ktotal_lifting,
+            const uint Ktotal_nonlifting,
+            t_zeta_lifting& zeta,
+            t_zeta_col_lifting& zeta_col,
+            t_zeta_star_lifting& zeta_star,
+            t_gamma_lifting& gamma,
+            t_gamma_star_lifting& gamma_star,
+            t_uext_col_lifting& uext_col,
+            t_surface_vec_lifting& normals,
+            t_surface_vec_lifting& longitudinals,
+            t_surface_vec_lifting& perpendiculars,
+            t_zeta_nonlifting& zeta_nonlifting,
+            t_zeta_col_nonlifting& zeta_col_nonlifting,
+            t_uext_col_nonlifting& uext_col_nonlifting,
+            t_u_induced_col_nonlifting& u_induced_col_nonlifting,
+            t_sigma_nonlifting& sigma_nonlifting,
+            t_surface_vec_nonlifting& normals_nonlifting,
+            t_surface_vec_nonlifting& longitudinals_nonlifting,
+            t_surface_vec_nonlifting& perpendiculars_nonlifting
+        );
     }
 }
 
@@ -547,7 +590,6 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Geometry::generate_surface_vectors(zeta_nonlifting, normals_nonlifting, longitudinals_nonlifting, perpendiculars_nonlifting);
 
     // ########################################
-    // Get AICs and RHS
     const uint n_surf = options.NumSurfaces;
     const uint n_surf_nonlifting = options_nonlifting.NumSurfaces;
     // size of rhs lifting surface 
@@ -555,78 +597,37 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     uint Ktotal_nonlifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col_nonlifting);
     uint Ktotal = Ktotal_lifting + Ktotal_nonlifting;
 
-    // RHS generation
-    UVLM::Types::VectorX rhs_lifting;
-    UVLM::Types::VectorX rhs_nonlifting;
-    UVLM::Matrix::RHS(zeta_col,
-                      zeta_star,
-                      uext_col,
-                      gamma_star,
-                      normals,
-                      options,
-                      rhs_lifting,
-                      Ktotal_lifting);
-    UVLM::Matrix::RHS_nonlifting_body(uext_col_nonlifting,
-                                      normals_nonlifting,
-                                      rhs_nonlifting,
-                                      Ktotal_nonlifting,
-                                      n_surf_nonlifting);
-    UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
-
-    // AIC generation    
-    UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
-    UVLM::Types::MatrixX aic_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    
-	UVLM::Types::MatrixX u_induced_x_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_y_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_z_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Matrix::aic_combined(Ktotal,
-                                Ktotal_lifting,
-                                Ktotal_nonlifting, 
-                                options,
-                                options_nonlifting,
-                                zeta,
-                                zeta_col,
-                                zeta_star,
-                                uext_col,
-                                normals,
-                                longitudinals,
-                                perpendiculars,
-                                aic_lifting,
-                                zeta_nonlifting,
-                                zeta_col_nonlifting,
-                                uext_col_nonlifting,
-                                normals_nonlifting,
-                                longitudinals_nonlifting,
-                                perpendiculars_nonlifting,
-                                u_induced_x_nonlifting_on_nonlifting,
-                                u_induced_y_nonlifting_on_nonlifting,
-                                u_induced_z_nonlifting_on_nonlifting,        
-                                aic_nonlifting,
-                                aic);
-    
-    // linear system solution
-    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
-
-    UVLM::LinearSolver::solve_system
+    UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
-        aic,
-        rhs,
         options,
-        gamma_and_sigma_flat
+        options_nonlifting,
+        flightconditions,
+        n_surf,
+        n_surf_nonlifting,
+        Ktotal,
+        Ktotal_lifting,
+        Ktotal_nonlifting,
+        zeta,
+        zeta_col,
+        zeta_star,
+        gamma,
+        gamma_star,
+        uext_total_col,
+        normals,
+        longitudinals,
+        perpendiculars,
+        zeta_nonlifting,
+        zeta_col_nonlifting,
+        uext_col_nonlifting,
+        u_induced_col_nonlifting,
+        sigma_nonlifting,
+        normals_nonlifting,
+        longitudinals_nonlifting,
+        perpendiculars_nonlifting
     );
-    
-    // gamma flat to gamma
-    // probably could be done better with a Map
-    UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(Ktotal_lifting);
-    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);
-    UVLM::Matrix::reconstruct_gamma(gamma_flat,
-                                    gamma,
-                                    zeta_col);
-    UVLM::Matrix::reconstruct_gamma(sigma_flat,
-                                    sigma_nonlifting,
-                                    zeta_col_nonlifting);
+     // Postprocessing lifting surfaces
+         // if options.horseshoe, it is finished.
+
 }
 /*-----------------------------------------------------------------------------
 
@@ -880,3 +881,149 @@ void UVLM::Steady::solve_discretised_nonlifting_body
                                     uext_col);
 
 }
+
+template <typename t_zeta_lifting,
+          typename t_zeta_col_lifting,
+          typename t_zeta_star_lifting,
+          typename t_gamma_lifting,
+          typename t_gamma_star_lifting,
+          typename t_uext_col_lifting,
+          typename t_surface_vec_lifting,
+          typename t_zeta_nonlifting,
+          typename t_zeta_col_nonlifting,
+          typename t_uext_col_nonlifting,
+          typename t_u_induced_col_nonlifting,
+          typename t_sigma_nonlifting,
+          typename t_surface_vec_nonlifting>
+void UVLM::Steady::solve_discretised_lifting_and_nonlifting
+(
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::VMopts& options_nonlifting,
+    const UVLM::Types::FlightConditions& flightconditions,
+    const uint n_surf,
+    const uint n_surf_nonlifting,
+    const uint Ktotal,
+    const uint Ktotal_lifting,
+    const uint Ktotal_nonlifting,
+    t_zeta_lifting& zeta,
+    t_zeta_col_lifting& zeta_col,
+    t_zeta_star_lifting& zeta_star,
+    t_gamma_lifting& gamma,
+    t_gamma_star_lifting& gamma_star,
+    t_uext_col_lifting& uext_col,
+    t_surface_vec_lifting& normals,
+    t_surface_vec_lifting& longitudinals,
+    t_surface_vec_lifting& perpendiculars,
+    t_zeta_nonlifting& zeta_nonlifting,
+    t_zeta_col_nonlifting& zeta_col_nonlifting,
+    t_uext_col_nonlifting& uext_col_nonlifting,
+    t_u_induced_col_nonlifting& u_induced_col_nonlifting,
+    t_sigma_nonlifting& sigma_nonlifting,
+    t_surface_vec_nonlifting& normals_nonlifting,
+    t_surface_vec_nonlifting& longitudinals_nonlifting,
+    t_surface_vec_nonlifting& perpendiculars_nonlifting
+)
+{
+
+    // RHS generation
+    UVLM::Types::VectorX rhs_lifting;
+    UVLM::Types::VectorX rhs_nonlifting;
+    UVLM::Matrix::RHS(zeta_col,
+                      zeta_star,
+                      uext_col,
+                      gamma_star,
+                      normals,
+                      options,
+                      rhs_lifting,
+                      Ktotal_lifting);
+    
+    UVLM::Matrix::RHS_nonlifting_body(uext_col_nonlifting,
+                                      normals_nonlifting,
+                                      rhs_nonlifting,
+                                      Ktotal_nonlifting,
+                                      n_surf_nonlifting);
+    UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
+
+    // AIC generation   
+    UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
+    UVLM::Types::MatrixX aic_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    
+	UVLM::Types::MatrixX u_induced_x_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX u_induced_y_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX u_induced_z_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Matrix::aic_combined(Ktotal,
+                                Ktotal_lifting,
+                                Ktotal_nonlifting, 
+                                options,
+                                options_nonlifting,
+                                zeta,
+                                zeta_col,
+                                zeta_star,
+                                uext_col,
+                                normals,
+                                longitudinals,
+                                perpendiculars,
+                                aic_lifting,
+                                zeta_nonlifting,
+                                zeta_col_nonlifting,
+                                uext_col_nonlifting,
+                                normals_nonlifting,
+                                longitudinals_nonlifting,
+                                perpendiculars_nonlifting,
+                                u_induced_x_nonlifting_on_nonlifting,
+                                u_induced_y_nonlifting_on_nonlifting,
+                                u_induced_z_nonlifting_on_nonlifting,        
+                                aic_nonlifting,
+                                aic);
+
+
+    // linear system solution
+    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
+    UVLM::LinearSolver::solve_system
+    (
+        aic,
+        rhs,
+        options,
+        gamma_and_sigma_flat
+    );
+    // split gamma and sigma Vector
+    UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(Ktotal_lifting);
+    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);
+    
+
+        // gamma flat to gamma
+    // probably could be done better with a Map
+    UVLM::Matrix::reconstruct_gamma(gamma_flat,
+                                    gamma,
+                                    zeta_col);
+    // copy gamma from trailing edge to wake
+    int in_n_rows = -1;
+    // if (!options.Steady) {in_n_rows = 1;}
+    // UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+    //                                             gamma_star,
+    //                                             in_n_rows);
+    if (options.Steady) {
+        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+                                                gamma_star,
+                                                in_n_rows);
+    }
+
+    // ---- Post-processing nonlifting body ----
+    // Get induced velocity nonlifting surface
+    UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal_nonlifting);
+	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+												   u_induced_x_nonlifting_on_nonlifting,
+												   u_induced_y_nonlifting_on_nonlifting,
+												   u_induced_z_nonlifting_on_nonlifting,
+												   u_induced_col_flat);
+
+	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+						              u_induced_col_nonlifting,
+						              uext_col_nonlifting);
+    
+    UVLM::Matrix::reconstruct_gamma(sigma_flat,
+                                    sigma_nonlifting,
+                                    zeta_col_nonlifting);
+}
+
