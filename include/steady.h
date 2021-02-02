@@ -582,10 +582,132 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         normals_nonlifting,
         longitudinals_nonlifting,
         perpendiculars_nonlifting
-    );
-     // Postprocessing lifting surfaces
-         // if options.horseshoe, it is finished.
+        );
 
+        // copy gamma from trailing edge to wake
+        if (options.Steady) 
+        {
+        int in_n_rows = -1;
+        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+                                                    gamma_star,
+                                                    in_n_rows);
+        }
+
+        // Post-processing
+        UVLM::PostProc::calculate_static_forces
+        (
+            zeta,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext_total,
+            forces,
+            options,
+            flightconditions
+        );
+        UVLM::PostProc::calculate_static_forces_nonlifting_body
+        (
+            zeta_nonlifting,
+            sigma_nonlifting,
+            normals_nonlifting,
+            longitudinals_nonlifting,
+            perpendiculars_nonlifting,
+            uext_col_nonlifting,
+            u_induced_col_nonlifting,
+            forces_nonlifting,
+            options_nonlifting,
+            flightconditions
+        );
+        UVLM::Wake::Horseshoe::to_discretised(zeta_star,
+                                              gamma_star,
+                                              delta_x);
+        return;
+    }
+    else
+    {
+        UVLM::Steady::solve_discretised
+        (
+            zeta,
+            zeta_col,
+            uext_total_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            normals,
+            options,
+            flightconditions
+         );
+         UVLM::Steady::wake_roll_up_lifting
+        (
+            zeta,
+            zeta_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext_total_col,
+            normals,
+            options,
+            flightconditions
+        );
+ 
+        UVLM::Steady::solve_discretised_lifting_and_nonlifting
+        (
+            options,
+            options_nonlifting,
+            flightconditions,
+            n_surf,
+            n_surf_nonlifting,
+            Ktotal,
+            Ktotal_lifting,
+            Ktotal_nonlifting,
+            zeta,
+            zeta_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext_total_col,
+            normals,
+            longitudinals,
+            perpendiculars,
+            zeta_nonlifting,
+            zeta_col_nonlifting,
+            uext_col_nonlifting,
+            u_induced_col_nonlifting,
+            sigma_nonlifting,
+            normals_nonlifting,
+            longitudinals_nonlifting,
+            perpendiculars_nonlifting
+        );
+
+        // Post-processing
+        UVLM::PostProc::calculate_static_forces_nonlifting_body
+        (
+            zeta_nonlifting,
+            sigma_nonlifting,
+            normals_nonlifting,
+            longitudinals_nonlifting,
+            perpendiculars_nonlifting,
+            uext_col_nonlifting,
+            u_induced_col_nonlifting,
+            forces_nonlifting,
+            options_nonlifting,
+            flightconditions
+        );
+
+        UVLM::PostProc::calculate_static_forces_unsteady
+        (
+            zeta,
+            zeta_dot,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext,
+            rbm_vel_g,
+            forces,
+            options,
+            flightconditions
+        );
+    }
 }
 /*-----------------------------------------------------------------------------
 
