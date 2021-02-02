@@ -228,7 +228,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
 
     // Setup Nonlifting Body
     unsigned int n_surf_nonlifting;
-    n_surf_nonlifting = options.NumSurfaces;
+    n_surf_nonlifting = options_nonlifting.NumSurfaces;
     UVLM::Types::VecDimensions dimensions_nonlifting;
     UVLM::CppInterface::transform_dimensions(n_surf_nonlifting,
                                              p_dimensions_nonlifting,
