@@ -586,13 +586,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         perpendiculars_nonlifting
         );
 
-        // copy gamma from trailing edge to wake
-        if (options.Steady) 
-        {
-        int in_n_rows = -1;
-        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                                    gamma_star,
-                                                    in_n_rows);
+
         }
 
         // Post-processing
@@ -1074,18 +1068,15 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);
     
 
-        // gamma flat to gamma
+    // gamma flat to gamma
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     gamma,
                                     zeta_col);
     // copy gamma from trailing edge to wake
-    int in_n_rows = -1;
-    // if (!options.Steady) {in_n_rows = 1;}
-    // UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-    //                                             gamma_star,
-    //                                             in_n_rows);
+
     if (options.Steady) {
+        int in_n_rows = -1;
         UVLM::Wake::Horseshoe::circulation_transfer(gamma,
                                                 gamma_star,
                                                 in_n_rows);
