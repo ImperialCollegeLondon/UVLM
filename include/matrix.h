@@ -58,7 +58,42 @@ namespace UVLM
 	        t_u_induced_col& u_induced_col_z,
             t_aic& aic_sources
         );
-
+        template <typename t_zeta_lifting,
+                typename t_zeta_col_lifting,
+                typename t_zeta_star_lifting,
+                typename t_uext_col_lifting,
+                typename t_surface_vec_lifting,
+                typename t_zeta_nonlifting,
+                typename t_zeta_col_nonlifting,
+                typename t_uext_col_nonlifting,
+                typename t_surface_vec_nonlifting>
+        void aic_combined
+            (
+                const uint& Ktotal,
+                const uint& Ktotal_lifting,
+                const uint& Ktotal_nonlifting, 
+                const UVLM::Types::VMopts& options,
+                const UVLM::Types::VMopts& options_nonlifting,
+                const t_zeta_lifting& zeta,
+                const t_zeta_col_lifting& zeta_col,
+                const t_zeta_star_lifting& zeta_star,
+                const t_uext_col_lifting& uext_col,
+                const t_surface_vec_lifting& normals,
+                const t_surface_vec_lifting& longitudinals,
+                const t_surface_vec_lifting& perpendiculars,
+                UVLM::Types::MatrixX& aic_lifting,
+                const t_zeta_nonlifting& zeta_nonlifting,
+                const t_zeta_col_nonlifting& zeta_col_nonlifting,
+                const t_uext_col_nonlifting& uext_col_nonlifting,
+                const t_surface_vec_nonlifting& normals_nonlifting,
+                const t_surface_vec_nonlifting& longitudinals_nonlifting,
+                const t_surface_vec_nonlifting& perpendiculars_nonlifting,
+                UVLM::Types::MatrixX& u_induced_x_nonlifting_on_nonlifting,
+                UVLM::Types::MatrixX& u_induced_y_nonlifting_on_nonlifting,
+                UVLM::Types::MatrixX& u_induced_z_nonlifting_on_nonlifting,        
+                UVLM::Types::MatrixX& aic_nonlifting,
+                UVLM::Types::MatrixX& aic
+            );
         template <typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_uext_col,
@@ -596,6 +631,110 @@ void UVLM::Matrix::deconstruct_gamma
         }
     }
 
+}
+
+template <typename t_zeta_lifting,
+        typename t_zeta_col_lifting,
+        typename t_zeta_star_lifting,
+        typename t_uext_col_lifting,
+        typename t_surface_vec_lifting,
+        typename t_zeta_nonlifting,
+        typename t_zeta_col_nonlifting,
+        typename t_uext_col_nonlifting,
+        typename t_surface_vec_nonlifting>
+void UVLM::Matrix::aic_combined
+    (
+        const uint& Ktotal,
+        const uint& Ktotal_lifting,
+        const uint& Ktotal_nonlifting, 
+        const UVLM::Types::VMopts& options,
+        const UVLM::Types::VMopts& options_nonlifting,
+        const t_zeta_lifting& zeta,
+        const t_zeta_col_lifting& zeta_col,
+        const t_zeta_star_lifting& zeta_star,
+        const t_uext_col_lifting& uext_col,
+        const t_surface_vec_lifting& normals,
+        const t_surface_vec_lifting& longitudinals,
+        const t_surface_vec_lifting& perpendiculars,
+        UVLM::Types::MatrixX& aic_lifting,
+        const t_zeta_nonlifting& zeta_nonlifting,
+        const t_zeta_col_nonlifting& zeta_col_nonlifting,
+        const t_uext_col_nonlifting& uext_col_nonlifting,
+        const t_surface_vec_nonlifting& normals_nonlifting,
+        const t_surface_vec_nonlifting& longitudinals_nonlifting,
+        const t_surface_vec_nonlifting& perpendiculars_nonlifting,
+        UVLM::Types::MatrixX& u_induced_x_nonlifting_on_nonlifting,
+        UVLM::Types::MatrixX& u_induced_y_nonlifting_on_nonlifting,
+        UVLM::Types::MatrixX& u_induced_z_nonlifting_on_nonlifting,        
+        UVLM::Types::MatrixX& aic_nonlifting,
+        UVLM::Types::MatrixX& aic
+    )
+    {
+    //UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
+    UVLM::Matrix::AIC(Ktotal_lifting,
+                      zeta,
+                      zeta_col,
+                      zeta_star,
+                      uext_col,
+                      normals,
+                      options,
+                      false,
+                      aic_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);
+
+    // Lifting on nonlifting surfaces
+    UVLM::Matrix::AIC_sources(Ktotal_nonlifting,
+                              zeta_nonlifting,
+                              zeta_col_nonlifting,
+                              uext_col_nonlifting,
+                              longitudinals_nonlifting,
+                              perpendiculars_nonlifting,
+                              normals_nonlifting,
+                              longitudinals_nonlifting, //collocation
+                              perpendiculars_nonlifting, //collocation
+                              normals_nonlifting, //collocation
+                              options_nonlifting,
+							  u_induced_x_nonlifting_on_nonlifting,
+							  u_induced_y_nonlifting_on_nonlifting,
+							  u_induced_z_nonlifting_on_nonlifting,
+                              aic_nonlifting);
+    
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting, aic, Ktotal_lifting, Ktotal_lifting);
+    
+    // Lifting on nonlifting surfaces
+	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
+    UVLM::Matrix::AIC(Ktotal_lifting,
+                      zeta,
+                      zeta_col_nonlifting,
+                      zeta_star,
+                      uext_col_nonlifting,
+                      normals_nonlifting,
+                      options,
+                      false,
+                      aic_lifting_on_nonlifting);
+    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
+    
+    // Nonlifting on lifting surfaces
+	UVLM::Types::MatrixX aic_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX u_induced_x_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX u_induced_y_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX u_induced_z_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Matrix::AIC_sources(Ktotal_nonlifting,
+                              zeta_nonlifting,
+                              zeta_col,
+                              uext_col,
+                              longitudinals_nonlifting,
+                              perpendiculars_nonlifting,
+                              normals_nonlifting,
+                              longitudinals, //collocation
+                              perpendiculars, //collocation
+                              normals, //collocation
+                              options_nonlifting,
+							  u_induced_x_nonlifting_on_nonlifting,
+							  u_induced_y_nonlifting_on_nonlifting,
+							  u_induced_z_nonlifting_on_nonlifting,
+                              aic_nonlifting_on_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting, aic, 0, Ktotal_lifting);
 }
 
 uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
