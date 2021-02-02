@@ -554,7 +554,9 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     uint Ktotal_lifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
     uint Ktotal_nonlifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col_nonlifting);
     uint Ktotal = Ktotal_lifting + Ktotal_nonlifting;
-
+    if (options.horseshoe)
+    {
+    //To-Do: Check if special solver for horseshoe needed
     UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
         options,
