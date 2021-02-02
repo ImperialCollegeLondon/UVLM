@@ -342,6 +342,35 @@ namespace UVLM
             }
         }
 
+        inline void copy_Mat_to_block
+        (
+            UVLM::Types::MatrixX& in,
+            UVLM::Types::MatrixX& out,
+            uint i_start,
+            uint j_start
+        )
+        {
+            uint M = in.rows();
+            uint N = in.cols();
+            for (uint i_m=0; i_m<M; ++i_m)
+            {
+                for (uint i_n=0; i_n<N; ++i_n)
+                {
+                    out(i_m+i_start, i_n+j_start) = in(i_m, i_n);
+                }
+            }
+        }
+        UVLM::Types::VectorX join_vectors
+        (
+            const UVLM::Types::VectorX& vec1,
+            const UVLM::Types::VectorX& vec2
+        )
+        {
+            UVLM::Types::VectorX vec_joined(vec1.size() + vec2.size());
+            vec_joined << vec1, vec2;
+            return vec_joined;
+        }
+
         template <typename t_mat>
         inline double norm_VecVec_mat
         (
