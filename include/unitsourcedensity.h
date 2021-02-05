@@ -18,18 +18,16 @@ namespace UVLM
         // DECLARATIONS
         template <typename t_zeta,
                   typename t_tsurface,
-                  typename t_u_induced_col,
-                  typename t_uout,
+                  typename t_aic,
                   typename t_surf_vec_panel,
                   typename t_surf_vec_col>
         void get_influence_coefficient
         (
             const t_zeta&       zeta,
             const t_tsurface&   target_surface,
-			t_u_induced_col&   u_induced_col_surface_x,
-			t_u_induced_col&   u_induced_col_surface_y,
-			t_u_induced_col&   u_induced_col_surface_z,
-            t_uout&             uout,
+            t_aic&             aic_x,
+            t_aic&             aic_y,
+            t_aic&             aic_z,
             const t_surf_vec_panel&    longitudinal_panel = NULL,
             const t_surf_vec_panel&    perpendicular_panel = NULL,
             const t_surf_vec_panel&    normal_panel = NULL,
@@ -77,8 +75,7 @@ namespace UVLM
 }
 template <typename t_zeta,
 		  typename t_tsurface,
-		  typename t_u_induced_col,
-		  typename t_uout,
+		  typename t_aic,
 		  typename t_surf_vec_panel,
 		  typename t_surf_vec_col>
 
@@ -86,10 +83,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
     (
     const t_zeta&       zeta,
     const t_tsurface&   target_surface,
-    t_u_induced_col&   u_induced_col_surface_x,
-    t_u_induced_col&   u_induced_col_surface_y,
-    t_u_induced_col&   u_induced_col_surface_z,
-    t_uout&             uout,
+    t_aic&             aic_x,
+    t_aic&             aic_y,
+    t_aic&             aic_z,
 	const t_surf_vec_panel&    longitudinal_panel,
 	const t_surf_vec_panel&    perpendicular_panel,
 	const t_surf_vec_panel&    normal_panel,
@@ -236,10 +232,9 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 																						  normal_col_vec
 																						  );
 					}
-					uout(collocation_id,panel_id) = induced_velocity_vec[2];//(4.0*UVLM::Constants::PI);
-					u_induced_col_surface_x(collocation_id,panel_id) = induced_velocity_vec[0];//(4.0*UVLM::Constants::PI);
-					u_induced_col_surface_y(collocation_id,panel_id) = induced_velocity_vec[1];//(4.0*UVLM::Constants::PI);
-					u_induced_col_surface_z(collocation_id,panel_id) = induced_velocity_vec[2];//(4.0*UVLM::Constants::PI);
+					aic_x(collocation_id,panel_id) = induced_velocity_vec[0];//(4.0*UVLM::Constants::PI);
+					aic_y(collocation_id,panel_id) = induced_velocity_vec[1];//(4.0*UVLM::Constants::PI);
+					aic_z(collocation_id,panel_id) = induced_velocity_vec[2];//(4.0*UVLM::Constants::PI);
 					collocation_id += 1;
 				}
 			}

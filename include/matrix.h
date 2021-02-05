@@ -38,7 +38,6 @@ namespace UVLM
                   typename t_uext_col,
                   typename t_surf_vec_panel,
                   typename t_surf_vec_col,
-                  typename t_u_induced_col,
                   typename t_aic>
         void AIC_sources
         (
@@ -53,10 +52,9 @@ namespace UVLM
             const t_surf_vec_col& perpendiculars_col,
             const t_surf_vec_col& normals_col,
             const UVLM::Types::VMopts& options,
-	        t_u_induced_col& u_induced_col_x,
-	        t_u_induced_col& u_induced_col_y,
-	        t_u_induced_col& u_induced_col_z,
-            t_aic& aic_sources
+            t_aic& aic_sources_x,
+            t_aic& aic_sources_y,
+            t_aic& aic_sources_z
         );
         template <typename t_zeta_lifting,
                 typename t_zeta_col_lifting,
@@ -88,10 +86,9 @@ namespace UVLM
                 const t_surface_vec_nonlifting& normals_nonlifting,
                 const t_surface_vec_nonlifting& longitudinals_nonlifting,
                 const t_surface_vec_nonlifting& perpendiculars_nonlifting,
-                UVLM::Types::MatrixX& u_induced_x_nonlifting_on_nonlifting,
-                UVLM::Types::MatrixX& u_induced_y_nonlifting_on_nonlifting,
-                UVLM::Types::MatrixX& u_induced_z_nonlifting_on_nonlifting,        
-                UVLM::Types::MatrixX& aic_nonlifting,
+                UVLM::Types::MatrixX& aic_nonlifting_x,
+                UVLM::Types::MatrixX& aic_nonlifting_y,      
+                UVLM::Types::MatrixX& aic_nonlifting_z,
                 UVLM::Types::MatrixX& aic
             );
         template <typename t_zeta_col,
@@ -302,7 +299,6 @@ template <typename t_zeta,
           typename t_uext_col,
           typename t_surf_vec_panel,
           typename t_surf_vec_col,
-          typename t_u_induced_col,
           typename t_aic>
 
 void UVLM::Matrix::AIC_sources
@@ -318,10 +314,9 @@ void UVLM::Matrix::AIC_sources
     const t_surf_vec_col& perpendiculars_col,
     const t_surf_vec_col& normals_col,
     const UVLM::Types::VMopts& options,
-	t_u_induced_col& u_induced_col_x,
-	t_u_induced_col& u_induced_col_y,
-	t_u_induced_col& u_induced_col_z,
-    t_aic& aic_sources
+    t_aic& aic_sources_x,
+    t_aic& aic_sources_y,
+    t_aic& aic_sources_z
 )
 {
     const uint n_surf_panel = zeta.size();
@@ -353,19 +348,17 @@ void UVLM::Matrix::AIC_sources
         {
             uint k_surf_panel_j = dimensions_panel[jpanel_surf].first*
                                   dimensions_panel[jpanel_surf].second;
-            UVLM::Types::Block block_u_induced_x = u_induced_col_x.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
-            UVLM::Types::Block block_u_induced_y = u_induced_col_y.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
-            UVLM::Types::Block block_u_induced_z = u_induced_col_z.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
-            UVLM::Types::Block block_aic = aic_sources.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_aic_x = aic_sources_x.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_aic_y = aic_sources_y.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
+            UVLM::Types::Block block_aic_z = aic_sources_z.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
 
             if (options.Steady)
             {
                 UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
                                                                 zeta_col[icol_surf],
-																block_u_induced_x,
-																block_u_induced_y,
-																block_u_induced_z,
-                                                                block_aic,
+                                                                block_aic_x,
+                                                                block_aic_y,
+                                                                block_aic_z,
                                                                 longitudinals_panel[jpanel_surf],
                                                                 perpendiculars_panel[jpanel_surf],
                                                                 normals_panel[jpanel_surf],
@@ -663,10 +656,9 @@ void UVLM::Matrix::aic_combined
         const t_surface_vec_nonlifting& normals_nonlifting,
         const t_surface_vec_nonlifting& longitudinals_nonlifting,
         const t_surface_vec_nonlifting& perpendiculars_nonlifting,
-        UVLM::Types::MatrixX& u_induced_x_nonlifting_on_nonlifting,
-        UVLM::Types::MatrixX& u_induced_y_nonlifting_on_nonlifting,
-        UVLM::Types::MatrixX& u_induced_z_nonlifting_on_nonlifting,        
-        UVLM::Types::MatrixX& aic_nonlifting,
+        UVLM::Types::MatrixX& aic_nonlifting_x,
+        UVLM::Types::MatrixX& aic_nonlifting_y,       
+        UVLM::Types::MatrixX& aic_nonlifting_z,
         UVLM::Types::MatrixX& aic
     )
     {
@@ -694,13 +686,12 @@ void UVLM::Matrix::aic_combined
                               perpendiculars_nonlifting, //collocation
                               normals_nonlifting, //collocation
                               options_nonlifting,
-							  u_induced_x_nonlifting_on_nonlifting,
-							  u_induced_y_nonlifting_on_nonlifting,
-							  u_induced_z_nonlifting_on_nonlifting,
-                              aic_nonlifting);
+							  aic_nonlifting_x,
+							  aic_nonlifting_y,
+                              aic_nonlifting_z);
     
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting, aic, Ktotal_lifting, Ktotal_lifting);
-    
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
+
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
     UVLM::Matrix::AIC(Ktotal_lifting,
@@ -713,12 +704,12 @@ void UVLM::Matrix::aic_combined
                       false,
                       aic_lifting_on_nonlifting);
     UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
-    
+
+
     // Nonlifting on lifting surfaces
-	UVLM::Types::MatrixX aic_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_x_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_y_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_z_nonlifting_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
     UVLM::Matrix::AIC_sources(Ktotal_nonlifting,
                               zeta_nonlifting,
                               zeta_col,
@@ -730,11 +721,11 @@ void UVLM::Matrix::aic_combined
                               perpendiculars, //collocation
                               normals, //collocation
                               options_nonlifting,
-							  u_induced_x_nonlifting_on_nonlifting,
-							  u_induced_y_nonlifting_on_nonlifting,
-							  u_induced_z_nonlifting_on_nonlifting,
-                              aic_nonlifting_on_lifting);
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting, aic, 0, Ktotal_lifting);
+							  aic_nonlifting_on_lifting_x,
+							  aic_nonlifting_on_lifting_y,
+                              aic_nonlifting_on_lifting_z);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+
 }
 
 uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)

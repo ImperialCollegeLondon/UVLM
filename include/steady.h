@@ -898,10 +898,9 @@ void UVLM::Steady::solve_discretised_nonlifting_body
     // size of rhs
     uint Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
     UVLM::Types::VectorX rhs;
-    UVLM::Types::MatrixX aic_sources = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX aic_sources_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX aic_sources_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX aic_sources_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
     // RHS generation
     UVLM::Matrix::RHS_nonlifting_body(uext_col,
                               normals,
@@ -920,10 +919,9 @@ void UVLM::Steady::solve_discretised_nonlifting_body
                               perpendiculars,
                               normals,
                               options,
-							  u_induced_x,
-							  u_induced_y,
-							  u_induced_z,
-                              aic_sources);
+							  aic_sources_x,
+							  aic_sources_y,
+							  aic_sources_z);
 
     // linear system solution
     UVLM::Types::VectorX sigma_flat;
@@ -933,7 +931,7 @@ void UVLM::Steady::solve_discretised_nonlifting_body
 
     UVLM::LinearSolver::solve_system
     (
-        aic_sources,
+        aic_sources_z,
         rhs,
         options,
         sigma_flat
@@ -941,9 +939,9 @@ void UVLM::Steady::solve_discretised_nonlifting_body
 
 	UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal);
 	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
-												   u_induced_x,
-												   u_induced_y,
-												   u_induced_z,
+												   aic_sources_x,
+												   aic_sources_y,
+												   aic_sources_z,
 												   u_induced_col_flat);
 
 	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
@@ -1020,14 +1018,13 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                       n_surf_nonlifting);
     UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
 
-    // AIC generation   
+    // AIC generation
+    std::cout << "\n ----------- AIC generation ----------- \n";    
     UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
-    UVLM::Types::MatrixX aic_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic_nonlifting_x = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic_nonlifting_y = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
+    UVLM::Types::MatrixX aic_nonlifting_z = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    
-	UVLM::Types::MatrixX u_induced_x_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_y_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX u_induced_z_nonlifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Matrix::aic_combined(Ktotal,
                                 Ktotal_lifting,
                                 Ktotal_nonlifting, 
@@ -1046,11 +1043,10 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                 uext_col_nonlifting,
                                 normals_nonlifting,
                                 longitudinals_nonlifting,
-                                perpendiculars_nonlifting,
-                                u_induced_x_nonlifting_on_nonlifting,
-                                u_induced_y_nonlifting_on_nonlifting,
-                                u_induced_z_nonlifting_on_nonlifting,        
-                                aic_nonlifting,
+                                perpendiculars_nonlifting,      
+                                aic_nonlifting_x,
+                                aic_nonlifting_y,
+                                aic_nonlifting_z,
                                 aic);
 
 
@@ -1086,9 +1082,9 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     // Get induced velocity nonlifting surface
     UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal_nonlifting);
 	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
-												   u_induced_x_nonlifting_on_nonlifting,
-												   u_induced_y_nonlifting_on_nonlifting,
-												   u_induced_z_nonlifting_on_nonlifting,
+												   aic_nonlifting_x,
+												   aic_nonlifting_y,
+												   aic_nonlifting_z,
 												   u_induced_col_flat);
 
 	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
