@@ -908,8 +908,7 @@ void UVLM::Steady::solve_discretised_nonlifting_body
                               Ktotal,
                               n_surf);
     // AIC generation
-    UVLM::Matrix::AIC_sources(Ktotal,
-                              zeta,
+    UVLM::Matrix::AIC_sources(zeta,
                               zeta_col,
                               uext_col,
                               longitudinals,

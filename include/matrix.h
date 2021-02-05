@@ -41,7 +41,6 @@ namespace UVLM
                   typename t_aic>
         void AIC_sources
         (
-            const uint& Ktotal,
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
             const t_uext_col& uext_col,
@@ -303,7 +302,6 @@ template <typename t_zeta,
 
 void UVLM::Matrix::AIC_sources
 (
-    const uint& Ktotal,
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_uext_col& uext_col,
@@ -675,8 +673,7 @@ void UVLM::Matrix::aic_combined
     UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);
 
     // Lifting on nonlifting surfaces
-    UVLM::Matrix::AIC_sources(Ktotal_nonlifting,
-                              zeta_nonlifting,
+    UVLM::Matrix::AIC_sources(zeta_nonlifting,
                               zeta_col_nonlifting,
                               uext_col_nonlifting,
                               longitudinals_nonlifting,
@@ -710,8 +707,7 @@ void UVLM::Matrix::aic_combined
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
-    UVLM::Matrix::AIC_sources(Ktotal_nonlifting,
-                              zeta_nonlifting,
+    UVLM::Matrix::AIC_sources(zeta_nonlifting,
                               zeta_col,
                               uext_col,
                               longitudinals_nonlifting,
