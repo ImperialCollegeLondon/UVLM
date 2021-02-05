@@ -416,23 +416,47 @@ namespace UVLM
             return vec;
         }
 
-		UVLM::Types::Vector3 remove_row
+        void remove_row_from_VectorX
 		(
-		UVLM::Types::Vector4& vector_in,
-		 int rowToRemove
+		UVLM::Types::VectorX & vector_in,
+		const int rowToRemove
 		)
 		{
 			int counter_idx = 0;
-			UVLM::Types::Vector3 vector_out;
-			for (uint i_row = 0;i_row<4;++i_row)
+            UVLM::Types::VectorX intitial_vector_in = vector_in;
+            uint vector_initial_size = vector_in.rows();
+            vector_in.resize(vector_initial_size-1,1);
+			for (uint i_row = 0;i_row<vector_initial_size;++i_row)
 			{
 				if (i_row!=rowToRemove)
 				{
-					vector_out[counter_idx] = vector_in[i_row];
+					vector_in[counter_idx] = intitial_vector_in[i_row];
 					counter_idx++;
 				}
 			}
-			return vector_out;
+		}
+
+        template<typename vec_in>
+        UVLM::Types::VectorX reorder_vector_by_pushback
+		(
+		vec_in& vector_in,
+		const int numb_of_push_backs
+		)
+		{
+            uint vector_size = vector_in.rows();            
+            UVLM::Types::VectorX vec_out(vector_size);
+            uint counter = 0;
+			for (uint i_row = numb_of_push_backs;i_row<vector_size;++i_row)
+			{
+                vec_out[counter] = vector_in[i_row];
+                counter++;
+			}
+            for (uint i_row = 0 ;i_row<numb_of_push_backs;++i_row)
+			{
+                vec_out[counter] = vector_in[i_row];
+                counter++;
+			}
+            return vec_out;
 		}
         // inline void allocate_VecVecVecMat
         // (

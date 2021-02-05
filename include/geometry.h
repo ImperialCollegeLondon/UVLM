@@ -271,16 +271,18 @@ namespace UVLM
             }
         }
 
-        template <typename type>
-        void convert_to_panel_coordinate_system(const type& x_G,
-                                                const type& y_G,
-                                                const type& z_G,
+
+        template <typename type_in,
+                  typename type_out>
+        void convert_to_panel_coordinate_system(const type_in& x_G,
+                                                const type_in& y_G,
+                                                const type_in& z_G,
                                                 const UVLM::Types::Vector3& chordwise_vec,
                                                 const UVLM::Types::Vector3& tangential_vec,
                                                 const UVLM::Types::Vector3& normal_vec,
-                                                UVLM::Types::Vector4& x_transf,
-                                                UVLM::Types::Vector4& y_transf,
-                                                UVLM::Types::Vector4& z_transf
+                                                type_out& x_transf,
+                                                type_out& y_transf,
+                                                type_out& z_transf
                                                 )
         {
             UVLM::Types::Vector4 x = UVLM::Types::Vector4(x_G(0,0), x_G(1, 0), x_G(1, 1), x_G(0, 1));
@@ -336,11 +338,6 @@ namespace UVLM
 			transformation_matrix << chordwise_vec[0], chordwise_vec[1], chordwise_vec[2],
 									 tangential_vec[0], tangential_vec[1], tangential_vec[2],
 									 normal_vec[0], normal_vec[1], normal_vec[2];
-			// std::cout << "\n Transformationmatrix = " <<transformation_matrix << std::endl;
-			// std::cout << "\n Normal Vector \n " <<normal_vec << std::endl;
-			// std::cout << "\n det(R) = " <<transformation_matrix.determinant() << std::endl;
-			// std::cout << "\n R^-1 = " <<transformation_matrix.inverse() << std::endl;
-			// std::cout << "\n R^T = " <<transformation_matrix.transpose() << std::endl;
             coordinates_vec = transformation_matrix.inverse()*coordinates_vec;
 		}
 		
@@ -365,20 +362,18 @@ namespace UVLM
 																const UVLM::Types::Vector3& normal_vec_B
 																)
         {
-			//std::cout << "Panel A Frame: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
 			UVLM::Geometry::convert_to_global_coordinate_system(vector_to_be_converted,
 																chordwise_vec_A,
 																tangential_vec_A,
 																normal_vec_A
 																);
-			//std::cout << "Global: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
 			UVLM::Geometry::convert_to_panel_coordinate_system(vector_to_be_converted,
 																chordwise_vec_B,
 																tangential_vec_B,
 																normal_vec_B
 																);
-			//std::cout << "Panel B Frame: " << vector_to_be_converted[0]*vector_to_be_converted[0] + vector_to_be_converted[1]*vector_to_be_converted[1]+vector_to_be_converted[2]*vector_to_be_converted[2] << std::endl;
 		}
+
         template <typename t_in,
                   typename t_out>
         void generate_colocationMesh
@@ -410,22 +405,18 @@ namespace UVLM
                                                collocation_mesh[i_surf]);
             }
         }
-        void get_vector_diff(const UVLM::Types::Vector4& vec,
-                             UVLM::Types::Vector4& diff_vec)
+
+        UVLM::Types::VectorX get_vector_diff(UVLM::Types::VectorX& vec)
         {
             // Calcualtes difference between adjascent vector scalars
-            diff_vec = UVLM::Types::Vector4(vec[1]-vec[0],
-                                            vec[2]-vec[1],
-                                            vec[3]-vec[2],
-                                            vec[0]-vec[3]);
-        }
-        void get_vector_diff(const UVLM::Types::Vector3& vec,
-                             UVLM::Types::Vector3& diff_vec)
-        {
-            // Calcualtes difference between adjascent vector scalars
-            diff_vec = UVLM::Types::Vector3(vec[1]-vec[0],
-                                            vec[2]-vec[1],
-                                            vec[0]-vec[2]);
+            const uint vector_size = vec.rows();
+            UVLM::Types::VectorX vec_out(vector_size);
+            for(uint i = 0; i < vector_size-1; ++i)
+            {
+                vec_out[i] = vec[i+1] - vec[i];
+            }
+            vec_out[vector_size-1] = vec[0] - vec[vector_size-1];
+            return vec_out;
         }
 
     } // geometry
