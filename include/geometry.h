@@ -271,6 +271,44 @@ namespace UVLM
             }
         }
 
+        template <typename type_in,
+                  typename type_out>
+        void generate_surface_vectors_wake(const type_in& zeta_star,
+                                           type_out& normal,
+                                           type_out& longitudinal,
+                                           type_out& perpendicular)
+        {
+            // generate surface vectors of panel
+            generate_surface_vectors(zeta_star,
+                                     normal,
+                                     longitudinal,
+                                     perpendicular);
+            // copy surface vectors of last panel (col and row) to last wake corner point (col and row)
+            const uint N_surf = normal.size();
+            for(uint i_surf=0; i_surf < N_surf; ++i_surf)
+            {
+                const uint N_row = normal[i_surf][0].rows();
+                const uint N_col = normal[i_surf][0].cols();
+            
+                for(uint i_dim =0; i_dim < 3; ++i_dim)
+                {
+                
+                    for (uint i_row = 0; i_row < N_row; ++i_row)
+                    {
+    
+                        normal[i_surf][i_dim](i_row, N_col) = normal[i_surf][i_dim](i_row, N_col-1);
+                        longitudinal[i_surf][i_dim](i_row, N_col) = longitudinal[i_surf][i_dim](i_row, N_col-1);
+                        perpendicular[i_surf][i_dim](i_row, N_col) = perpendicular[i_surf][i_dim](i_row, N_col-1);
+                    }                
+                    for (uint i_col = 0; i_col < N_col; ++i_col)
+                    {
+                        normal[i_surf][i_dim](N_row, i_col) = normal[i_surf][i_dim](N_row-1, i_col);
+                        longitudinal[i_surf][i_dim](N_row, i_col) = longitudinal[i_surf][i_dim](N_row-1, i_col);
+                        perpendicular[i_surf][i_dim](N_row, i_col) = perpendicular[i_surf][i_dim](N_row-1, i_col);
+                    }   
+                }
+            }
+        }
 
         template <typename type_in,
                   typename type_out>
