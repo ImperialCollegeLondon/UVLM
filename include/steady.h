@@ -910,7 +910,6 @@ void UVLM::Steady::solve_discretised_nonlifting_body
     // AIC generation
     UVLM::Matrix::AIC_sources(zeta,
                               zeta_col,
-                              uext_col,
                               longitudinals,
                               perpendiculars,
                               normals,

@@ -35,7 +35,6 @@ namespace UVLM
 
         template <typename t_zeta,
                   typename t_zeta_col,
-                  typename t_uext_col,
                   typename t_surf_vec_panel,
                   typename t_surf_vec_col,
                   typename t_aic>
@@ -43,7 +42,6 @@ namespace UVLM
         (
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
-            const t_uext_col& uext_col,
             const t_surf_vec_panel& longitudinals_panel,
             const t_surf_vec_panel& perpendiculars_panel,
             const t_surf_vec_panel& normals_panel,
@@ -295,7 +293,6 @@ void UVLM::Matrix::build_offsets
 
 template <typename t_zeta,
           typename t_zeta_col,
-          typename t_uext_col,
           typename t_surf_vec_panel,
           typename t_surf_vec_col,
           typename t_aic>
@@ -304,7 +301,6 @@ void UVLM::Matrix::AIC_sources
 (
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
-    const t_uext_col& uext_col,
     const t_surf_vec_panel& longitudinals_panel,
     const t_surf_vec_panel& perpendiculars_panel,
     const t_surf_vec_panel& normals_panel,
@@ -675,7 +671,6 @@ void UVLM::Matrix::aic_combined
     // Lifting on nonlifting surfaces
     UVLM::Matrix::AIC_sources(zeta_nonlifting,
                               zeta_col_nonlifting,
-                              uext_col_nonlifting,
                               longitudinals_nonlifting,
                               perpendiculars_nonlifting,
                               normals_nonlifting,
@@ -709,7 +704,6 @@ void UVLM::Matrix::aic_combined
     UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
     UVLM::Matrix::AIC_sources(zeta_nonlifting,
                               zeta_col,
-                              uext_col,
                               longitudinals_nonlifting,
                               perpendiculars_nonlifting,
                               normals_nonlifting,
