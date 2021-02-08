@@ -936,17 +936,11 @@ void UVLM::Steady::solve_discretised_nonlifting_body
         sigma_flat
     );
 
-	UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal);
 	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
 												   aic_sources_x,
 												   aic_sources_y,
 												   aic_sources_z,
-												   u_induced_col_flat);
-
-	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
-						              u_induced_col,
-						              uext_col);
-
+												   u_induced_col);
 
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
@@ -1078,17 +1072,12 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     }
 
     // ---- Post-processing nonlifting body ----
-    // Get induced velocity nonlifting surface
-    UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,Ktotal_nonlifting);
 	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
 												   aic_nonlifting_x,
 												   aic_nonlifting_y,
 												   aic_nonlifting_z,
-												   u_induced_col_flat);
+												   u_induced_col_nonlifting);
 
-	UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
-						              u_induced_col_nonlifting,
-						              uext_col_nonlifting);
     
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     sigma_nonlifting,

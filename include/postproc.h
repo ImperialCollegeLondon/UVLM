@@ -767,20 +767,21 @@ namespace UVLM
             }
         }
 
-
         template <typename t_sigma_flat,
-                  typename t_u_induced>
+                  typename t_aic,
+                  typename t_u_ind>
         void calculate_induced_velocity_col
         (
             const t_sigma_flat& sigma_flat,
-            const t_u_induced& u_induced_x,
-            const t_u_induced& u_induced_y,
-            const t_u_induced& u_induced_z,
-			UVLM::Types::MatrixX& u_induced_col_flat
+            const t_aic& u_induced_x,
+            const t_aic& u_induced_y,
+            const t_aic& u_induced_z,
+			t_u_ind& u_induced_col
         )
 		{
 			uint n_rows = u_induced_x.rows();
 			uint n_cols = u_induced_x.cols();
+            UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_rows*n_cols);
 			for (uint i_col=0; i_col<n_rows; i_col++)
 			{
 				for (uint j_source=0; j_source<n_cols; j_source++)
@@ -791,6 +792,11 @@ namespace UVLM
 				}
 
 			}
+
+	    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+						                    u_induced_col,
+						                    u_induced_col);
+    
 		}
 		
         template <typename t_normal,
