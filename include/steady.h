@@ -207,6 +207,46 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions
         );
 
+        template <typename t_zeta,
+                  typename t_zeta_col,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_uext_col,
+                  typename t_zeta_nonlifting,
+                  typename t_zeta_col_nonlifting,
+                  typename t_uext_col_nonlifting,
+                  typename t_u_induced_col_nonlifting,
+                  typename t_sigma,
+                  typename t_surface_vec_lifting,
+                  typename t_surface_vec_nonlifting>
+        void wake_roll_up_lifting_and_nonlifting
+        (
+            t_zeta& zeta,
+            t_zeta_col& zeta_col,
+            t_zeta_star& zeta_star,
+            t_gamma& gamma,
+            t_gamma_star& gamma_star,
+            t_uext_col& uext_total_col,
+            const UVLM::Types::VMopts& options,
+            const UVLM::Types::FlightConditions& flightconditions,
+            t_zeta_nonlifting& zeta_nonlifting,
+            t_zeta_col_nonlifting& zeta_col_nonlifting,
+            t_uext_col_nonlifting& zeta_uext_nonlifting,
+            t_u_induced_col_nonlifting& u_induced_col_nonlifting,
+            t_sigma& sigma,
+            t_surface_vec_lifting& longitudinals_lifting,
+            t_surface_vec_lifting& perpendiculars_lifting,
+            t_surface_vec_lifting& normals_lifting,
+            t_surface_vec_nonlifting& longitudinals_nonlifting,
+            t_surface_vec_nonlifting& perpendiculars_nonlifting,
+            t_surface_vec_nonlifting& normals_nonlifting,
+            const UVLM::Types::VMopts& options_nonlifting,
+            const uint Ktotal,
+            const uint Ktotal_lifting,
+            const uint Ktotal_nonlifting
+        );
+
         template <typename t_zeta_star,
                   typename t_zeta_star_previous>       
         bool convergence_check_wake
@@ -585,11 +625,13 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         longitudinals_nonlifting,
         perpendiculars_nonlifting
         );
-
-
+        if (options.Steady) 
+        {
+        int in_n_rows = -1;
+        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+                                                    gamma_star,
+                                                    in_n_rows);
         }
-
-        // Post-processing
         UVLM::PostProc::calculate_static_forces
         (
             zeta,
@@ -621,31 +663,62 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     }
     else
     {
-        UVLM::Steady::solve_discretised
+        std::cout << "\n -------------- Vortex ring problems! -------------- \n";
+        UVLM::Steady::solve_discretised_lifting_and_nonlifting
         (
-            zeta,
-            zeta_col,
-            uext_total_col,
-            zeta_star,
-            gamma,
-            gamma_star,
-            normals,
-            options,
-            flightconditions
-         );
-         UVLM::Steady::wake_roll_up_lifting
-        (
-            zeta,
-            zeta_col,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext_total_col,
-            normals,
-            options,
-            flightconditions
+        options,
+        options_nonlifting,
+        flightconditions,
+        n_surf,
+        n_surf_nonlifting,
+        Ktotal,
+        Ktotal_lifting,
+        Ktotal_nonlifting,
+        zeta,
+        zeta_col,
+        zeta_star,
+        gamma,
+        gamma_star,
+        uext_total_col,
+        normals,
+        longitudinals,
+        perpendiculars,
+        zeta_nonlifting,
+        zeta_col_nonlifting,
+        uext_col_nonlifting,
+        u_induced_col_nonlifting,
+        sigma_nonlifting,
+        normals_nonlifting,
+        longitudinals_nonlifting,
+        perpendiculars_nonlifting
         );
- 
+        
+        UVLM::Steady::wake_roll_up_lifting_and_nonlifting
+        (
+            zeta,
+            zeta_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext_total_col,
+            options,
+            flightconditions,
+            zeta_nonlifting,
+            zeta_col_nonlifting,
+            uext_col_nonlifting,
+            u_induced_col_nonlifting,
+            sigma_nonlifting,
+            longitudinals,
+            perpendiculars,
+            normals,
+            longitudinals_nonlifting,
+            perpendiculars_nonlifting,
+            normals_nonlifting,
+            options_nonlifting,
+            Ktotal,
+            Ktotal_lifting,
+            Ktotal_nonlifting
+        );
         UVLM::Steady::solve_discretised_lifting_and_nonlifting
         (
             options,
@@ -1160,8 +1233,182 @@ void UVLM::Steady::wake_roll_up_lifting
                 options,
                 flightconditions
             );
+            
          }
+        // convergence check -------------------
+        zeta_star_norm = UVLM::Types::norm_VecVec_mat(zeta_star);
+        convergence = convergence_check_wake(i_rollup,
+                                             zeta_star,
+                                             zeta_star_previous,
+                                             zeta_star_norm_first,
+                                             options.rollup_tolerance);
+        if (convergence){break;}
+        zeta_star_norm_previous = zeta_star_norm;
+        UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_previous);
+    }
+}
+template <typename t_zeta,
+          typename t_zeta_col,
+          typename t_zeta_star,
+          typename t_gamma,
+          typename t_gamma_star,
+          typename t_uext_col,
+          typename t_zeta_nonlifting,
+          typename t_zeta_col_nonlifting,
+          typename t_uext_col_nonlifting,
+          typename t_u_induced_col_nonlifting,
+          typename t_sigma,
+          typename t_surface_vec_lifting,
+          typename t_surface_vec_nonlifting>
+void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
+(
+    t_zeta& zeta,
+    t_zeta_col& zeta_col,
+    t_zeta_star& zeta_star,
+    t_gamma& gamma,
+    t_gamma_star& gamma_star,
+    t_uext_col& uext_total_col,
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    t_zeta_nonlifting& zeta_nonlifting,
+    t_zeta_col_nonlifting& zeta_col_nonlifting,
+    t_uext_col_nonlifting& uext_col_nonlifting,
+    t_u_induced_col_nonlifting& u_induced_col_nonlifting,
+    t_sigma& sigma,
+    t_surface_vec_lifting& longitudinals_lifting,
+    t_surface_vec_lifting& perpendiculars_lifting,
+    t_surface_vec_lifting& normals_lifting,
+    t_surface_vec_nonlifting& longitudinals_nonlifting,
+    t_surface_vec_nonlifting& perpendiculars_nonlifting,
+    t_surface_vec_nonlifting& normals_nonlifting,
+    const UVLM::Types::VMopts& options_nonlifting,
+    const uint Ktotal,
+    const uint Ktotal_lifting,
+    const uint Ktotal_nonlifting
+)
+{
+    double zeta_star_norm_first = 0.0;
+    double zeta_star_norm_previous = 0.0;
+    double zeta_star_norm = 0.0;
+    unsigned int N;
+    bool convergence;
 
+    UVLM::Types::VecVecMatrixX zeta_star_previous;
+    if (options.n_rollup != 0)
+    {
+        zeta_star_norm_first = UVLM::Types::norm_VecVec_mat(zeta_star);
+        zeta_star_norm_previous = zeta_star_norm_first;
+        zeta_star_norm = 0.0;
+
+        UVLM::Types::allocate_VecVecMat(zeta_star_previous, zeta_star);
+        UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_previous);
+    }
+    
+
+    // ROLLUP LOOP--------------------------------------------------------
+    for (uint i_rollup=0; i_rollup<options.n_rollup; ++i_rollup)
+    {
+        // determine convection velocity u_ind
+        UVLM::Types::VecVecMatrixX u_ind;
+        UVLM::Types::allocate_VecVecMat(u_ind,
+                                        zeta_star);
+        // induced velocity by vortex rings
+        UVLM::BiotSavart::total_induced_velocity_on_wake(
+            zeta,
+            zeta_star,
+            gamma,
+            gamma_star,
+            u_ind,
+            options.ImageMethod,
+            options.vortex_radius_wake_ind);
+
+        // Get surface vectors of zeta_star (account for points instead of panels)
+        UVLM::Types::VecVecMatrixX normals_star;
+        UVLM::Types::allocate_VecVecMat(normals_star, zeta_star);   
+        UVLM::Types::VecVecMatrixX longitudinals_star;
+        UVLM::Types::allocate_VecVecMat(longitudinals_star, zeta_star);
+        UVLM::Types::VecVecMatrixX perpendiculars_star;
+        UVLM::Types::allocate_VecVecMat(perpendiculars_star , zeta_star); 
+        UVLM::Geometry::generate_surface_vectors_wake(zeta_star, normals_star, longitudinals_star, perpendiculars_star);
+            
+            // Allocate matrices for source influence
+        uint Ktotal_star = UVLM::Matrix::get_total_VecVecMat_size(zeta_star_previous);
+        UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
+        UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
+        UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
+
+        // Get induced velocities by sources
+        UVLM::Matrix::AIC_sources(zeta_nonlifting,
+                                    zeta_star,
+                                    longitudinals_nonlifting,
+                                    perpendiculars_nonlifting,
+                                    normals_nonlifting,
+                                    longitudinals_star,
+                                    perpendiculars_star,
+                                    normals_star,
+                                    options_nonlifting,
+                                    u_induced_x,
+                                    u_induced_y,
+                                    u_induced_z);
+        // add induced velocity by sources
+        UVLM::Types::VectorX sigma_flat;
+        UVLM::Matrix::deconstruct_gamma(sigma,
+                                        sigma_flat,
+                                        u_ind);
+
+        UVLM::Types::VecVecMatrixX u_induced_star_sources;
+        UVLM::Types::allocate_VecVecMat(u_induced_star_sources, u_ind);
+	    UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+												       u_induced_x,
+												       u_induced_y,
+												       u_induced_z,
+												       u_induced_star_sources);
+        u_ind += u_induced_star_sources;
+
+        // Do not move the vertices in the TE
+        UVLM::Wake::Discretised::no_movement_of_vortices_at_TE(u_ind);
+
+
+        // convect based on u_ind for all the grid.
+        UVLM::Wake::Discretised::convect(zeta_star,
+                                         u_ind,
+                                         options.dt);
+
+        // solve system again
+        if (i_rollup%options.rollup_aic_refresh == 0)
+        {      
+
+                // TO-DO: Refactor since not all AIC matrices have to be recreated (??)
+                UVLM::Steady::solve_discretised_lifting_and_nonlifting
+                (
+                    options,
+                    options_nonlifting,
+                    flightconditions,
+                    options.NumSurfaces,
+                    options_nonlifting.NumSurfaces,
+                    Ktotal,
+                    Ktotal_lifting,
+                    Ktotal_nonlifting,
+                    zeta,
+                    zeta_col,
+                    zeta_star,
+                    gamma,
+                    gamma_star,
+                    uext_total_col,
+                    normals_lifting,
+                    longitudinals_lifting,
+                    perpendiculars_lifting,
+                    zeta_nonlifting,
+                    zeta_col_nonlifting,
+                    uext_col_nonlifting,
+                    u_induced_col_nonlifting,
+                    sigma,
+                    normals_nonlifting,
+                    longitudinals_nonlifting,
+                    perpendiculars_nonlifting
+                );
+
+         }
         // convergence check -------------------
         zeta_star_norm = UVLM::Types::norm_VecVec_mat(zeta_star);
         convergence = convergence_check_wake(i_rollup,
