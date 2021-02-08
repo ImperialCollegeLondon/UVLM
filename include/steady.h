@@ -1148,18 +1148,9 @@ void UVLM::Steady::wake_roll_up_lifting
             u_ind,
             options.ImageMethod,
             options.vortex_radius_wake_ind);
+
         // Do not move the vertices in the TE
-        for (uint i_surf=0; i_surf<zeta_star.size(); ++i_surf)
-        {
-            N = zeta_star[i_surf][0].cols();
-            for (uint i_n=0; i_n<N; ++i_n)
-            {
-                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                {
-                    u_ind[i_surf][i_dim](0, i_n) = 0.;
-                }
-            }
-        }
+        UVLM::Wake::Discretised::no_movement_of_vortices_at_TE(u_ind);
 
         // convect based on u_ind for all the grid.
         UVLM::Wake::Discretised::convect(zeta_star,

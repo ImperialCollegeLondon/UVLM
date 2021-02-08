@@ -110,6 +110,26 @@ namespace UVLM
                     }
                 }
             }
+            template<typename t_u_ind>
+            void no_movement_of_vortices_at_TE
+            (
+               t_u_ind& u_ind 
+            )
+            {
+                // Do not move the vertices in the TE
+                const uint n_surf = u_ind.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    uint N = u_ind[i_surf][0].cols();
+                    for (uint i_n=0; i_n<N; ++i_n)
+                    {
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            u_ind[i_surf][i_dim](0, i_n) = 0.;
+                        }
+                    }
+                }
+            }
 
             template <typename t_zeta,
                       typename t_zeta_star,
