@@ -18,12 +18,15 @@ namespace UVLM
         // Eigen shortcuts
         // Matrices
         typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixX;
+        typedef Eigen::Array<bool,Eigen::Dynamic,1> MatrixXb;
         typedef Eigen::Map<MatrixX> MapMatrixX;
+        typedef Eigen::Map<MatrixXb> MapMatrixXb;
         typedef Eigen::Map<const MatrixX> cMapMatrixX;
         typedef std::vector<MatrixX> VecMatrixX;
         typedef std::vector<VecMatrixX> VecVecMatrixX;
         typedef std::vector<VecVecMatrixX> VecVecVecMatrixX;
         typedef std::vector<MapMatrixX> VecMapX;
+        typedef std::vector<MapMatrixXb> VecMapXb;
         typedef std::vector<VecMapX> VecVecMapX;
         typedef std::vector<VecVecMapX> VecVecVecMapX;
 
