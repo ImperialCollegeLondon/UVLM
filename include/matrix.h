@@ -61,12 +61,15 @@ namespace UVLM
                 typename t_zeta_nonlifting,
                 typename t_zeta_col_nonlifting,
                 typename t_uext_col_nonlifting,
-                typename t_surface_vec_nonlifting>
+                typename t_surface_vec_nonlifting,
+                typename t_zeta_phantom,
+                typename t_surface_vec_phantom>
         void aic_combined
             (
                 const uint& Ktotal,
                 const uint& Ktotal_lifting,
                 const uint& Ktotal_nonlifting, 
+                const uint& Ktotal_phantom, 
                 const UVLM::Types::VMopts& options,
                 const UVLM::Types::VMopts& options_nonlifting,
                 const t_zeta_lifting& zeta,
@@ -83,6 +86,10 @@ namespace UVLM
                 const t_surface_vec_nonlifting& normals_nonlifting,
                 const t_surface_vec_nonlifting& longitudinals_nonlifting,
                 const t_surface_vec_nonlifting& perpendiculars_nonlifting,
+                const t_zeta_phantom& zeta_phantom,
+                const t_surface_vec_phantom& normals_phantom,
+                const t_surface_vec_phantom& longitudinals_phantom,
+                const t_surface_vec_phantom& perpendiculars_phantom,
                 UVLM::Types::MatrixX& aic_nonlifting_x,
                 UVLM::Types::MatrixX& aic_nonlifting_y,      
                 UVLM::Types::MatrixX& aic_nonlifting_z,
@@ -628,12 +635,15 @@ template <typename t_zeta_lifting,
         typename t_zeta_nonlifting,
         typename t_zeta_col_nonlifting,
         typename t_uext_col_nonlifting,
-        typename t_surface_vec_nonlifting>
+        typename t_surface_vec_nonlifting,
+        typename t_zeta_phantom,
+        typename t_surface_vec_phantom>
 void UVLM::Matrix::aic_combined
     (
         const uint& Ktotal,
         const uint& Ktotal_lifting,
         const uint& Ktotal_nonlifting, 
+        const uint& Ktotal_phantom, 
         const UVLM::Types::VMopts& options,
         const UVLM::Types::VMopts& options_nonlifting,
         const t_zeta_lifting& zeta,
@@ -650,6 +660,10 @@ void UVLM::Matrix::aic_combined
         const t_surface_vec_nonlifting& normals_nonlifting,
         const t_surface_vec_nonlifting& longitudinals_nonlifting,
         const t_surface_vec_nonlifting& perpendiculars_nonlifting,
+        const t_zeta_phantom& zeta_phantom,
+        const t_surface_vec_phantom& normals_phantom,
+        const t_surface_vec_phantom& longitudinals_phantom,
+        const t_surface_vec_phantom& perpendiculars_phantom,
         UVLM::Types::MatrixX& aic_nonlifting_x,
         UVLM::Types::MatrixX& aic_nonlifting_y,       
         UVLM::Types::MatrixX& aic_nonlifting_z,
@@ -715,6 +729,31 @@ void UVLM::Matrix::aic_combined
 							  aic_nonlifting_on_lifting_y,
                               aic_nonlifting_on_lifting_z);
     UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+    // Phantom panels on lifting cols
+    UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);
+    UVLM::Matrix::AIC(Ktotal_phantom,
+                      zeta_phantom,
+                      zeta_col,
+                      zeta_star,
+                      uext_col,
+                      normals,
+                      options,
+                      false,
+                      aic_phantom_on_lifting);
+    
+    UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal);
+    // Phantom panels on nonlifting cols           aic_nonlifting_on_lifting_z);
+    UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_phantom);
+    UVLM::Matrix::AIC(Ktotal_phantom,
+                      zeta_phantom,
+                      zeta_col_nonlifting,
+                      zeta_star,
+                      uext_col_nonlifting,
+                      normals_nonlifting,
+                      options,
+                      false,
+                      aic_phantom_on_nonlifting);
+    UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, Ktotal_lifting, Ktotal);
 
 }
 
