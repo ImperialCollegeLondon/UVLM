@@ -7,6 +7,7 @@
 #include "geometry.h"
 #include "biotsavart.h"
 #include "matrix.h"
+#include "phantom.h"
 #include "wake.h"
 #include "postproc.h"
 #include "linear_solver.h"
@@ -62,6 +63,7 @@ namespace UVLM
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_forces,
+                  typename t_flag_zeta_phantom,
                   typename t_rbm_vel_g,
                   typename t_zeta_nonlifting,
                   typename t_uext_nonlifting,
@@ -76,6 +78,7 @@ namespace UVLM
             t_gamma& gamma,
             t_gamma_star& gamma_star,
             t_forces& forces,
+            t_flag_zeta_phantom& flag_zeta_phantom,
             t_rbm_vel_g& rbm_vel_g,
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions,
@@ -158,7 +161,9 @@ namespace UVLM
                   typename t_uext_col_nonlifting,
                   typename t_u_induced_col_nonlifting,
                   typename t_sigma_nonlifting,
-                  typename t_surface_vec_nonlifting>
+                  typename t_surface_vec_nonlifting,
+                  typename t_zeta_phantom,
+                  typename t_surface_vec_phantom>
         void solve_discretised_lifting_and_nonlifting
         (
             const UVLM::Types::VMopts& options,
@@ -169,6 +174,7 @@ namespace UVLM
             const uint Ktotal,
             const uint Ktotal_lifting,
             const uint Ktotal_nonlifting,
+            const uint Ktotal_phantom,
             t_zeta_lifting& zeta,
             t_zeta_col_lifting& zeta_col,
             t_zeta_star_lifting& zeta_star,
@@ -185,15 +191,20 @@ namespace UVLM
             t_sigma_nonlifting& sigma_nonlifting,
             t_surface_vec_nonlifting& normals_nonlifting,
             t_surface_vec_nonlifting& longitudinals_nonlifting,
-            t_surface_vec_nonlifting& perpendiculars_nonlifting
+            t_surface_vec_nonlifting& perpendiculars_nonlifting,
+            t_zeta_phantom& zeta_phantom,
+            t_surface_vec_phantom& normals_phantom,
+            t_surface_vec_phantom& longitudinals_phantom,
+            t_surface_vec_phantom& perpendiculars_phantom
         );
+
         template <typename t_zeta,
                   typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_uext_col,
-                  typename t_surface_vec>
+          typename t_surface_vec>
         void wake_roll_up_lifting
         (
             t_zeta& zeta,
@@ -219,9 +230,11 @@ namespace UVLM
                   typename t_u_induced_col_nonlifting,
                   typename t_sigma,
                   typename t_surface_vec_lifting,
-                  typename t_surface_vec_nonlifting>
+                  typename t_surface_vec_nonlifting,
+                  typename t_zeta_phantom,
+                  typename t_surface_vec_phantom>
         void wake_roll_up_lifting_and_nonlifting
-        (
+        (    
             t_zeta& zeta,
             t_zeta_col& zeta_col,
             t_zeta_star& zeta_star,
@@ -232,7 +245,7 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions,
             t_zeta_nonlifting& zeta_nonlifting,
             t_zeta_col_nonlifting& zeta_col_nonlifting,
-            t_uext_col_nonlifting& zeta_uext_nonlifting,
+            t_uext_col_nonlifting& uext_col_nonlifting,
             t_u_induced_col_nonlifting& u_induced_col_nonlifting,
             t_sigma& sigma,
             t_surface_vec_lifting& longitudinals_lifting,
@@ -241,10 +254,15 @@ namespace UVLM
             t_surface_vec_nonlifting& longitudinals_nonlifting,
             t_surface_vec_nonlifting& perpendiculars_nonlifting,
             t_surface_vec_nonlifting& normals_nonlifting,
+            t_zeta_phantom& zeta_phantom,
+            t_surface_vec_phantom& longitudinals_phantom,
+            t_surface_vec_phantom& perpendiculars_phantom,
+            t_surface_vec_phantom& normals_phantom,
             const UVLM::Types::VMopts& options_nonlifting,
             const uint Ktotal,
             const uint Ktotal_lifting,
-            const uint Ktotal_nonlifting
+            const uint Ktotal_nonlifting,
+            const uint Ktotal_phantom
         );
 
         template <typename t_zeta_star,
@@ -488,6 +506,7 @@ template <typename t_zeta,
             typename t_gamma,
             typename t_gamma_star,
             typename t_forces,
+            typename t_flag_zeta_phantom,
             typename t_rbm_vel_g,
             typename t_zeta_nonlifting,
             typename t_uext_nonlifting,
@@ -502,6 +521,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     t_gamma& gamma,
     t_gamma_star& gamma_star,
     t_forces& forces,
+    t_flag_zeta_phantom& flag_zeta_phantom,
     t_rbm_vel_g& rbm_vel_g,
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
@@ -535,7 +555,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::VecVecMatrixX perpendiculars ;
     UVLM::Types::allocate_VecVecMat(perpendiculars , zeta_col ); 
     UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
-    UVLM::Geometry::generate_surfaceNormal(zeta, normals);
+    //UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     UVLM::Types::Vector3 u_steady;
     u_steady << uext[0][0](0,0),
@@ -555,9 +575,17 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
 
     UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
 
-
+    // -------- Phantom Panels -------
+    // Generate zeta phantom   
+    UVLM::Types::VecVecMatrixX zeta_phantom;
+    UVLM::Phantom::create_phantom_zeta(zeta, zeta_phantom, flag_zeta_phantom);
+    // Generate Surface Vec Phantom
+    UVLM::Types::VecVecMatrixX normals_phantom, longitudinals_phantom, perpendiculars_phantom;
+    UVLM::Types::allocate_VecVecMat(normals_phantom, zeta_phantom, -1);   
+    UVLM::Types::allocate_VecVecMat(longitudinals_phantom , zeta_phantom,-1 );
+    UVLM::Types::allocate_VecVecMat(perpendiculars_phantom, zeta_phantom, -1); 
+    UVLM::Geometry::generate_surface_vectors(zeta_phantom, normals_phantom, longitudinals_phantom, perpendiculars_phantom);
     // Generate collocation points info and panel vectors for nonlifting bodies
-	
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col_nonlifting;
     UVLM::Types::VecVecMatrixX uext_col_nonlifting;
@@ -593,6 +621,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     // size of rhs lifting surface 
     uint Ktotal_lifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
     uint Ktotal_nonlifting = UVLM::Matrix::get_total_VecVecMat_size(uext_col_nonlifting);
+    uint Ktotal_phantom = UVLM::Matrix::get_total_VecVecMat_size(normals_phantom);
     uint Ktotal = Ktotal_lifting + Ktotal_nonlifting;
     if (options.horseshoe)
     {
@@ -623,7 +652,11 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         sigma_nonlifting,
         normals_nonlifting,
         longitudinals_nonlifting,
-        perpendiculars_nonlifting
+        perpendiculars_nonlifting,
+        zeta_phantom,
+        normals_phantom,
+        longitudinals_phantom,
+        perpendiculars_phantom
         );
         if (options.Steady) 
         {
@@ -674,6 +707,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         Ktotal,
         Ktotal_lifting,
         Ktotal_nonlifting,
+        Ktotal_phantom,
         zeta,
         zeta_col,
         zeta_star,
@@ -690,7 +724,11 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         sigma_nonlifting,
         normals_nonlifting,
         longitudinals_nonlifting,
-        perpendiculars_nonlifting
+        perpendiculars_nonlifting,
+        zeta_phantom,
+        normals_phantom,
+        longitudinals_phantom,
+        perpendiculars_phantom
         );
         
         UVLM::Steady::wake_roll_up_lifting_and_nonlifting
@@ -714,41 +752,49 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
             longitudinals_nonlifting,
             perpendiculars_nonlifting,
             normals_nonlifting,
+            zeta_phantom,
+            longitudinals_phantom,
+            perpendiculars_phantom,
+            normals_phantom,
             options_nonlifting,
-            Ktotal,
-            Ktotal_lifting,
-            Ktotal_nonlifting
-        );
-        UVLM::Steady::solve_discretised_lifting_and_nonlifting
-        (
-            options,
-            options_nonlifting,
-            flightconditions,
-            n_surf,
-            n_surf_nonlifting,
             Ktotal,
             Ktotal_lifting,
             Ktotal_nonlifting,
-            zeta,
-            zeta_col,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext_total_col,
-            normals,
-            longitudinals,
-            perpendiculars,
-            zeta_nonlifting,
-            zeta_col_nonlifting,
-            uext_col_nonlifting,
-            u_induced_col_nonlifting,
-            sigma_nonlifting,
-            normals_nonlifting,
-            longitudinals_nonlifting,
-            perpendiculars_nonlifting
+            Ktotal_phantom
         );
-
-        // Post-processing
+        UVLM::Steady::solve_discretised_lifting_and_nonlifting
+        (
+        options,
+        options_nonlifting,
+        flightconditions,
+        n_surf,
+        n_surf_nonlifting,
+        Ktotal,
+        Ktotal_lifting,
+        Ktotal_nonlifting,
+        Ktotal_phantom,
+        zeta,
+        zeta_col,
+        zeta_star,
+        gamma,
+        gamma_star,
+        uext_total_col,
+        normals,
+        longitudinals,
+        perpendiculars,
+        zeta_nonlifting,
+        zeta_col_nonlifting,
+        uext_col_nonlifting,
+        u_induced_col_nonlifting,
+        sigma_nonlifting,
+        normals_nonlifting,
+        longitudinals_nonlifting,
+        perpendiculars_nonlifting,
+        zeta_phantom,
+        normals_phantom,
+        longitudinals_phantom,
+        perpendiculars_phantom
+        );
         UVLM::PostProc::calculate_static_forces_nonlifting_body
         (
             zeta_nonlifting,
@@ -1033,7 +1079,9 @@ template <typename t_zeta_lifting,
           typename t_uext_col_nonlifting,
           typename t_u_induced_col_nonlifting,
           typename t_sigma_nonlifting,
-          typename t_surface_vec_nonlifting>
+          typename t_surface_vec_nonlifting,
+          typename t_zeta_phantom,
+          typename t_surface_vec_phantom>
 void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 (
     const UVLM::Types::VMopts& options,
@@ -1044,6 +1092,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     const uint Ktotal,
     const uint Ktotal_lifting,
     const uint Ktotal_nonlifting,
+    const uint Ktotal_phantom,
     t_zeta_lifting& zeta,
     t_zeta_col_lifting& zeta_col,
     t_zeta_star_lifting& zeta_star,
@@ -1060,11 +1109,17 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     t_sigma_nonlifting& sigma_nonlifting,
     t_surface_vec_nonlifting& normals_nonlifting,
     t_surface_vec_nonlifting& longitudinals_nonlifting,
-    t_surface_vec_nonlifting& perpendiculars_nonlifting
+    t_surface_vec_nonlifting& perpendiculars_nonlifting,
+    t_zeta_phantom& zeta_phantom,
+    t_surface_vec_phantom& normals_phantom,
+    t_surface_vec_phantom& longitudinals_phantom,
+    t_surface_vec_phantom& perpendiculars_phantom
 )
 {
 
     // RHS generation
+    std::cout << "\n ----------- RHS generation ----------- \n";
+    std::cout << " \n --generate RHS lifting -- \n";
     UVLM::Types::VectorX rhs_lifting;
     UVLM::Types::VectorX rhs_nonlifting;
     UVLM::Matrix::RHS(zeta_col,
@@ -1108,7 +1163,11 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                 uext_col_nonlifting,
                                 normals_nonlifting,
                                 longitudinals_nonlifting,
-                                perpendiculars_nonlifting,      
+                                perpendiculars_nonlifting, 
+                                zeta_phantom,
+                                normals_phantom,
+                                longitudinals_phantom,
+                                perpendiculars_phantom,      
                                 aic_nonlifting_x,
                                 aic_nonlifting_y,
                                 aic_nonlifting_z,
@@ -1259,7 +1318,9 @@ template <typename t_zeta,
           typename t_u_induced_col_nonlifting,
           typename t_sigma,
           typename t_surface_vec_lifting,
-          typename t_surface_vec_nonlifting>
+          typename t_surface_vec_nonlifting,
+          typename t_zeta_phantom,
+          typename t_surface_vec_phantom>
 void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
 (
     t_zeta& zeta,
@@ -1281,10 +1342,15 @@ void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
     t_surface_vec_nonlifting& longitudinals_nonlifting,
     t_surface_vec_nonlifting& perpendiculars_nonlifting,
     t_surface_vec_nonlifting& normals_nonlifting,
+    t_zeta_phantom& zeta_phantom,
+    t_surface_vec_phantom& longitudinals_phantom,
+    t_surface_vec_phantom& perpendiculars_phantom,
+    t_surface_vec_phantom& normals_phantom,
     const UVLM::Types::VMopts& options_nonlifting,
     const uint Ktotal,
     const uint Ktotal_lifting,
-    const uint Ktotal_nonlifting
+    const uint Ktotal_nonlifting,
+    const uint Ktotal_phantom
 )
 {
     double zeta_star_norm_first = 0.0;
@@ -1378,35 +1444,40 @@ void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
         if (i_rollup%options.rollup_aic_refresh == 0)
         {      
 
-                // TO-DO: Refactor since not all AIC matrices have to be recreated (??)
-                UVLM::Steady::solve_discretised_lifting_and_nonlifting
-                (
-                    options,
-                    options_nonlifting,
-                    flightconditions,
-                    options.NumSurfaces,
-                    options_nonlifting.NumSurfaces,
-                    Ktotal,
-                    Ktotal_lifting,
-                    Ktotal_nonlifting,
-                    zeta,
-                    zeta_col,
-                    zeta_star,
-                    gamma,
-                    gamma_star,
-                    uext_total_col,
-                    normals_lifting,
-                    longitudinals_lifting,
-                    perpendiculars_lifting,
-                    zeta_nonlifting,
-                    zeta_col_nonlifting,
-                    uext_col_nonlifting,
-                    u_induced_col_nonlifting,
-                    sigma,
-                    normals_nonlifting,
-                    longitudinals_nonlifting,
-                    perpendiculars_nonlifting
-                );
+            // TO-DO: Refactor since not all AIC matrices have to be recreated (??)
+            UVLM::Steady::solve_discretised_lifting_and_nonlifting
+            (
+            options,
+            options_nonlifting,
+            flightconditions,
+            options.NumSurfaces,
+            options_nonlifting.NumSurfaces,
+            Ktotal,
+            Ktotal_lifting,
+            Ktotal_nonlifting,
+            Ktotal_phantom,
+            zeta,
+            zeta_col,
+            zeta_star,
+            gamma,
+            gamma_star,
+            uext_total_col,
+            normals_lifting,
+            longitudinals_lifting,
+            perpendiculars_lifting,
+            zeta_nonlifting,
+            zeta_col_nonlifting,
+            uext_col_nonlifting,
+            u_induced_col_nonlifting,
+            sigma,
+            normals_nonlifting,
+            longitudinals_nonlifting,
+            perpendiculars_nonlifting,
+            zeta_phantom,
+            normals_phantom,
+            longitudinals_phantom,
+            perpendiculars_phantom
+            );
 
          }
         // convergence check -------------------

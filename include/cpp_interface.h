@@ -52,6 +52,19 @@ namespace UVLM
                                                        dimensions[i_surf].second + correction));
             }
         }
+        void map_VecMat_bool(const UVLM::Types::VecDimensions& dimensions,
+                        bool** in,
+                        UVLM::Types::VecMapXb& map,
+                        const int& correction=0)
+        {
+            const unsigned int n_surf = dimensions.size();
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                map.push_back(UVLM::Types::MapMatrixXb (in[i_surf],
+                                                       dimensions[i_surf].second + correction,
+                                                       dimensions[i_surf].first + correction));
+            }
+        }
 
         void map_VecVec1(const UVLM::Types::VecDimensions& dimensions,
                         double** in,

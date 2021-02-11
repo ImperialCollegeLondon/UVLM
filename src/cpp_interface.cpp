@@ -157,7 +157,8 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     double** p_gamma,
     double** p_gamma_star,
     double** p_forces,
-    double* p_rbm_vel_g,
+    bool** p_flag_zeta_phantom,
+    double* p_rbm_vel_g,   
     const UVLM::Types::VMopts& options_nonlifting,
     unsigned int** p_dimensions_nonlifting,
     double** p_zeta_nonlifting,
@@ -226,6 +227,11 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
 
     UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
 
+    UVLM::Types::VecMapXb flag_zeta_phantom;
+    UVLM::CppInterface::map_VecMat_bool(dimensions,
+                                       p_flag_zeta_phantom,
+                                       flag_zeta_phantom,
+                                       0);
     // Setup Nonlifting Body
     unsigned int n_surf_nonlifting;
     n_surf_nonlifting = options_nonlifting.NumSurfaces;
@@ -268,6 +274,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
 		gamma,
 		gamma_star,
 		forces,
+		flag_zeta_phantom,
 		rbm_vel_g,
 		options,
 		flightconditions,
