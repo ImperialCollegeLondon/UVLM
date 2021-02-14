@@ -120,6 +120,7 @@ void UVLM::Unsteady::initialise
     //     rbm_velocity,
     //     uext_resultant
     // );
+    UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
     // call steady solver
     UVLM::Steady::solver
@@ -132,6 +133,7 @@ void UVLM::Unsteady::initialise
         gamma_star,
         forces,
         rbm_velocity,
+        centre_rot,
         options,
         flightconditions
     );
@@ -287,6 +289,7 @@ void UVLM::Unsteady::solver
     // set forces to 0 just in case
     UVLM::Types::initialise_VecVecMat(forces);
     // static:
+    UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
     UVLM::PostProc::calculate_static_forces_unsteady
     (
         zeta,
@@ -296,6 +299,7 @@ void UVLM::Unsteady::solver
         gamma_star,
         uext,
         rbm_velocity,
+        centre_rot,
         forces,
         steady_options,
         flightconditions

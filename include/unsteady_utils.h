@@ -14,6 +14,7 @@ namespace UVLM
                       typename t_zeta_dot,
                       typename t_uext,
                       typename t_rbm_velocity,
+                      typename t_centre_rot,
                       typename t_uext_out>
             void compute_resultant_grid_velocity
             (
@@ -21,6 +22,7 @@ namespace UVLM
                 t_zeta_dot& zeta_dot,
                 t_uext& uext,
                 t_rbm_velocity& rbm_velocity,
+                t_centre_rot& centre_rot,
                 t_uext_out& uext_out
             );
             template <typename t_zeta,
@@ -70,6 +72,7 @@ template <typename t_zeta,
           typename t_zeta_dot,
           typename t_uext,
           typename t_rbm_velocity,
+          typename t_centre_rot,
           typename t_uext_out>
 void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
 (
@@ -77,6 +80,7 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     t_zeta_dot& zeta_dot,
     t_uext& uext,
     t_rbm_velocity& rbm_velocity,
+    t_centre_rot& centre_rot,
     t_uext_out& uext_out
 )
 {
@@ -93,9 +97,9 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         {
             for (uint i_row=0; i_row<n_row; ++i_row)
             {
-                zeta_temp << zeta[i_surf][0](i_row, i_col),
-                             zeta[i_surf][1](i_row, i_col),
-                             zeta[i_surf][2](i_row, i_col);
+                zeta_temp << zeta[i_surf][0](i_row, i_col) - centre_rot(0),
+                             zeta[i_surf][1](i_row, i_col) - centre_rot(1),
+                             zeta[i_surf][2](i_row, i_col) - centre_rot(2);
                 w_cross_zeta =
                     rbm_velocity.template block<3,1> (3, 0).cross(zeta_temp);
                 for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
@@ -222,6 +226,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         // total stream velocity
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
         rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+        UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
@@ -229,6 +234,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             zeros,
             uext_star,
             rbm_no_omega,
+            centre_rot,
             uext_star_total
         );
         // convection with uext + delta u (perturbation)
@@ -273,6 +279,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         // total stream velocity
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
         rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+        UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
@@ -280,6 +287,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             zeros,
             uext_star,
             rbm_no_omega,
+            centre_rot,
             uext_star_total
         );
         // induced velocity by vortex rings

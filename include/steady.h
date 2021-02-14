@@ -27,7 +27,8 @@ namespace UVLM
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_forces,
-                  typename t_rbm_vel_g>
+                  typename t_rbm_vel_g,
+                  typename t_centre_rot_g>
         void solver
         (
             t_zeta& zeta,
@@ -38,6 +39,7 @@ namespace UVLM
             t_gamma_star& gamma_star,
             t_forces& forces,
             t_rbm_vel_g& rbm_vel_g,
+            t_centre_rot_g& centre_rot_g,
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
@@ -93,7 +95,8 @@ template <typename t_zeta,
           typename t_gamma,
           typename t_gamma_star,
           typename t_forces,
-          typename t_rbm_vel_g>
+          typename t_rbm_vel_g,
+          typename t_centre_rot_g>
 void UVLM::Steady::solver
 (
     t_zeta& zeta,
@@ -104,6 +107,7 @@ void UVLM::Steady::solver
     t_gamma_star& gamma_star,
     t_forces& forces,
     t_rbm_vel_g& rbm_vel_g,
+    t_centre_rot_g& centre_rot_g,
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions
 )
@@ -141,6 +145,7 @@ void UVLM::Steady::solver
         zeta_dot,
         uext,
         rbm_vel_g,
+        centre_rot_g,
         uext_total
     );
 
@@ -293,6 +298,7 @@ void UVLM::Steady::solver
         gamma_star,
         uext,
         rbm_vel_g,
+        centre_rot_g,
         forces,
         options,
         flightconditions
