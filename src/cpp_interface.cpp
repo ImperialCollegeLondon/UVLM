@@ -207,6 +207,7 @@ DLLEXPORT void run_UVLM
     double** p_zeta_star,
     double** p_zeta_dot,
     double*  p_rbm_vel,
+    double*  p_centre_rot,
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
@@ -249,6 +250,7 @@ DLLEXPORT void run_UVLM
                                       1);
 
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+    UVLM::Types::MapVectorX centre_rot (p_centre_rot, UVLM::Constants::NDIM);
 
     UVLM::Types::VecVecMapX uext;
     UVLM::CppInterface::map_VecVecMat(dimensions,
@@ -320,6 +322,7 @@ DLLEXPORT void run_UVLM
         normals,
         // previous_gamma,
         rbm_velocity,
+        centre_rot,
         forces,
         dynamic_forces,
         options,

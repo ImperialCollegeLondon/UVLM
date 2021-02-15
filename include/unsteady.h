@@ -30,6 +30,7 @@ namespace UVLM
                   typename t_normals,
                 //   typename t_previous_gamma,
                   typename t_rbm_velocity,
+                  typename t_centre_rot,
                   typename t_forces>
         void solver
         (
@@ -45,6 +46,7 @@ namespace UVLM
             t_normals& normals,
             // const t_previous_gamma& previous_gamma,
             t_rbm_velocity& rbm_velocity,
+            t_centre_rot& centre_rot,
             t_forces& forces,
             t_forces& dynamic_forces,
             const UVLM::Types::UVMopts& options,
@@ -152,6 +154,7 @@ template <typename t_zeta,
           typename t_normals,
         //   typename t_previous_gamma,
           typename t_rbm_velocity,
+          typename t_centre_rot,
           typename t_forces>
 void UVLM::Unsteady::solver
 (
@@ -167,6 +170,7 @@ void UVLM::Unsteady::solver
     t_normals& normals,
     // const t_previous_gamma& previous_gamma,
     t_rbm_velocity& rbm_velocity,
+    t_centre_rot& centre_rot,
     t_forces& forces,
     t_forces& dynamic_forces,
     const UVLM::Types::UVMopts& options,
@@ -260,6 +264,7 @@ void UVLM::Unsteady::solver
                                         dist_to_orig,
                                         uext_star_total,
                                         solid_vel,
+                                        centre_rot,
                                         dt);
     }
 
