@@ -398,8 +398,8 @@ namespace UVLM
                     coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
                     coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
 
-                    new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
-                    new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
+                    new_coord0(i_m) = coef_next*(coord0(i_conv) - centre_rot(0)) + coef_prev*(coord0(i_conv - 1) - centre_rot(0)) + centre_rot(0);
+                    new_coord1(i_m) = coef_next*(coord1(i_conv) - centre_rot(1)) + coef_prev*(coord1(i_conv - 1) - centre_rot(1)) + centre_rot(1);
                 } else {
                     new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
                     new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
