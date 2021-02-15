@@ -63,7 +63,8 @@ namespace UVLM
                 typename t_uext_col_nonlifting,
                 typename t_surface_vec_nonlifting,
                 typename t_zeta_phantom,
-                typename t_surface_vec_phantom>
+                typename t_surface_vec_phantom,
+                typename t_flag_zeta_phantom>
         void aic_combined
             (
                 const uint& Ktotal,
@@ -90,11 +91,23 @@ namespace UVLM
                 const t_surface_vec_phantom& normals_phantom,
                 const t_surface_vec_phantom& longitudinals_phantom,
                 const t_surface_vec_phantom& perpendiculars_phantom,
+                const t_flag_zeta_phantom& flag_zeta_phantom,
                 UVLM::Types::MatrixX& aic_nonlifting_x,
                 UVLM::Types::MatrixX& aic_nonlifting_y,      
                 UVLM::Types::MatrixX& aic_nonlifting_z,
                 UVLM::Types::MatrixX& aic
             );
+        template<typename t_aic_phantom,
+                typename t_aic,
+                typename t_zeta,
+                typename t_flag_zeta_phantom>
+        void add_phantom_AIC_to_AIC
+        (
+            t_aic_phantom& aic_phantom,
+            t_aic& aic,
+            t_zeta& zeta,
+            t_flag_zeta_phantom& flag_zeta_phantom
+        );
         template <typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_uext_col,
@@ -637,7 +650,8 @@ template <typename t_zeta_lifting,
         typename t_uext_col_nonlifting,
         typename t_surface_vec_nonlifting,
         typename t_zeta_phantom,
-        typename t_surface_vec_phantom>
+        typename t_surface_vec_phantom,
+        typename t_flag_zeta_phantom>
 void UVLM::Matrix::aic_combined
     (
         const uint& Ktotal,
@@ -664,13 +678,13 @@ void UVLM::Matrix::aic_combined
         const t_surface_vec_phantom& normals_phantom,
         const t_surface_vec_phantom& longitudinals_phantom,
         const t_surface_vec_phantom& perpendiculars_phantom,
+        const t_flag_zeta_phantom& flag_zeta_phantom,
         UVLM::Types::MatrixX& aic_nonlifting_x,
         UVLM::Types::MatrixX& aic_nonlifting_y,       
         UVLM::Types::MatrixX& aic_nonlifting_z,
         UVLM::Types::MatrixX& aic
     )
     {
-    //UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
     UVLM::Matrix::AIC(Ktotal_lifting,
                       zeta,
                       zeta_col,
@@ -680,7 +694,6 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_lifting);
-    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);
 
     // Lifting on nonlifting surfaces
     UVLM::Matrix::AIC_sources(zeta_nonlifting,
@@ -695,8 +708,6 @@ void UVLM::Matrix::aic_combined
 							  aic_nonlifting_x,
 							  aic_nonlifting_y,
                               aic_nonlifting_z);
-    
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
 
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
@@ -709,8 +720,6 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_lifting_on_nonlifting);
-    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
-
 
     // Nonlifting on lifting surfaces
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_nonlifting);
@@ -728,7 +737,7 @@ void UVLM::Matrix::aic_combined
 							  aic_nonlifting_on_lifting_x,
 							  aic_nonlifting_on_lifting_y,
                               aic_nonlifting_on_lifting_z);
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+                 
     // Phantom panels on lifting cols
     UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);
     UVLM::Matrix::AIC(Ktotal_phantom,
@@ -740,9 +749,7 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_lifting);
-    
-    UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal);
-    // Phantom panels on nonlifting cols           aic_nonlifting_on_lifting_z);
+    // Phantom panels on nonlifting cols         
     UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_phantom);
     UVLM::Matrix::AIC(Ktotal_phantom,
                       zeta_phantom,
@@ -753,8 +760,15 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_nonlifting);
-    UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, Ktotal_lifting, Ktotal);
-
+   
+    
+    UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_lifting, aic_lifting, zeta, flag_zeta_phantom);   
+    UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_nonlifting, aic_lifting_on_nonlifting, zeta, flag_zeta_phantom);
+    // combine individual AICs to one matrix
+    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);    
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
 }
 
 uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
@@ -769,4 +783,66 @@ uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
         ii += M*N;
     }
     return ii;
+}
+
+
+
+template<typename t_aic_phantom,
+            typename t_aic,
+            typename t_zeta,
+            typename t_flag_zeta_phantom>
+void UVLM::Matrix::add_phantom_AIC_to_AIC
+(
+    t_aic_phantom& aic_phantom,
+    t_aic& aic,
+    t_zeta& zeta,
+    t_flag_zeta_phantom& flag_zeta_phantom
+)
+{
+    /* Function adds the AIC of the phantom panel on the collocation points to the adjacent wing panel
+       --> Keeps the combined AIC matrix squared
+       --> enforces the circulation BC at the junction (Gamma_phantom == Gamma_wing_junction)*/
+    const uint n_surf_panel = zeta.size();
+    const uint N_rows_aic = aic.rows();
+    uint N_phantom_cell, N_row_phantom, index_phantom, offset_aic_phantom = 0;
+    // build the offsets beforehand
+    std::vector<uint> offset_panel;
+    UVLM::Types::VecDimensions dimensions_panel;
+    UVLM::Types::generate_dimensions(zeta, dimensions_panel, - 1);
+	UVLM::Matrix::build_offsets(n_surf_panel,
+								dimensions_panel,
+								offset_panel);
+
+    for (uint jpanel_surf=0; jpanel_surf<n_surf_panel; ++jpanel_surf)
+    {
+        N_phantom_cell = (flag_zeta_phantom[jpanel_surf] > 0).count();
+        if (N_phantom_cell>0)
+        {
+            // Get index
+            for(Eigen::Index i=0; i<flag_zeta_phantom[jpanel_surf].size(); ++i)
+            {
+                if(flag_zeta_phantom[jpanel_surf](i))
+                {
+                    index_phantom = i;
+                    break;
+                }
+            }
+            uint k_surf_panel_j = dimensions_panel[jpanel_surf].first*
+                                    dimensions_panel[jpanel_surf].second;
+            N_row_phantom = dimensions_panel[jpanel_surf].first;
+            
+            for(Eigen::Index j_panel=0; j_panel<flag_zeta_phantom[jpanel_surf].size(); ++j_panel)
+            {
+                if(flag_zeta_phantom[jpanel_surf](j_panel))
+                {
+                    for(uint i_phantom_row=0; i_phantom_row<N_row_phantom; ++i_phantom_row)
+                    {
+                    aic.col(offset_panel[jpanel_surf]+j_panel*N_row_phantom+i_phantom_row)
+                            +=aic_phantom.col(offset_aic_phantom+i_phantom_row);
+                    }
+                    offset_aic_phantom+=N_row_phantom;
+                }
+            }
+        }
+    }
 }
