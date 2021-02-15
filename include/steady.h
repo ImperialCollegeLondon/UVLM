@@ -877,8 +877,7 @@ void UVLM::Steady::solve_horseshoe
 
     // AIC generation
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Matrix::AIC(Ktotal,
-                      zeta,
+    UVLM::Matrix::AIC(zeta,
                       zeta_col,
                       zeta_star,
                       uext_col,
@@ -953,8 +952,7 @@ void UVLM::Steady::solve_discretised
                       Ktotal);
 
     // AIC generation
-    UVLM::Matrix::AIC(Ktotal,
-                      zeta,
+    UVLM::Matrix::AIC(zeta,
                       zeta_col,
                       zeta_star,
                       uext_col,

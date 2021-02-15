@@ -200,7 +200,6 @@ template <typename t_zeta,
           typename t_aic>
 void UVLM::Matrix::AIC
 (
-    const uint& Ktotal,
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
@@ -685,8 +684,7 @@ void UVLM::Matrix::aic_combined
         UVLM::Types::MatrixX& aic
     )
     {
-    UVLM::Matrix::AIC(Ktotal_lifting,
-                      zeta,
+    UVLM::Matrix::AIC(zeta,
                       zeta_col,
                       zeta_star,
                       uext_col,
@@ -711,8 +709,7 @@ void UVLM::Matrix::aic_combined
 
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
-    UVLM::Matrix::AIC(Ktotal_lifting,
-                      zeta,
+    UVLM::Matrix::AIC(zeta,
                       zeta_col_nonlifting,
                       zeta_star,
                       uext_col_nonlifting,
@@ -740,8 +737,7 @@ void UVLM::Matrix::aic_combined
                  
     // Phantom panels on lifting cols
     UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);
-    UVLM::Matrix::AIC(Ktotal_phantom,
-                      zeta_phantom,
+    UVLM::Matrix::AIC(zeta_phantom,
                       zeta_col,
                       zeta_star,
                       uext_col,
@@ -749,10 +745,9 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_lifting);
-    // Phantom panels on nonlifting cols         
+    // Phantom panels on nonlifting cols
     UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_phantom);
-    UVLM::Matrix::AIC(Ktotal_phantom,
-                      zeta_phantom,
+    UVLM::Matrix::AIC(zeta_phantom,
                       zeta_col_nonlifting,
                       zeta_star,
                       uext_col_nonlifting,
