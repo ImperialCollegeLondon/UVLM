@@ -1186,19 +1186,18 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 
 
     // linear system solution
-    UVLM::Types::VectorX gamma_and_sigma_plus_phantom_flat = UVLM::Types::VectorX::Zero(Ktotal+Ktotal_phantom);
+    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
     UVLM::LinearSolver::solve_system
     (
         aic,
         rhs,
         options,
-        gamma_and_sigma_plus_phantom_flat
+        gamma_and_sigma_flat
     );
     // split gamma and sigma Vector
-    UVLM::Types::VectorX gamma_flat = gamma_and_sigma_plus_phantom_flat.head(Ktotal_lifting);
-    UVLM::Types::VectorX gamma_phantom_flat = gamma_and_sigma_plus_phantom_flat.tail(Ktotal_phantom);
-    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_plus_phantom_flat.block(Ktotal_lifting, 0, Ktotal_nonlifting, 1);
-    
+    UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(Ktotal_lifting);
+    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);    
+
 
     // gamma flat to gamma
     // probably could be done better with a Map
