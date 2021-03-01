@@ -22,7 +22,7 @@ namespace UVLM
         typedef Eigen::Map<MatrixX> MapMatrixX;
         typedef Eigen::Map<MatrixXb> MapMatrixXb;
         typedef Eigen::Map<const MatrixX> cMapMatrixX;
-        typedef std::vector<MatrixX> VecMatrixX;
+        typedef std::vector<MatrixX> VecMatrixX;;
         typedef std::vector<VecMatrixX> VecVecMatrixX;
         typedef std::vector<VecVecMatrixX> VecVecVecMatrixX;
         typedef std::vector<MapMatrixX> VecMapX;
