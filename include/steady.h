@@ -580,15 +580,21 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Geometry::generate_colocationMesh(uext_total, uext_total_col);
 
     // -------- Phantom Panels -------
-    // Generate zeta phantom   
+      
+    // Phantom Cells required if true in flag zeta phantom array
+    const bool phantom_cell_required = UVLM::Phantom::check_for_true_in_bool_vec_mat(flag_zeta_phantom);
+    
     UVLM::Types::VecVecMatrixX zeta_phantom;
-    UVLM::Phantom::create_phantom_zeta(zeta, zeta_phantom, flag_zeta_phantom);
     // Generate Surface Vec Phantom
     UVLM::Types::VecVecMatrixX normals_phantom, longitudinals_phantom, perpendiculars_phantom;
-    UVLM::Types::allocate_VecVecMat(normals_phantom, zeta_phantom, -1);   
-    UVLM::Types::allocate_VecVecMat(longitudinals_phantom , zeta_phantom,-1 );
-    UVLM::Types::allocate_VecVecMat(perpendiculars_phantom, zeta_phantom, -1); 
-    UVLM::Geometry::generate_surface_vectors(zeta_phantom, normals_phantom, longitudinals_phantom, perpendiculars_phantom);
+    if (phantom_cell_required)
+    {
+        UVLM::Phantom::create_phantom_zeta(zeta, zeta_phantom, flag_zeta_phantom);
+        UVLM::Types::allocate_VecVecMat(normals_phantom, zeta_phantom, -1);   
+        UVLM::Types::allocate_VecVecMat(longitudinals_phantom , zeta_phantom,-1 );
+        UVLM::Types::allocate_VecVecMat(perpendiculars_phantom, zeta_phantom, -1); 
+        UVLM::Geometry::generate_surface_vectors(zeta_phantom, normals_phantom, longitudinals_phantom, perpendiculars_phantom);
+    }
     // Generate collocation points info and panel vectors for nonlifting bodies
     //  Declaration
     UVLM::Types::VecVecMatrixX zeta_col_nonlifting;

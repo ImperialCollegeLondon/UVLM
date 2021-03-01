@@ -19,7 +19,11 @@ namespace UVLM
             t_zeta_phantom& zeta_phantom,
             t_flag_zeta_phantom& flag_zeta_phantom
         );
-
+        template<typename t_flag_zeta_phantom>
+        bool check_for_true_in_bool_vec_mat
+        (
+            t_flag_zeta_phantom& flag_zeta_phantom
+        );
     }
 }
 
@@ -86,4 +90,24 @@ void UVLM::Phantom::create_phantom_zeta
         }
 
     }
+}
+
+
+template<typename t_flag_zeta_phantom>
+bool UVLM::Phantom::check_for_true_in_bool_vec_mat
+(
+    t_flag_zeta_phantom& flag_zeta_phantom
+)
+{
+    for(uint i_surf=0; i_surf<flag_zeta_phantom.size(); ++i_surf)
+    {
+        for(uint i_row=0; i_row < flag_zeta_phantom[i_surf].size();++i_row)
+        {
+            if (flag_zeta_phantom[i_surf][i_row])
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
