@@ -832,7 +832,7 @@ void UVLM::Matrix::add_phantom_AIC_to_AIC
                 {
                     for(uint i_phantom_row=0; i_phantom_row<N_row_phantom; ++i_phantom_row)
                     {
-                    aic.col(offset_panel[jpanel_surf]+j_panel*N_row_phantom+i_phantom_row)
+                    aic.col(offset_panel[jpanel_surf]+j_panel+i_phantom_row*N_row_phantom)
                             +=aic_phantom.col(offset_aic_phantom+i_phantom_row);
                     }
                     offset_aic_phantom+=N_row_phantom;
