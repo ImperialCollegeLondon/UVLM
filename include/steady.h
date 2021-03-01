@@ -602,14 +602,10 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::VecVecMatrixX uext_total_nonlifting;
     UVLM::Types::VecVecMatrixX uext_total_col_nonlifting;
     UVLM::Types::VecVecMatrixX u_induced_col_nonlifting;
-
+    
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(zeta_nonlifting, zeta_col_nonlifting);
     UVLM::Geometry::generate_colocationMesh(uext_nonlifting, uext_col_nonlifting);
-
-    //UVLM::Types::allocate_VecVecMat(zeta_col, uext_col);
-	//std::cout << "Vefore opy Zeta Collocation Points\n";
-    // UVLM::Types::copy_VecVecMat(zeta_col_map, zeta_col);
 
     UVLM::Types::allocate_VecVecMat(uext_total_nonlifting, uext_nonlifting);
     UVLM::Types::copy_VecVecMat(uext_nonlifting, uext_total_nonlifting);
@@ -1159,7 +1155,8 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::MatrixX aic_nonlifting_x = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_y = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_z = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);//+Ktotal_phantom);
+    //UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal+Ktotal_phantom);
     UVLM::Matrix::aic_combined(Ktotal,
                                 Ktotal_lifting,
                                 Ktotal_nonlifting, 
@@ -1192,7 +1189,8 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 
 
     // linear system solution
-    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
+    UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal+Ktotal_phantom);
+    //UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
     UVLM::LinearSolver::solve_system
     (
         aic,
@@ -1202,8 +1200,8 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     );
     // split gamma and sigma Vector
     UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(Ktotal_lifting);
-    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.tail(Ktotal_nonlifting);    
-
+    UVLM::Types::VectorX gamma_phantom_flat = gamma_and_sigma_flat.tail(Ktotal_phantom);    
+    UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.block(Ktotal_lifting, 0, Ktotal_nonlifting, 1);  
 
     // gamma flat to gamma
     // probably could be done better with a Map
@@ -1211,9 +1209,8 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                     gamma,
                                     zeta_col);
     // copy gamma from trailing edge to wake
-
+    int in_n_rows = -1;
     if (options.Steady) {
-        int in_n_rows = -1;
         UVLM::Wake::Horseshoe::circulation_transfer(gamma,
                                                 gamma_star,
                                                 in_n_rows);

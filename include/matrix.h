@@ -755,15 +755,17 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_nonlifting);
-   
-    
-    UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_lifting, aic_lifting, zeta, flag_zeta_phantom);   
-    UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_nonlifting, aic_lifting_on_nonlifting, zeta, flag_zeta_phantom);
-    // combine individual AICs to one matrix
-    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);    
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
-    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
-    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+
+
+   //UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_lifting, aic_lifting, zeta, flag_zeta_phantom);   
+   //UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_nonlifting, aic_lifting_on_nonlifting, zeta, flag_zeta_phantom);
+   UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);    
+   UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
+   UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
+   UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+   UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal_lifting+Ktotal_nonlifting);
+   UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, Ktotal_lifting, Ktotal_lifting+Ktotal_nonlifting);
+
 }
 
 uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
