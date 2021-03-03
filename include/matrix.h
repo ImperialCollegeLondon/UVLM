@@ -51,7 +51,8 @@ namespace UVLM
             const UVLM::Types::VMopts& options,
             t_aic& aic_sources_x,
             t_aic& aic_sources_y,
-            t_aic& aic_sources_z
+            t_aic& aic_sources_z,
+            const bool& same_body = true
         );
         template <typename t_zeta_lifting,
                 typename t_zeta_col_lifting,
@@ -329,11 +330,13 @@ void UVLM::Matrix::AIC_sources
     const UVLM::Types::VMopts& options,
     t_aic& aic_sources_x,
     t_aic& aic_sources_y,
-    t_aic& aic_sources_z
+    t_aic& aic_sources_z,
+    const bool& same_body
 )
 {
     const uint n_surf_panel = zeta.size();
     const uint n_surf_col = zeta_col.size();
+    bool same_surface= false;
     UVLM::Types::VecDimensions dimensions_panel, dimensions_col;
     UVLM::Types::generate_dimensions(zeta, dimensions_panel, - 1);
     UVLM::Types::generate_dimensions(zeta_col, dimensions_col, 0);
@@ -367,6 +370,7 @@ void UVLM::Matrix::AIC_sources
 
             if (options.Steady)
             {
+                same_surface=((icol_surf==jpanel_surf)&&(same_body));
                 UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
                                                                 zeta_col[icol_surf],
                                                                 block_aic_x,
@@ -377,7 +381,8 @@ void UVLM::Matrix::AIC_sources
                                                                 normals_panel[jpanel_surf],
                                                                 longitudinals_col[icol_surf],
                                                                 perpendiculars_col[icol_surf],
-                                                                normals_col[icol_surf]
+                                                                normals_col[icol_surf],
+                                                                same_surface
                                                                 );
             }
         }
@@ -705,7 +710,8 @@ void UVLM::Matrix::aic_combined
                               options_nonlifting,
 							  aic_nonlifting_x,
 							  aic_nonlifting_y,
-                              aic_nonlifting_z);
+                              aic_nonlifting_z,
+                              true);
 
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_lifting);
@@ -733,7 +739,8 @@ void UVLM::Matrix::aic_combined
                               options_nonlifting,
 							  aic_nonlifting_on_lifting_x,
 							  aic_nonlifting_on_lifting_y,
-                              aic_nonlifting_on_lifting_z);
+                              aic_nonlifting_on_lifting_z,
+                              false);
                  
     // Phantom panels on lifting cols
     UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);

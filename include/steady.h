@@ -558,7 +558,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::allocate_VecVecMat(longitudinals , zeta_col );
     UVLM::Types::VecVecMatrixX perpendiculars ;
     UVLM::Types::allocate_VecVecMat(perpendiculars , zeta_col ); 
-    UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
+    UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars, true);
     //UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     UVLM::Types::Vector3 u_steady;

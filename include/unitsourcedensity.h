@@ -33,7 +33,8 @@ namespace UVLM
             const t_surf_vec_panel&    normal_panel = NULL,
             const t_surf_vec_col&    longitudinal_col = NULL,
             const t_surf_vec_col&    perpendicular_col = NULL,
-            const t_surf_vec_col&    normal_col = NULL
+            const t_surf_vec_col&    normal_col = NULL,
+			const bool& same_surface = false
         );
 
         void get_q_vec
@@ -91,7 +92,8 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 	const t_surf_vec_panel&    normal_panel,
 	const t_surf_vec_col&    longitudinal_col,
 	const t_surf_vec_col&    perpendicular_col,
-	const t_surf_vec_col&    normal_col
+	const t_surf_vec_col&    normal_col,
+	const bool& same_surface
     )
     {
     const unsigned int rows_collocation = target_surface[0].rows();
@@ -188,22 +190,15 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 													   d_vec,
 													   Q_vec);
 
-					flag_if_col_on_panel = false;
-					if (abs(collocation_point_transf[2])< 0.00000000001)
+					if((same_surface) && (i_col==i_panel)&&(j_col==j_panel))
 					{
-						flag_if_col_on_panel =UVLM::UnitSourceDensity::check_if_col_on_panel(S_vec,
-																							C_vec,
-																							delta_epsilon_x_vec,
-																							delta_eta_y_vec); 
-						if(flag_if_col_on_panel)
-							{
-							induced_velocity_vec[0] = 0;
-							induced_velocity_vec[1] = 0; 
-							induced_velocity_vec[2] = 0.5;
-						}
+						induced_velocity_vec[0] = 0;
+						induced_velocity_vec[1] = 0; 
+						induced_velocity_vec[2] = 0.5;
 					}
-					if (!flag_if_col_on_panel)
+					else
 					{
+						
 						induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
 						induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
 						induced_velocity_vec[2] = 0;
