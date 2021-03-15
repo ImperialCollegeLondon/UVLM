@@ -139,9 +139,6 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
         for (unsigned int j_panel=0; j_panel<cols_panel; ++j_panel)
         {
             collocation_id = 0;
-			UVLM::Types::Vector3 collocation_point_i = UVLM::Types::Vector3(target_surface[0](i_panel, j_panel),
-													   target_surface[1](i_panel, j_panel),
-													   target_surface[2](i_panel, j_panel));
             longitudinal_panel_vec = UVLM::Types::Vector3(longitudinal_panel[0](i_panel, j_panel), longitudinal_panel[1](i_panel, j_panel), longitudinal_panel[2](i_panel, j_panel));
             perpendicular_panel_vec = UVLM::Types::Vector3(perpendicular_panel[0](i_panel, j_panel), perpendicular_panel[1](i_panel, j_panel), perpendicular_panel[2](i_panel, j_panel));
             normal_panel_vec = UVLM::Types::Vector3(normal_panel[0](i_panel, j_panel), normal_panel[1](i_panel, j_panel), normal_panel[2](i_panel, j_panel));
