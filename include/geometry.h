@@ -295,15 +295,15 @@ namespace UVLM
                     for (uint i_row = 0; i_row < N_row; ++i_row)
                     {
     
-                        normal[i_surf][i_dim](i_row, N_col) = normal[i_surf][i_dim](i_row, N_col-1);
-                        longitudinal[i_surf][i_dim](i_row, N_col) = longitudinal[i_surf][i_dim](i_row, N_col-1);
-                        perpendicular[i_surf][i_dim](i_row, N_col) = perpendicular[i_surf][i_dim](i_row, N_col-1);
+                        normal[i_surf][i_dim](i_row, N_col - 1) = normal[i_surf][i_dim](i_row, N_col-2);
+                        longitudinal[i_surf][i_dim](i_row, N_col - 1) = longitudinal[i_surf][i_dim](i_row, N_col-2);
+                        perpendicular[i_surf][i_dim](i_row, N_col - 1) = perpendicular[i_surf][i_dim](i_row, N_col-2);
                     }                
                     for (uint i_col = 0; i_col < N_col; ++i_col)
                     {
-                        normal[i_surf][i_dim](N_row, i_col) = normal[i_surf][i_dim](N_row-1, i_col);
-                        longitudinal[i_surf][i_dim](N_row, i_col) = longitudinal[i_surf][i_dim](N_row-1, i_col);
-                        perpendicular[i_surf][i_dim](N_row, i_col) = perpendicular[i_surf][i_dim](N_row-1, i_col);
+                        normal[i_surf][i_dim](N_row - 1, i_col) = normal[i_surf][i_dim](N_row-2, i_col);
+                        longitudinal[i_surf][i_dim](N_row - 1, i_col) = longitudinal[i_surf][i_dim](N_row-2, i_col);
+                        perpendicular[i_surf][i_dim](N_row - 1, i_col) = perpendicular[i_surf][i_dim](N_row-2, i_col);
                     }   
                 }
             }
