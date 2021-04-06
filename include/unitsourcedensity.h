@@ -186,18 +186,18 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					UVLM::UnitSourceDensity::get_q_vec(radius_vec,
 													   d_vec,
 													   Q_vec);
-
+					induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
+					induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
 					if((same_surface) && (i_col==i_panel)&&(j_col==j_panel))
 					{
-						induced_velocity_vec[0] = 0;
-						induced_velocity_vec[1] = 0; 
+						//std::cout << "\nInduced Vx = " << induced_velocity_vec[0] << std::endl;
+						//std::cout << "\nInduced Vy = " << induced_velocity_vec[1] << std::endl;
 						induced_velocity_vec[2] = 0.5;
 					}
 					else
 					{
 						
-						induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
-						induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
+						
 						induced_velocity_vec[2] = 0;
 						if (abs(collocation_point_transf[2])!= 0.0)
 						{
