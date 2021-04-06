@@ -792,15 +792,15 @@ void UVLM::Matrix::aic_combined
                                                zeta_col,
                                                zeta_col_phantom,
                                                circulation_bc_phantom);
-    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);   
 
+    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0); 
     UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
     UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
     UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
 
     UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, Ktotal_lifting, Ktotal);
-
     UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal);
+
     UVLM::Types::copy_Mat_to_block(circulation_bc_phantom, aic, Ktotal, 0);
 }
 
