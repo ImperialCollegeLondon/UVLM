@@ -779,12 +779,12 @@ namespace UVLM
 			t_u_ind& u_induced_col
         )
 		{
-			uint n_rows = u_induced_x.rows();
-			uint n_cols = u_induced_x.cols();
-            UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_rows*n_cols);
-			for (uint i_col=0; i_col<n_rows; i_col++)
+			uint n_collocation_points = u_induced_x.rows();
+			uint n_panels = u_induced_x.cols();
+            UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_collocation_points);
+			for (uint i_col=0; i_col<n_collocation_points; i_col++)
 			{
-				for (uint j_source=0; j_source<n_cols; j_source++)
+				for (uint j_source=0; j_source<n_panels; j_source++)
 				{
 					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_source)* sigma_flat(j_source);
 					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_source)* sigma_flat(j_source);
