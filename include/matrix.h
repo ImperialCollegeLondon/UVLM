@@ -793,7 +793,8 @@ void UVLM::Matrix::aic_combined
                       aic_phantom_on_nonlifting);
     
     // Get matrix to enforce linear interpolated circulation on phantom panels
-    
+    UVLM::Types::VecVecMatrixX zeta_col_phantom;          
+    UVLM::Geometry::generate_colocationMesh(zeta_phantom, zeta_col_phantom);     
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(Ktotal_phantom, Ktotal+Ktotal_phantom);
     UVLM::Matrix::aic_phantom_interp_condition(Ktotal_lifting,
                                                Ktotal_nonlifting, 
