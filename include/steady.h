@@ -163,6 +163,7 @@ namespace UVLM
                   typename t_sigma_nonlifting,
                   typename t_surface_vec_nonlifting,
                   typename t_zeta_phantom,
+                  typename t_zeta_star_phantom,
                   typename t_surface_vec_phantom,
                   typename t_flag_zeta_phantom>
         void solve_discretised_lifting_and_nonlifting
@@ -194,6 +195,7 @@ namespace UVLM
             t_surface_vec_nonlifting& longitudinals_nonlifting,
             t_surface_vec_nonlifting& perpendiculars_nonlifting,
             t_zeta_phantom& zeta_phantom,
+            t_zeta_star_phantom& zeta_star_phantom,
             t_surface_vec_phantom& normals_phantom,
             t_surface_vec_phantom& longitudinals_phantom,
             t_surface_vec_phantom& perpendiculars_phantom,  
@@ -558,7 +560,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::allocate_VecVecMat(longitudinals , zeta_col );
     UVLM::Types::VecVecMatrixX perpendiculars ;
     UVLM::Types::allocate_VecVecMat(perpendiculars , zeta_col ); 
-    UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars, true);
+    UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
     //UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
     UVLM::Types::Vector3 u_steady;
@@ -584,12 +586,14 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     // Phantom Cells required if true in flag zeta phantom array
     const bool phantom_cell_required = UVLM::Phantom::check_for_true_in_bool_vec_mat(flag_zeta_phantom);
     
-    UVLM::Types::VecVecMatrixX zeta_phantom;
-    // Generate Surface Vec Phantom
-    UVLM::Types::VecVecMatrixX normals_phantom, longitudinals_phantom, perpendiculars_phantom;
+    // Generate Panels, Collocation points and Surface Vec Phantom
+    UVLM::Types::VecVecMatrixX zeta_phantom, zeta_star_phantom, zeta_col_phantom,normals_phantom, longitudinals_phantom, perpendiculars_phantom;
+    std::cout<<"\n---------CHECK FOR PHANTOM PANELS!---------\n";
     if (phantom_cell_required)
     {
         UVLM::Phantom::create_phantom_zeta(zeta, zeta_phantom, flag_zeta_phantom);
+        UVLM::Phantom::create_phantom_zeta_star(zeta_phantom, zeta_star, zeta_star_phantom); 
+        UVLM::Geometry::generate_colocationMesh(zeta_phantom, zeta_col_phantom);
         UVLM::Types::allocate_VecVecMat(normals_phantom, zeta_phantom, -1);   
         UVLM::Types::allocate_VecVecMat(longitudinals_phantom , zeta_phantom,-1 );
         UVLM::Types::allocate_VecVecMat(perpendiculars_phantom, zeta_phantom, -1); 
@@ -661,6 +665,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         longitudinals_nonlifting,
         perpendiculars_nonlifting,
         zeta_phantom,
+        zeta_star_phantom,
         normals_phantom,
         longitudinals_phantom,
         perpendiculars_phantom,
@@ -670,37 +675,13 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         {
         int in_n_rows = -1;
         UVLM::Wake::Horseshoe::circulation_transfer(gamma,
-                                                    gamma_star,
-                                                    in_n_rows);
+                                                        gamma_star,
+                                                        in_n_rows);
         }
-        UVLM::PostProc::calculate_static_forces
-        (
-            zeta,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext_total,
-            forces,
-            options,
-            flightconditions
-        );
-        UVLM::PostProc::calculate_static_forces_nonlifting_body
-        (
-            zeta_nonlifting,
-            sigma_nonlifting,
-            normals_nonlifting,
-            longitudinals_nonlifting,
-            perpendiculars_nonlifting,
-            uext_col_nonlifting,
-            u_induced_col_nonlifting,
-            forces_nonlifting,
-            options_nonlifting,
-            flightconditions
-        );
+
         UVLM::Wake::Horseshoe::to_discretised(zeta_star,
                                               gamma_star,
                                               delta_x);
-        return;
     }
     else
     {
@@ -734,6 +715,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         longitudinals_nonlifting,
         perpendiculars_nonlifting,
         zeta_phantom,
+        zeta_star_phantom,
         normals_phantom,
         longitudinals_phantom,
         perpendiculars_phantom,
@@ -1090,6 +1072,7 @@ template <typename t_zeta_lifting,
           typename t_sigma_nonlifting,
           typename t_surface_vec_nonlifting,
           typename t_zeta_phantom,
+          typename t_zeta_star_phantom,
           typename t_surface_vec_phantom,
           typename t_flag_zeta_phantom>
 void UVLM::Steady::solve_discretised_lifting_and_nonlifting
@@ -1121,6 +1104,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     t_surface_vec_nonlifting& longitudinals_nonlifting,
     t_surface_vec_nonlifting& perpendiculars_nonlifting,
     t_zeta_phantom& zeta_phantom,
+    t_zeta_star_phantom& zeta_star_phantom,
     t_surface_vec_phantom& normals_phantom,
     t_surface_vec_phantom& longitudinals_phantom,
     t_surface_vec_phantom& perpendiculars_phantom,  
@@ -1148,6 +1132,11 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                       Ktotal_nonlifting,
                                       n_surf_nonlifting);
     UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
+    UVLM::Types::VectorX rhs_phantom;
+    rhs_phantom.setZero(Ktotal_phantom);
+    UVLM::Types::VectorX rhs;
+        UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
+        rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
 
     // AIC generation
     std::cout << "\n ----------- AIC generation ----------- \n";    
@@ -1156,7 +1145,8 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::MatrixX aic_nonlifting_y = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_z = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     //UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal+Ktotal_phantom);
+    //UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal+Ktotal_phantom);
+    UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal+Ktotal_phantom, Ktotal+Ktotal_phantom);
     UVLM::Matrix::aic_combined(Ktotal,
                                 Ktotal_lifting,
                                 Ktotal_nonlifting, 
@@ -1178,6 +1168,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                 longitudinals_nonlifting,
                                 perpendiculars_nonlifting, 
                                 zeta_phantom,
+                                zeta_star_phantom,
                                 normals_phantom,
                                 longitudinals_phantom,
                                 perpendiculars_phantom,      

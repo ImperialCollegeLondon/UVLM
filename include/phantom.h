@@ -18,6 +18,15 @@ namespace UVLM
             t_zeta& zeta,
             t_zeta_phantom& zeta_phantom,
             t_flag_zeta_phantom& flag_zeta_phantom
+        );        
+        template<typename t_zeta_phantom,
+                 typename t_zeta_star,
+                 typename t_zeta_phantom_star>
+        void create_phantom_zeta_star
+        (
+            t_zeta_phantom& zeta_phantom,
+            t_zeta_star& zeta_star,
+            t_zeta_phantom_star& zeta_phantom_star
         );
         template<typename t_flag_zeta_phantom>
         bool check_for_true_in_bool_vec_mat
@@ -94,6 +103,43 @@ void UVLM::Phantom::create_phantom_zeta
     }
 }
 
+template<typename t_zeta_phantom,
+            typename t_zeta_star,
+            typename t_zeta_phantom_star>
+void UVLM::Phantom::create_phantom_zeta_star
+(
+    t_zeta_phantom& zeta_phantom,
+    t_zeta_star& zeta_star,
+    t_zeta_phantom_star& zeta_phantom_star
+)
+{
+    // allocate zeta phantom star
+    uint N_rows, N_cols, N_rows_zeta_phantom;
+    const uint n_surf_phantom = zeta_phantom.size();
+    zeta_phantom_star.resize(n_surf_phantom);
+    for (uint i_surf=0; i_surf <n_surf_phantom; ++i_surf)
+    {
+        zeta_phantom_star[i_surf].resize(UVLM::Constants::NDIM);
+        N_rows = zeta_star[i_surf][0].rows();
+        N_cols = zeta_phantom[i_surf][0].cols();
+        N_rows_zeta_phantom =zeta_phantom[i_surf][0].rows();
+        for(uint i_dim=0; i_dim<UVLM::Constants::NDIM;++i_dim)
+        {
+            zeta_phantom_star[i_surf][i_dim].resize(N_rows, N_cols);
+        }
+        // set coordinates of zeta phantom star
+        for (uint i_row=0; i_row<N_rows;++i_row)
+        {
+            for (uint i_col=0; i_col<N_cols;++i_col)
+            {
+                // TO-DO: Generalize case, or outsource whole phantom panels generation to SHARPy
+                zeta_phantom_star[i_surf][1](i_row, i_col) = zeta_phantom[i_surf][1](N_rows_zeta_phantom-1, i_col);
+                zeta_phantom_star[i_surf][0](i_row, i_col) = zeta_star[i_surf][0](i_row, 0);
+                zeta_phantom_star[i_surf][2](i_row, i_col) = zeta_star[i_surf][2](i_row, 0);
+            }
+        }
+    }
+}
 
 template<typename t_flag_zeta_phantom>
 bool UVLM::Phantom::check_for_true_in_bool_vec_mat
