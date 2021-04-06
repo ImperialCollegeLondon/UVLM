@@ -100,6 +100,18 @@ namespace UVLM
                 UVLM::Types::MatrixX& aic_nonlifting_z,
                 UVLM::Types::MatrixX& aic
             );
+            template<typename t_zeta_col, 
+                    typename t_zeta_phantom_col,
+                    typename t_aic_phantom_out>
+            void aic_phantom_interp_condition
+            (
+                const uint& Ktotal_lifting,
+                const uint& Ktotal_nonlifting, 
+                const uint& Ktotal_phantom, 
+                t_zeta_col& zeta_col,
+                t_zeta_phantom_col& zeta_phantom_col,
+                t_aic_phantom_out& aic_phantom_out
+            );
         template<typename t_aic_phantom,
                 typename t_aic,
                 typename t_zeta,
@@ -779,18 +791,26 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_nonlifting);
-
+    
     // Get matrix to enforce linear interpolated circulation on phantom panels
+    
+    UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(Ktotal_phantom, Ktotal+Ktotal_phantom);
+    UVLM::Matrix::aic_phantom_interp_condition(Ktotal_lifting,
+                                               Ktotal_nonlifting, 
+                                               Ktotal_phantom, 
+                                               zeta_col,
+                                               zeta_col_phantom,
+                                               circulation_bc_phantom);
+    UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);   
 
-   //UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_lifting, aic_lifting, zeta, flag_zeta_phantom);   
-   //UVLM::Matrix::add_phantom_AIC_to_AIC(aic_phantom_on_nonlifting, aic_lifting_on_nonlifting, zeta, flag_zeta_phantom);
-   UVLM::Types::copy_Mat_to_block(aic_lifting, aic, 0, 0);    
-   UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
-   UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
-   UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_z, aic, Ktotal_lifting, Ktotal_lifting);
+    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, Ktotal_lifting,0);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, Ktotal_lifting);
 
     UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, Ktotal_lifting, Ktotal);
+
     UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal);
+    UVLM::Types::copy_Mat_to_block(circulation_bc_phantom, aic, Ktotal, 0);
 }
 
 uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
@@ -864,6 +884,62 @@ void UVLM::Matrix::add_phantom_AIC_to_AIC
                     }
                     offset_aic_phantom+=N_row_phantom;
                 }
+            }
+    }
+}
+
+template<typename t_zeta_col, 
+         typename t_zeta_phantom_col,
+         typename t_aic_phantom_out>
+void UVLM::Matrix::aic_phantom_interp_condition
+(
+    const uint& Ktotal_lifting,
+    const uint& Ktotal_nonlifting, 
+    const uint& Ktotal_phantom, 
+    t_zeta_col& zeta_col,
+    t_zeta_phantom_col& zeta_phantom_col,
+    t_aic_phantom_out& aic_phantom_out
+)
+{
+    uint N_phantom_panels, M_phantom_panels, counter_row, N_spanwise_panels;
+    double yL0_minus_yR0, interpolated_value;
+    const uint n_surf = zeta_col.size();
+    // set influence of phantom panel on own collocation point
+    aic_phantom_out.topRightCorner(Ktotal_phantom, Ktotal_phantom).setIdentity();
+    aic_phantom_out *= -1;
+
+    // get offsets beforehand    
+    std::vector<uint> offset_panel, offset_phantom_panel;
+    UVLM::Types::VecDimensions dimensions_panel, dimensions_phantom_panel;
+    UVLM::Types::generate_dimensions(zeta_col, dimensions_panel, 0);
+    UVLM::Types::generate_dimensions(zeta_phantom_col, dimensions_phantom_panel, 0);
+	UVLM::Matrix::build_offsets(n_surf, dimensions_panel,offset_panel);
+	UVLM::Matrix::build_offsets(n_surf, dimensions_phantom_panel,offset_phantom_panel);
+
+    for(uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        counter_row = 0;
+        N_spanwise_panels = zeta_col[i_surf][0].cols();
+        N_phantom_panels= zeta_phantom_col[i_surf][0].rows();
+        M_phantom_panels= zeta_phantom_col[i_surf][0].cols();
+        
+        for (uint i_row=0; i_row<N_phantom_panels; ++i_row)
+        {
+            yL0_minus_yR0 = zeta_col[1][1](i_row, 0) - zeta_col[0][1](i_row, 0);
+            for (uint i_col=0; i_col<M_phantom_panels; ++i_col)
+            {
+                interpolated_value = (zeta_phantom_col[i_surf][1](i_row, i_col)-zeta_col[0][1](i_row, 0))/yL0_minus_yR0;
+                aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[0]+i_row*N_spanwise_panels) = 1-interpolated_value;
+                aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[1]+i_row*N_spanwise_panels) = interpolated_value;
+                if (i_surf==0)
+                {
+                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[1]+i_row*N_spanwise_panels)*=-1;
+                }
+                else
+                {
+                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[0]+i_row*N_spanwise_panels)*=-1;
+                }
+                counter_row++;
             }
         }
     }
