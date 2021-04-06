@@ -1131,10 +1131,10 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                       rhs_nonlifting,
                                       Ktotal_nonlifting,
                                       n_surf_nonlifting);
-    UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
-    UVLM::Types::VectorX rhs_phantom;
+
+    UVLM::Types::VectorX rhs_phantom, rhs;
     rhs_phantom.setZero(Ktotal_phantom);
-    UVLM::Types::VectorX rhs;
+
         UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(rhs_lifting, rhs_nonlifting);
         rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
 
@@ -1144,8 +1144,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::MatrixX aic_nonlifting_x = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_y = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
     UVLM::Types::MatrixX aic_nonlifting_z = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_nonlifting);
-    //UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-    //UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal+Ktotal_phantom);
+    
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal+Ktotal_phantom, Ktotal+Ktotal_phantom);
     UVLM::Matrix::aic_combined(Ktotal,
                                 Ktotal_lifting,
@@ -1181,7 +1180,6 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 
     // linear system solution
     UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal+Ktotal_phantom);
-    //UVLM::Types::VectorX gamma_and_sigma_flat = UVLM::Types::VectorX::Zero(Ktotal);
     UVLM::LinearSolver::solve_system
     (
         aic,
@@ -1213,8 +1211,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 												   aic_nonlifting_y,
 												   aic_nonlifting_z,
 												   u_induced_col_nonlifting);
-
-    
+   
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     sigma_nonlifting,
                                     zeta_col_nonlifting);
@@ -1252,7 +1249,6 @@ void UVLM::Steady::wake_roll_up_lifting
         zeta_star_norm_first = UVLM::Types::norm_VecVec_mat(zeta_star);
         zeta_star_norm_previous = zeta_star_norm_first;
         zeta_star_norm = 0.0;
-
         UVLM::Types::allocate_VecVecMat(zeta_star_previous, zeta_star);
         UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_previous);
     }
