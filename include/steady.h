@@ -783,8 +783,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     forces,
     options,
             flightconditions
-        );
-    }
+    );
 }
 /*-----------------------------------------------------------------------------
 
