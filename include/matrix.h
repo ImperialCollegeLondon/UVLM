@@ -705,6 +705,9 @@ void UVLM::Matrix::aic_combined
         UVLM::Types::MatrixX& aic
     )
     {
+        
+	//TO-DO: delete unnessary inputs like aic_lifting
+    //UVLM::Types::MatrixX aic_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_lifting);
     UVLM::Matrix::AIC(zeta,
                       zeta_col,
                       zeta_star,
@@ -755,25 +758,11 @@ void UVLM::Matrix::aic_combined
                               options_nonlifting,
 							  aic_nonlifting_on_lifting_x,
 							  aic_nonlifting_on_lifting_y,
-                                aic_nonlifting_on_lifting_z,
-                                false);
- 
-   
-    // Lifting on nonlifting surfaces
-    
-    UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_phantom);
-    UVLM::Matrix::AIC(zeta,
-                    zeta_col_nonlifting,
-                    zeta_star,
-                    uext_col_nonlifting,
-                    normals_nonlifting,
-                    options,
-                    false,
-                    aic_lifting_on_nonlifting);
-    
+                              aic_nonlifting_on_lifting_z,
+                              false);    
                  
     //Phantom panels        
-    UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);
+    UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(Ktotal_lifting, Ktotal_phantom);    
     UVLM::Matrix::AIC(zeta_phantom,
                       zeta_col,
                       zeta_star_phantom,
@@ -782,10 +771,11 @@ void UVLM::Matrix::aic_combined
                       options,
                       false,
                       aic_phantom_on_lifting);
-    
+
+    UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(Ktotal_nonlifting, Ktotal_phantom);   
     UVLM::Matrix::AIC(zeta_phantom,
                       zeta_col_nonlifting,
-                    zeta_star_phantom,
+                      zeta_star_phantom,
                       uext_col_nonlifting,
                       normals_nonlifting,
                       options,
