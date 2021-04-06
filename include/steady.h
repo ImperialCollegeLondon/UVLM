@@ -624,7 +624,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::VecVecMatrixX perpendiculars_nonlifting;
     UVLM::Types::allocate_VecVecMat(perpendiculars_nonlifting, zeta_col_nonlifting);
     UVLM::Geometry::generate_surface_vectors(zeta_nonlifting, normals_nonlifting, longitudinals_nonlifting, perpendiculars_nonlifting);
-
+   
     // ########################################
     const uint n_surf = options.NumSurfaces;
     const uint n_surf_nonlifting = options_nonlifting.NumSurfaces;
@@ -673,8 +673,8 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         );
         if (options.Steady) 
         {
-        int in_n_rows = -1;
-        UVLM::Wake::Horseshoe::circulation_transfer(gamma,
+            int in_n_rows = -1;
+            UVLM::Wake::Horseshoe::circulation_transfer(gamma,
                                                         gamma_star,
                                                         in_n_rows);
         }
@@ -722,7 +722,8 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         flag_zeta_phantom
         );
         
-        UVLM::Steady::wake_roll_up_lifting_and_nonlifting
+        //To Do Use struct
+        /*UVLM::Steady::wake_roll_up_lifting_and_nonlifting
         (
             zeta,
             zeta_col,
@@ -753,66 +754,34 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
             Ktotal_nonlifting,
             Ktotal_phantom,
             flag_zeta_phantom
-        );
-        UVLM::Steady::solve_discretised_lifting_and_nonlifting
-        (
-        options,
+        );*/
+    }
+    std::cout << "\n Calculate static forces nonlifting!\n";
+    UVLM::PostProc::calculate_static_forces_nonlifting_body
+    (
+    zeta_nonlifting,
+    sigma_nonlifting,
+    normals_nonlifting,
+    longitudinals_nonlifting,
+    perpendiculars_nonlifting,
+    uext_col_nonlifting,
+    u_induced_col_nonlifting,
+    forces_nonlifting,
         options_nonlifting,
-        flightconditions,
-        n_surf,
-        n_surf_nonlifting,
-        Ktotal,
-        Ktotal_lifting,
-        Ktotal_nonlifting,
-        Ktotal_phantom,
-        zeta,
-        zeta_col,
-        zeta_star,
-        gamma,
-        gamma_star,
-        uext_total_col,
-        normals,
-        longitudinals,
-        perpendiculars,
-        zeta_nonlifting,
-        zeta_col_nonlifting,
-        uext_col_nonlifting,
-        u_induced_col_nonlifting,
-        sigma_nonlifting,
-        normals_nonlifting,
-        longitudinals_nonlifting,
-        perpendiculars_nonlifting,
-        zeta_phantom,
-        normals_phantom,
-        longitudinals_phantom,
-        perpendiculars_phantom,
-        flag_zeta_phantom
-        );
-        UVLM::PostProc::calculate_static_forces_nonlifting_body
-        (
-            zeta_nonlifting,
-            sigma_nonlifting,
-            normals_nonlifting,
-            longitudinals_nonlifting,
-            perpendiculars_nonlifting,
-            uext_col_nonlifting,
-            u_induced_col_nonlifting,
-            forces_nonlifting,
-            options_nonlifting,
-            flightconditions
-        );
+        flightconditions
+    );
 
-        UVLM::PostProc::calculate_static_forces_unsteady
-        (
-            zeta,
-            zeta_dot,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext,
-            rbm_vel_g,
-            forces,
-            options,
+    UVLM::PostProc::calculate_static_forces_unsteady
+    (
+        zeta,
+    zeta_dot,
+    zeta_star,
+    gamma,
+    gamma_star,
+    uext,
+    rbm_vel_g,
+    forces,
+    options,
             flightconditions
         );
     }
@@ -1125,7 +1094,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                       options,
                       rhs_lifting,
                       Ktotal_lifting);
-    
+
     UVLM::Matrix::RHS_nonlifting_body(uext_col_nonlifting,
                                       normals_nonlifting,
                                       rhs_nonlifting,
@@ -1401,10 +1370,10 @@ void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
         UVLM::Geometry::generate_surface_vectors_wake(zeta_star, normals_star, longitudinals_star, perpendiculars_star);
             
             // Allocate matrices for source influence
-        uint Ktotal_star = UVLM::Matrix::get_total_VecVecMat_size(zeta_star_previous);
-        UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
-        UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
-        UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_star);
+        uint Ktotal_star = UVLM::Matrix::get_total_VecVecMat_size(normals_star);
+        UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_nonlifting);
+        UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_nonlifting);
+        UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal_star, Ktotal_nonlifting);
 
         // Get induced velocities by sources
         UVLM::Matrix::AIC_sources(zeta_nonlifting,
@@ -1423,7 +1392,7 @@ void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
         UVLM::Types::VectorX sigma_flat;
         UVLM::Matrix::deconstruct_gamma(sigma,
                                         sigma_flat,
-                                        u_ind);
+                                        zeta_col_nonlifting);
 
         UVLM::Types::VecVecMatrixX u_induced_star_sources;
         UVLM::Types::allocate_VecVecMat(u_induced_star_sources, u_ind);
@@ -1443,47 +1412,6 @@ void UVLM::Steady::wake_roll_up_lifting_and_nonlifting
                                          u_ind,
                                          options.dt);
 
-        // solve system again
-        if (i_rollup%options.rollup_aic_refresh == 0)
-        {      
-
-            // TO-DO: Refactor since not all AIC matrices have to be recreated (??)
-            UVLM::Steady::solve_discretised_lifting_and_nonlifting
-            (
-            options,
-            options_nonlifting,
-            flightconditions,
-            options.NumSurfaces,
-            options_nonlifting.NumSurfaces,
-            Ktotal,
-            Ktotal_lifting,
-            Ktotal_nonlifting,
-            Ktotal_phantom,
-            zeta,
-            zeta_col,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext_total_col,
-            normals_lifting,
-            longitudinals_lifting,
-            perpendiculars_lifting,
-            zeta_nonlifting,
-            zeta_col_nonlifting,
-            uext_col_nonlifting,
-            u_induced_col_nonlifting,
-            sigma,
-            normals_nonlifting,
-            longitudinals_nonlifting,
-            perpendiculars_nonlifting,
-            zeta_phantom,
-            normals_phantom,
-            longitudinals_phantom,
-            perpendiculars_phantom,
-            flag_zeta_phantom
-            );
-
-         }
         // convergence check -------------------
         zeta_star_norm = UVLM::Types::norm_VecVec_mat(zeta_star);
         convergence = convergence_check_wake(i_rollup,
