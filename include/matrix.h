@@ -857,32 +857,27 @@ void UVLM::Matrix::add_phantom_AIC_to_AIC
 
     for (uint jpanel_surf=0; jpanel_surf<n_surf_panel; ++jpanel_surf)
     {
-        N_phantom_cell = (flag_zeta_phantom[jpanel_surf] > 0).count();
-        if (N_phantom_cell>0)
+        // Get index
+        for(Eigen::Index i=0; i<flag_zeta_phantom.rows(); ++i)
         {
-            // Get index
-            for(Eigen::Index i=0; i<flag_zeta_phantom[jpanel_surf].size(); ++i)
+            if(flag_zeta_phantom(i, jpanel_surf))
             {
-                if(flag_zeta_phantom[jpanel_surf](i))
-                {
-                    index_phantom = i;
-                    break;
-                }
+                index_phantom = i;
+                break;
             }
-            uint k_surf_panel_j = dimensions_panel[jpanel_surf].first*
-                                    dimensions_panel[jpanel_surf].second;
-            N_row_phantom = dimensions_panel[jpanel_surf].first;
-            
-            for(Eigen::Index j_panel=0; j_panel<flag_zeta_phantom[jpanel_surf].size(); ++j_panel)
+        }
+        N_row_phantom = dimensions_panel[jpanel_surf].first;
+        
+        for(Eigen::Index j_panel=0; j_panel<flag_zeta_phantom.rows(); ++j_panel)
+        {
+            if(flag_zeta_phantom(j_panel, jpanel_surf))
             {
-                if(flag_zeta_phantom[jpanel_surf](j_panel))
+                for(uint i_phantom_row=0; i_phantom_row<N_row_phantom; ++i_phantom_row)
                 {
-                    for(uint i_phantom_row=0; i_phantom_row<N_row_phantom; ++i_phantom_row)
-                    {
-                    aic.col(offset_panel[jpanel_surf]+j_panel+i_phantom_row*N_row_phantom)
-                            +=aic_phantom.col(offset_aic_phantom+i_phantom_row);
-                    }
-                    offset_aic_phantom+=N_row_phantom;
+                aic.col(offset_panel[jpanel_surf]+j_panel*N_row_phantom+i_phantom_row)
+                        +=aic_phantom.col(offset_aic_phantom+i_phantom_row);
+                }
+                offset_aic_phantom+=N_row_phantom;
                 }
             }
     }
