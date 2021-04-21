@@ -142,6 +142,7 @@ namespace UVLM
                   typename t_gamma_star,
                   typename t_uext,
                   typename t_rbm_velocity,
+                  typename t_centre_rot,
                   typename t_forces>
         void calculate_static_forces_unsteady
         (
@@ -152,6 +153,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             const t_uext& uext,
             const t_rbm_velocity& rbm_velocity,
+            const t_centre_rot& centre_rot,
             t_forces&  forces,
             const UVLM::Types::VMopts options,
             const UVLM::Types::FlightConditions& flightconditions
@@ -173,6 +175,7 @@ namespace UVLM
                 zeta_dot,
                 uext,
                 rbm_velocity,
+                centre_rot,
                 velocities
             );
 
@@ -565,6 +568,7 @@ namespace UVLM
             UVLM::Types::allocate_VecVecMat(velocities, zeta);
             // free stream contribution
             UVLM::Types::copy_VecVecMat(u_ext, velocities);
+            UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
             // u_ext taking into account unsteady contributions
             UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -573,6 +577,7 @@ namespace UVLM
                 zeta_dot,
                 u_ext,
                 rbm_velocity,
+                centre_rot,
                 velocities
             );
 
