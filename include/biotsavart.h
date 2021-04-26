@@ -220,13 +220,11 @@ namespace UVLM
             const t_zeta&       zeta,
             const t_gamma&      gamma,
             const t_ttriad&     target_triad,
-            // t_uout&             uout,
+            // t_uout&             uout,            
+            const bool&         image_method,
+            const UVLM::Types::Real& vortex_radius,
             unsigned int        Mstart = 0,
-            unsigned int        Nstart = 0,
-            unsigned int        Mend = -1,
-            unsigned int        Nend = -1,
-            const bool&         image_method = false,
-            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
+            unsigned int        Nstart = 0
         );
 
         template <typename t_ttriad,
@@ -595,10 +593,6 @@ void UVLM::BiotSavart::surface
     const UVLM::Types::Real& vortex_radius
 )
 {
-    // If Mend or Nend are == -1, their values are taken as the surface M and N
-    if (Mend == -1) {Mend = gamma.rows();}
-    if (Nend == -1) {Nend = gamma.cols();}
-
     UVLM::Types::VecVecMatrixX span_seg_uout;
     UVLM::Types::VecVecMatrixX chord_seg_uout;
     UVLM::Types::allocate_VecVecMat(span_seg_uout, 1, 3, (Mend-Mstart)+1, (Nend-Nstart));
@@ -890,6 +884,10 @@ void UVLM::BiotSavart::multisurface
                                       gamma,
                                       target_triad,
                                       temp_uout,
+                                      0,
+                                      0,
+                                      gamma.rows(),
+                                      gamma.cols(),
                                       vortex_radius);
 
             // surface_counter = -1;
@@ -1105,7 +1103,7 @@ void UVLM::BiotSavart::whole_surface_on_surface
                         zeta,
                         gamma,
                         target_triad,
-                        // uout,
+                        // uout,                        
                         image_method,
                         vortex_radius
                     );
@@ -1127,17 +1125,15 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
     const t_gamma&      gamma,
     const t_ttriad&     target_triad,
     // t_uout&             uout,
-    unsigned int        Mstart,
-    unsigned int        Nstart,
-    unsigned int        Mend,
-    unsigned int        Nend,
     const bool&         image_method,
-    const UVLM::Types::Real& vortex_radius
+    const UVLM::Types::Real& vortex_radius,
+    unsigned int        Mstart,
+    unsigned int        Nstart
 )
 {
     // If Mend or Nend are == -1, their values are taken as the surface M and N
-    if (Mend == -1) {Mend = gamma.rows();}
-    if (Nend == -1) {Nend = gamma.cols();}
+    uint Mend = gamma.rows();
+    uint Nend = gamma.cols();
 
     UVLM::Types::Vector3 uout;
     uout.setZero();
@@ -1295,10 +1291,6 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
             gamma_star[i_surf],
             target_triad,
             // sum_uout,
-            0,
-            0,
-            -1,
-            -1,
             image_method,
             vortex_radius
         );
@@ -1309,10 +1301,6 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
             gamma[i_surf],
             target_triad,
             // sum_uout,
-            0,
-            0,
-            -1,
-            -1,
             image_method,
             vortex_radius
         );
