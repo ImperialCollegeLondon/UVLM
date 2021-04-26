@@ -44,8 +44,7 @@ namespace UVLM
             UVLM::Types::Vector3 f;
             UVLM::Types::Vector3 v_ind;
             UVLM::Types::Vector3 rp;
-            uint start;
-            uint end;
+            uint start, end;
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 const uint M = gamma[i_surf].rows();
@@ -65,8 +64,8 @@ namespace UVLM
                                 // trailing edge
                                 continue;
                             }
-                            unsigned int start = i_segment;
-                            unsigned int end = (start + 1)%n_segment;
+                            start = i_segment;
+                            end = (start + 1)%n_segment;
                             uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
                             uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
                             uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
@@ -456,7 +455,6 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions
         )
         {
-            const UVLM::Types::Real dt = options.dt;
             const uint n_surf = zeta.size();
 
             UVLM::Types::VecVecMatrixX unsteady_force;

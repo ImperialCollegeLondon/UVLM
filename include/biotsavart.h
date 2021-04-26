@@ -806,7 +806,6 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
     const uint Nend = gamma.cols();
 
     // UVLM::Types::Vector3 temp_uout;
-    const uint ii = 0;
     // Surface contribution
     UVLM::BiotSavart::surface(zeta,
                               gamma,
@@ -1089,8 +1088,6 @@ void UVLM::BiotSavart::whole_surface_on_surface
 {
     const uint col_n_M = zeta_col[0].rows();
     const uint col_n_N = zeta_col[0].cols();
-    const uint n_M = zeta[0].rows();
-    const uint n_N = zeta[0].cols();
 
     #pragma omp parallel for collapse(2)
     for (uint col_i_M=0; col_i_M<col_n_M; ++col_i_M)
