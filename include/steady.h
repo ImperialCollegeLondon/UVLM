@@ -210,6 +210,8 @@ void UVLM::Steady::solver
     double zeta_star_norm = 0.0;
     unsigned int N;
 
+    (void)zeta_star_norm_previous; // used to silence warning
+
     UVLM::Types::VecVecMatrixX zeta_star_previous;
     if (options.n_rollup != 0)
     {
