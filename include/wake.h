@@ -584,14 +584,17 @@ namespace UVLM
                 const int in_n_rows = -1
             )
             {
-
+                uint n_rows = 0;
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    uint n_rows = in_n_rows;
-                    if (n_rows == -1)
+                    if (in_n_rows == -1)
                     {
                         n_rows = gamma_star[i_surf].rows();
+                    }
+                    else
+                    {
+                        n_rows = in_n_rows;
                     }
                     for (uint i_m=0; i_m<n_rows; ++i_m)
                     {
