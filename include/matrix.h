@@ -238,14 +238,10 @@ void UVLM::Matrix::RHS
                     for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                     {
                         v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
-                                                                      gamma_star[ii_surf],
-                                                                      collocation_coords,
-                                                                      0,
-                                                                      0,
-                                                                      -1,
-                                                                      -1,
-                                                                      options.ImageMethod,
-                                                                      options.vortex_radius);
+                                                                    gamma_star[ii_surf],
+                                                                    collocation_coords,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
                     }
                     u_col += v_ind;
 

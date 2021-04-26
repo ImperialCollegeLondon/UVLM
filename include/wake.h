@@ -180,7 +180,7 @@ namespace UVLM
                 UVLM::Types::VectorX dist_to_orig_conv, coord0, coord1, coord2;
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
                 UVLM::Types::Vector3 point, conv_dir, conv_vel, solid_vel_vec;
-                UVLM::Types::Real total_dist, rho, norm, conv_vel_norm, solid_vel_norm;
+                UVLM::Types::Real total_dist, norm, conv_vel_norm, solid_vel_norm;
                 bool increasing;
 
                 // Allocate zeta_star_conv
@@ -532,12 +532,14 @@ namespace UVLM
                 const double& delta_x
             )
             {
+                /*Now the wake shape generation will be dealt with from SHARPy
+                Not relevant for horseshoe case
                 UVLM::Types::Vector3 dir_stream;
                 dir_stream << zeta_star[0][0](1, 0) - zeta_star[0][0](0, 0),
-                              zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
-                              zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
+                             zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
+                             zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
                 dir_stream.normalize();
-                UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;
+                UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;*/
 
                 const uint n_surf = zeta_star.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -546,20 +548,20 @@ namespace UVLM
                         zeta_star[i_surf][0].cols() - 1;
                     const uint mstar =
                         zeta_star[i_surf][0].rows() - 1;
-                    // Now the wake shape generation will be dealt with from SHARPy
-                    // It might be acceptable to keep it for horseshoe cases
-                    // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                    // {
-                    //     for (uint j=0; j<n_spanwise_panels + 1; ++j)
-                    //     {
-                    //         for (uint i=1; i<mstar + 1; ++i)
-                    //         {
-                    //             zeta_star[i_surf][i_dim](i, j) =
-                    //                 zeta_star[i_surf][i_dim](i - 1, j)\
-                    //                     + delta_x_vec(i_dim);
-                    //         }
-                    //     }
-                    // }
+                     
+                    /* Not relevant for horseshoe case
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        for (uint j=0; j<n_spanwise_panels + 1; ++j)
+                        {
+                            for (uint i=1; i<mstar + 1; ++i)
+                            {
+                                zeta_star[i_surf][i_dim](i, j) =
+                                    zeta_star[i_surf][i_dim](i - 1, j)\
+                                        + delta_x_vec(i_dim);
+                            }
+                        }
+                    }*/
                     for (uint j=0; j<n_spanwise_panels; ++j)
                     {
                         for (uint i=1; i<mstar; ++i)
@@ -582,14 +584,17 @@ namespace UVLM
                 const int in_n_rows = -1
             )
             {
-
+                uint n_rows = 0;
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    uint n_rows = in_n_rows;
-                    if (n_rows == -1)
+                    if (in_n_rows == -1)
                     {
                         n_rows = gamma_star[i_surf].rows();
+                    }
+                    else
+                    {
+                        n_rows = in_n_rows;
                     }
                     for (uint i_m=0; i_m<n_rows; ++i_m)
                     {
