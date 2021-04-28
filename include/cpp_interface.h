@@ -12,7 +12,7 @@
 //#endif
 
 #define DLLEXPORT extern "C"
-#pragma warning disable 1017
+// #pragma warning disable 1017
 
 namespace UVLM
 {

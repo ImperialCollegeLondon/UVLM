@@ -49,7 +49,6 @@ namespace UVLM
             // calculate side length
             UVLM::Types::VectorX sides;
             sides.resize(4);
-            uint i_side = 0;
             for (uint i_side=0; i_side<4; ++i_side)
             {
                 uint i_first = UVLM::Mapping::vortex_indices(i_side, 0);
@@ -133,7 +132,7 @@ namespace UVLM
             UVLM::Types::Vector3 v_03(x(1,0) - x(0,0),
                                       y(1,0) - y(0,0),
                                       z(1,0) - z(0,0));
-            UVLM::Types::Vector3 diff = v_01.cross(v_03);
+            //UVLM::Types::Vector3 diff = v_01.cross(v_03);
 
             UVLM::Types::Vector3 A(x(1,1) - x(0,0),
                                    y(1,1) - y(0,0),
@@ -603,13 +602,15 @@ namespace UVLM
             }
         } // splines
 
-        template <typename t_dist,
+        template <typename t_centre_rot,
+                  typename t_dist,
                   typename t_dist_conv,
                   typename t_coord,
                   typename t_coord_conv>
         void slerp_z
         (
             uint M,
+            const t_centre_rot& centre_rot,
             const t_dist& dist_to_orig,
             const t_dist_conv& dist_to_orig_conv,
             const t_coord_conv& coord0,
@@ -636,25 +637,24 @@ namespace UVLM
                 to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
                 prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
 
-                mod_prev = std::sqrt(coord0(i_conv - 1)*coord0(i_conv - 1) +
-                                     coord1(i_conv - 1)*coord1(i_conv - 1));
+                mod_prev = std::sqrt((coord0(i_conv - 1) - centre_rot(0))*(coord0(i_conv - 1) - centre_rot(0)) +
+                                     (coord1(i_conv - 1) - centre_rot(1))*(coord1(i_conv - 1) - centre_rot(1)));
                                      // coord2(i_conv - 1)*coord2(i_conv - 1));
-                mod_next = std::sqrt(coord0(i_conv)*coord0(i_conv) +
-                                     coord1(i_conv)*coord1(i_conv));
+                mod_next = std::sqrt((coord0(i_conv) - centre_rot(0))*(coord0(i_conv) - centre_rot(0)) +
+                                     (coord1(i_conv) - centre_rot(1))*(coord1(i_conv) - centre_rot(1)));
                                      // coord2(i_conv)*coord2(i_conv));
 
-                omega = std::acos((coord0(i_conv - 1)*coord0(i_conv) +
-                                  coord1(i_conv - 1)*coord1(i_conv))/mod_prev/mod_next);
+                omega = std::acos(((coord0(i_conv - 1) - centre_rot(0))*(coord0(i_conv) - centre_rot(0)) +
+                                   (coord1(i_conv - 1) - centre_rot(1))*(coord1(i_conv) - centre_rot(1)))/mod_prev/mod_next);
                                   // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
-
 
                 if (std::abs(std::sin(omega)) > 1e-6)
                 {
                     coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
                     coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
 
-                    new_coord0(i_m) = (coef_next*coord0(i_conv) + coef_prev*coord0(i_conv - 1));
-                    new_coord1(i_m) = (coef_next*coord1(i_conv) + coef_prev*coord1(i_conv - 1));
+                    new_coord0(i_m) = coef_next*(coord0(i_conv) - centre_rot(0)) + coef_prev*(coord0(i_conv - 1) - centre_rot(0)) + centre_rot(0);
+                    new_coord1(i_m) = coef_next*(coord1(i_conv) - centre_rot(1)) + coef_prev*(coord1(i_conv - 1) - centre_rot(1)) + centre_rot(1);
                 } else {
                     new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
                     new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
@@ -664,7 +664,8 @@ namespace UVLM
             }
         } // slerp_z
 
-        template <typename t_dist,
+        template <typename t_centre_rot,
+                  typename t_dist,
                   typename t_dist_conv,
                   typename t_coord,
                   typename t_coord_conv>
@@ -672,6 +673,7 @@ namespace UVLM
         (
             uint M,
             const UVLM::Types::Real yaw,
+            const t_centre_rot& centre_rot,
             const t_dist& dist_to_orig,
             const t_dist_conv& dist_to_orig_conv,
             const t_coord_conv& coord0,
@@ -699,9 +701,9 @@ namespace UVLM
             // Transform the coordinates
             for (unsigned int i_m=0; i_m<M+1; ++i_m)
             {
-                aux_coord0(i_m) = coord0(i_m);
-                aux_coord1(i_m) = coord1(i_m)*cos(yaw) + coord2(i_m)*sin(yaw);
-                aux_coord2(i_m) = -1.0*coord1(i_m)*sin(yaw) + coord2(i_m)*cos(yaw);
+                aux_coord0(i_m) = coord0(i_m) - centre_rot(0);
+                aux_coord1(i_m) = (coord1(i_m) - centre_rot(1))*cos(yaw) + (coord2(i_m) - centre_rot(2))*sin(yaw);
+                aux_coord2(i_m) = -1.0*(coord1(i_m) - centre_rot(1))*sin(yaw) + (coord2(i_m) - centre_rot(2))*cos(yaw);
             }
 
             // Compute the new coordinates in the yaw FoR
@@ -741,9 +743,9 @@ namespace UVLM
             // Transform back the coordinates
             for (unsigned int i_m=0; i_m<M; ++i_m)
             {
-                new_coord0(i_m) = aux_new_coord0(i_m);
-                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw);
-                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw);
+                new_coord0(i_m) = aux_new_coord0(i_m) + centre_rot(0);
+                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw) + centre_rot(1);
+                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw) + centre_rot(2);
             }
 
         } // slerp_yaw

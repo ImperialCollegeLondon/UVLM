@@ -15,7 +15,8 @@ DLLEXPORT void run_VLM
     double** p_gamma,
     double** p_gamma_star,
     double** p_forces,
-    double* p_rbm_vel_g
+    double* p_rbm_vel_g,
+    double* p_centre_rot_g
 )
 {
 #if defined(_OPENMP)
@@ -76,6 +77,7 @@ DLLEXPORT void run_VLM
                                       2*UVLM::Constants::NDIM);
 
     UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
+    UVLM::Types::MapVectorX centre_rot_g (p_centre_rot_g, UVLM::Constants::NDIM);
 
     UVLM::Steady::solver(zeta,
                          zeta_dot,
@@ -85,6 +87,7 @@ DLLEXPORT void run_VLM
                          gamma_star,
                          forces,
                          rbm_vel_g,
+                         centre_rot_g,
                          options,
                          flightconditions);
 }
@@ -397,6 +400,7 @@ DLLEXPORT void run_UVLM
     double** p_zeta_star,
     double** p_zeta_dot,
     double*  p_rbm_vel,
+    double*  p_centre_rot,
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
@@ -439,6 +443,7 @@ DLLEXPORT void run_UVLM
                                       1);
 
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+    UVLM::Types::MapVectorX centre_rot (p_centre_rot, UVLM::Constants::NDIM);
 
     UVLM::Types::VecVecMapX uext;
     UVLM::CppInterface::map_VecVecMat(dimensions,
@@ -510,6 +515,7 @@ DLLEXPORT void run_UVLM
         normals,
         // previous_gamma,
         rbm_velocity,
+        centre_rot,
         forces,
         dynamic_forces,
         options,

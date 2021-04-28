@@ -28,7 +28,8 @@ namespace UVLM
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_forces,
-                  typename t_rbm_vel_g>
+                  typename t_rbm_vel_g,
+                  typename t_centre_rot_g>
         void solver
         (
             t_zeta& zeta,
@@ -39,6 +40,7 @@ namespace UVLM
             t_gamma_star& gamma_star,
             t_forces& forces,
             t_rbm_vel_g& rbm_vel_g,
+            t_centre_rot_g& centre_rot_g,
             const UVLM::Types::VMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
@@ -294,7 +296,8 @@ template <typename t_zeta,
           typename t_gamma,
           typename t_gamma_star,
           typename t_forces,
-          typename t_rbm_vel_g>
+          typename t_rbm_vel_g,
+          typename t_centre_rot_g>
 void UVLM::Steady::solver
 (
     t_zeta& zeta,
@@ -305,6 +308,7 @@ void UVLM::Steady::solver
     t_gamma_star& gamma_star,
     t_forces& forces,
     t_rbm_vel_g& rbm_vel_g,
+    t_centre_rot_g& centre_rot_g,
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions
 )
@@ -342,6 +346,7 @@ void UVLM::Steady::solver
         zeta_dot,
         uext,
         rbm_vel_g,
+        centre_rot_g,
         uext_total
     );
 
@@ -401,18 +406,90 @@ void UVLM::Steady::solver
         flightconditions
     );
 
-    UVLM::Steady::wake_roll_up_lifting
-    (
-        zeta,
-        zeta_col,
-        zeta_star,
-        gamma,
-        gamma_star,
-        uext_total_col,
-        normals,
-        options,
-        flightconditions
-    );
+    double zeta_star_norm_first = 0.0;
+    double zeta_star_norm_previous = 0.0;
+    double zeta_star_norm = 0.0;
+    unsigned int N;
+
+    UVLM::Types::VecVecMatrixX zeta_star_previous;
+    if (options.n_rollup != 0)
+    {
+        zeta_star_norm_first = UVLM::Types::norm_VecVec_mat(zeta_star);
+        zeta_star_norm_previous = zeta_star_norm_first;
+        zeta_star_norm = 0.0;
+
+        UVLM::Types::allocate_VecVecMat(zeta_star_previous, zeta_star);
+        UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_previous);
+    }
+
+    // ROLLUP LOOP--------------------------------------------------------
+    for (uint i_rollup=0; i_rollup<options.n_rollup; ++i_rollup)
+    {
+        // determine convection velocity u_ind
+        UVLM::Types::VecVecMatrixX u_ind;
+        UVLM::Types::allocate_VecVecMat(u_ind,
+                                        zeta_star);
+        // induced velocity by vortex rings
+        UVLM::BiotSavart::total_induced_velocity_on_wake(
+            zeta,
+            zeta_star,
+            gamma,
+            gamma_star,
+            u_ind,
+            options.ImageMethod,
+            options.vortex_radius_wake_ind);
+        // Do not move the vertices in the TE
+        for (uint i_surf=0; i_surf<zeta_star.size(); ++i_surf)
+        {
+            N = zeta_star[i_surf][0].cols();
+            for (uint i_n=0; i_n<N; ++i_n)
+            {
+                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                {
+                    u_ind[i_surf][i_dim](0, i_n) = 0.;
+                }
+            }
+        }
+
+        // convect based on u_ind for all the grid.
+        UVLM::Wake::Discretised::convect(zeta_star,
+                                         u_ind,
+                                         options.dt);
+
+        // generate AIC again
+        if (i_rollup%options.rollup_aic_refresh == 0)
+        {
+            UVLM::Steady::solve_discretised
+            (
+                zeta,
+                zeta_col,
+                uext_total_col,
+                zeta_star,
+                gamma,
+                gamma_star,
+                normals,
+                options,
+                flightconditions
+            );
+        }
+
+        // convergence check -------------------
+        zeta_star_norm = UVLM::Types::norm_VecVec_mat(zeta_star);
+        if (i_rollup != 0)
+        {
+            // double eps = std::abs((zeta_star_norm - zeta_star_norm_previous)
+            //                       /zeta_star_norm_first);
+            double eps = std::abs(UVLM::Types::norm_VecVec_mat(zeta_star - zeta_star_previous))/zeta_star_norm_first;
+            std::cout << "    UVLM: Rollup iteration: " << i_rollup << ". Error: " << eps << std::endl;
+            if (eps < options.rollup_tolerance)
+            {
+                break;
+            }
+            zeta_star_norm_previous = zeta_star_norm;
+            UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_previous);
+        }
+    }
+
     UVLM::PostProc::calculate_static_forces_unsteady
     (
         zeta,
@@ -422,6 +499,7 @@ void UVLM::Steady::solver
         gamma_star,
         uext,
         rbm_vel_g,
+        centre_rot_g,
         forces,
         options,
         flightconditions

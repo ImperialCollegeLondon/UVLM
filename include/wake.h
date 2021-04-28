@@ -179,7 +179,8 @@ namespace UVLM
                       typename t_extra_zeta_star,
                       typename t_dist_to_orig,
                       typename t_uext_star_total,
-                      typename t_solid_vel>
+                      typename t_solid_vel,
+                      typename t_centre_rot>
             void cfl_n1
             (
                 const UVLM::Types::UVMopts& options,
@@ -190,6 +191,7 @@ namespace UVLM
                 const t_dist_to_orig& dist_to_orig,
                 t_uext_star_total& uext_star_total,
                 t_solid_vel& solid_vel,
+                t_centre_rot& centre_rot,
                 double dt=0.
             )
             {
@@ -198,7 +200,7 @@ namespace UVLM
                 UVLM::Types::VectorX dist_to_orig_conv, coord0, coord1, coord2;
                 UVLM::Types::VectorX new_coord0, new_coord1, new_coord2;
                 UVLM::Types::Vector3 point, conv_dir, conv_vel, solid_vel_vec;
-                UVLM::Types::Real total_dist, rho, norm, conv_vel_norm, solid_vel_norm;
+                UVLM::Types::Real total_dist, norm, conv_vel_norm, solid_vel_norm;
                 bool increasing;
 
                 // Allocate zeta_star_conv
@@ -294,18 +296,20 @@ namespace UVLM
                                 // Cylindrical coordinates along the z axis
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
-                                    coord0(i_m) = std::sqrt(zeta_star[i_surf][0](i_m, i_n)*zeta_star[i_surf][0](i_m, i_n) +
-                                                      zeta_star[i_surf][1](i_m, i_n)*zeta_star[i_surf][1](i_m, i_n));
+                                    coord0(i_m) = std::sqrt((zeta_star[i_surf][0](i_m, i_n) - centre_rot(0))*(zeta_star[i_surf][0](i_m, i_n) - centre_rot(0)) +
+                                                            (zeta_star[i_surf][1](i_m, i_n) - centre_rot(1))*(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1)));
                                     // https://math.stackexchange.com/questions/360113/how-does-one-interpolate-between-polar-coordinates
                                     // coord0(i_m) = 1./coord0(i_m)/coord0(i_m);
-                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n), zeta_star[i_surf][0](i_m, i_n));
-                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) + 0.;
+                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1),
+                                                        zeta_star[i_surf][0](i_m, i_n) - centre_rot(0));
+                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) - centre_rot(2);
                                 }
-                                coord0(M + 1) = std::sqrt(extra_zeta_star[i_surf][0](0, i_n)*extra_zeta_star[i_surf][0](0, i_n) +
-                                                  extra_zeta_star[i_surf][1](0, i_n)*extra_zeta_star[i_surf][1](0, i_n));
+                                coord0(M + 1) = std::sqrt((extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0))*(extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0)) +
+                                                          (extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1))*(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1)));
                                 // coord0(M + 1) = 1./coord0(M + 1)/coord0(M + 1);
-                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n), extra_zeta_star[i_surf][0](0, i_n));
-                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) + 0.;
+                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1),
+                                                      extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0));
+                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) - centre_rot(2);
 
                                 if (coord1(2) >= coord1(1))
                                 {
@@ -387,6 +391,7 @@ namespace UVLM
                                 // Slerp interpolation
                                 // https://en.wikipedia.org/wiki/Slerp
                                 UVLM::Interpolation::slerp_z(M + 1,
+                                                            centre_rot,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
@@ -396,6 +401,7 @@ namespace UVLM
                                 // https://en.wikipedia.org/wiki/Slerp
                                 UVLM::Interpolation::slerp_yaw(M + 1,
                                                             options.yaw_slerp,
+                                                            centre_rot,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
@@ -424,9 +430,9 @@ namespace UVLM
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
                                     // new_coord0(i_m) = std::sqrt(1./new_coord0(i_m));
-                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m));
-                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m));
-                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + 0.;
+                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m)) + centre_rot(0);
+                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m)) + centre_rot(1);
+                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + centre_rot(2);
                                 }
                             }
 
@@ -546,12 +552,14 @@ namespace UVLM
                 const double& delta_x
             )
             {
+                /*Now the wake shape generation will be dealt with from SHARPy
+                Not relevant for horseshoe case
                 UVLM::Types::Vector3 dir_stream;
                 dir_stream << zeta_star[0][0](1, 0) - zeta_star[0][0](0, 0),
-                              zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
-                              zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
+                             zeta_star[0][1](1, 0) - zeta_star[0][1](0, 0),
+                             zeta_star[0][2](1, 0) - zeta_star[0][2](0, 0);
                 dir_stream.normalize();
-                UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;
+                UVLM::Types::Vector3 delta_x_vec = dir_stream*delta_x;*/
 
                 const uint n_surf = zeta_star.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -560,20 +568,20 @@ namespace UVLM
                         zeta_star[i_surf][0].cols() - 1;
                     const uint mstar =
                         zeta_star[i_surf][0].rows() - 1;
-                    // Now the wake shape generation will be dealt with from SHARPy
-                    // It might be acceptable to keep it for horseshoe cases
-                    // for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                    // {
-                    //     for (uint j=0; j<n_spanwise_panels + 1; ++j)
-                    //     {
-                    //         for (uint i=1; i<mstar + 1; ++i)
-                    //         {
-                    //             zeta_star[i_surf][i_dim](i, j) =
-                    //                 zeta_star[i_surf][i_dim](i - 1, j)\
-                    //                     + delta_x_vec(i_dim);
-                    //         }
-                    //     }
-                    // }
+                     
+                    /* Not relevant for horseshoe case
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        for (uint j=0; j<n_spanwise_panels + 1; ++j)
+                        {
+                            for (uint i=1; i<mstar + 1; ++i)
+                            {
+                                zeta_star[i_surf][i_dim](i, j) =
+                                    zeta_star[i_surf][i_dim](i - 1, j)\
+                                        + delta_x_vec(i_dim);
+                            }
+                        }
+                    }*/
                     for (uint j=0; j<n_spanwise_panels; ++j)
                     {
                         for (uint i=1; i<mstar; ++i)
@@ -596,14 +604,17 @@ namespace UVLM
                 const int in_n_rows = -1
             )
             {
-
+                uint n_rows = 0;
                 const uint n_surf = gamma.size();
                 for (uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {
-                    uint n_rows = in_n_rows;
-                    if (n_rows == -1)
+                    if (in_n_rows == -1)
                     {
                         n_rows = gamma_star[i_surf].rows();
+                    }
+                    else
+                    {
+                        n_rows = in_n_rows;
                     }
                     for (uint i_m=0; i_m<n_rows; ++i_m)
                     {
