@@ -333,11 +333,6 @@ void UVLM::Steady::solver
     UVLM::Types::allocate_VecVecMat(normals, zeta_col);
     UVLM::Geometry::generate_surfaceNormal(zeta, normals);
 
-    UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0),
-                uext[0][1](0,0),
-                uext[0][2](0,0);
-    double delta_x = u_steady.norm()*options.dt;
 
     // total stream velocity
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -380,8 +375,10 @@ void UVLM::Steady::solver
             options,
             flightconditions
         );
-        UVLM::Wake::Horseshoe::to_discretised(zeta_star,
-                                              gamma_star,
+        
+        double delta_x = options.dt * UVLM::Types::norm_Vec(lifting_surfaces.u_ext[0][0](0,0),
+                                                            lifting_surfaces.u_ext[0][1](0,0),
+                                                            lifting_surfaces.u_ext[0][2](0,0));
                                               delta_x);
         return;
     }
@@ -640,11 +637,6 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Types::allocate_VecVecMat(perpendiculars , zeta_col ); 
     UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
 
-    UVLM::Types::Vector3 u_steady;
-    u_steady << uext[0][0](0,0),
-                uext[0][1](0,0),
-                uext[0][2](0,0);
-    double delta_x = u_steady.norm()*options.dt;
 
     // total stream velocity
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity

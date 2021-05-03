@@ -59,6 +59,7 @@ namespace UVLM
         	bool Rollup;
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
+        	unsigned int NumSurfacesNonlifting;
             double dt;
             unsigned int n_rollup;
             double rollup_tolerance;
@@ -76,6 +77,7 @@ namespace UVLM
             double dt;
             uint NumCores;
             uint NumSurfaces;
+            uint NumSurfacesNonlifting;
             // uint steady_n_rollup;
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
@@ -102,6 +104,7 @@ namespace UVLM
             vm.dt = uvm.dt;
             vm.NumCores = uvm.NumCores;
             vm.NumSurfaces = uvm.NumSurfaces;
+            vm.NumSurfacesNonlifting = uvm.NumSurfacesNonlifting;
             // vm.Mstar = uvm.Mstar;
             vm.ImageMethod = uvm.ImageMethod;
             vm.iterative_solver = uvm.iterative_solver;
@@ -344,10 +347,10 @@ namespace UVLM
                 }
             }
         }
-
+        template<typename mat_in>
         inline void copy_Mat_to_block
         (
-            UVLM::Types::MatrixX& in,
+            mat_in& in,
             UVLM::Types::MatrixX& out,
             uint i_start,
             uint j_start
@@ -391,6 +394,31 @@ namespace UVLM
                 }
             }
             return norm;
+        }
+
+        inline double norm_Vec
+        (
+            const double value_1,
+            const double value_2,
+            const double value_3
+        )
+        {
+            
+            UVLM::Types::Vector3 vector;
+            vector << value_1, value_2, value_3;
+            return vector.norm();
+        }
+        inline double norm_Vec_squared
+        (
+            const double value_1,
+            const double value_2,
+            const double value_3
+        )
+        {
+            
+            return value_1 * value_1 + 
+                   value_2 * value_2 + 
+                   value_3 * value_3;
         }
 
         template <typename t_mat>
