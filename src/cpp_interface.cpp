@@ -91,116 +91,41 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     omp_set_num_threads(options.NumCores);
 #endif
     // Setup Lifting Surfaces
-    unsigned int n_surf;
-    n_surf = options.NumSurfaces;
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions,
-                                             dimensions);
-    UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions_star,
-                                             dimensions_star);
-
-    UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta,
-                                      zeta,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star,
-                                      zeta_star,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta_dot,
-                                      zeta_dot,
-                                      1);
-
-    UVLM::Types::VecVecMapX u_ext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_u_ext,
-                                      u_ext,
-                                      1);
-
-    UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_gamma,
-                                   gamma,
-                                   0);
-
-    UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_gamma_star,
-                                   gamma_star,
-                                   0);
-
-    UVLM::Types::VecVecMapX forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_forces,
-                                      forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
-
-    //To-Do: Adjust MatrixXint to allow for different sized lifting surfaces (e.g. wing + tail configuration)
-    UVLM::Types::MapMatrixXint flag_zeta_phantom(p_flag_zeta_phantom, dimensions[0].second, n_surf);
-
-    // Setup Nonlifting Body
-    unsigned int n_surf_nonlifting;
-    n_surf_nonlifting = options_nonlifting.NumSurfaces;
-    UVLM::Types::VecDimensions dimensions_nonlifting;
-    UVLM::CppInterface::transform_dimensions(n_surf_nonlifting,
-                                             p_dimensions_nonlifting,
-                                             dimensions_nonlifting);
-
-    UVLM::Types::VecVecMapX zeta_nonlifting;
-    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
-                                      p_zeta_nonlifting,
-                                      zeta_nonlifting,
-                                      1);
-
-    UVLM::Types::VecVecMapX u_ext_nonlifting;
-    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
-                                      p_u_ext_nonlifting,
-                                      u_ext_nonlifting,
-                                      1);
-
-    UVLM::Types::VecMapX sigma_nonlifting;
-    UVLM::CppInterface::map_VecMat(dimensions_nonlifting,
-                                   p_sigma_nonlifting,
-                                   sigma_nonlifting,
-                                   0);
-
-    UVLM::Types::VecVecMapX forces_nonlifting;
-    UVLM::CppInterface::map_VecVecMat(dimensions_nonlifting,
-                                      p_forces_nonlifting,
-                                      forces_nonlifting,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
+    struct UVLM::StructUtils::lifting_surface Lifting_surfaces = UVLM::StructUtils::lifting_surface
+            (options.NumSurfaces,
+            p_dimensions,
+            p_zeta,
+            p_u_ext,
+            p_forces,
+            p_zeta_star,
+            p_zeta_dot,
+            p_gamma,
+            p_gamma_star,
+            p_rbm_vel_g,
+            p_dimensions_star);
+    
+    // Setup Nonlifting Body  
+    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfacesNonlifting,
+                                                    p_dimensions_nonlifting,
+                                                    p_zeta_nonlifting,
+                                                    p_u_ext_nonlifting,
+                                                    p_forces_nonlifting,
+                                                    p_sigma_nonlifting);
+    // Setup Phantom Surfaces
+    struct UVLM::StructUtils::phantom_surface phantom_surfaces = UVLM::StructUtils::phantom_surface(p_flag_zeta_phantom,
+                                                                                                    Lifting_surfaces.n_surf,
+                                                                                                    Lifting_surfaces.zeta,
+                                                                                                    Lifting_surfaces.zeta_star,
+                                                                                                    Lifting_surfaces.dimensions);
+    
     //Start solver
 	UVLM::Steady::solver_lifting_and_nonlifting_bodies
 	(
-		zeta,
-		zeta_dot,
-		u_ext,
-		zeta_star,
-		gamma,
-		gamma_star,
-		forces,
-		flag_zeta_phantom,
-		rbm_vel_g,
+		Lifting_surfaces,
+		phantom_surfaces,
 		options,
 		flightconditions,
-		zeta_nonlifting,
-		u_ext_nonlifting,
-		sigma_nonlifting,
-		forces_nonlifting,
-		options_nonlifting
+		nl_body
 	);
 }
 
@@ -286,7 +211,6 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
-    std::cout << "\nStart solver unsteady for lifting and nonlifting surfaces!\n";
     struct UVLM::StructUtils::lifting_surface_unsteady Lifting_surfaces_unsteady = UVLM::StructUtils::lifting_surface_unsteady
         (options.NumSurfaces,
         p_dimensions,
