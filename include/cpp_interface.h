@@ -5,7 +5,7 @@
 #include "geometry.h"
 #include "steady.h"
 #include "unsteady.h"
-
+#include "struct_utils.h"
 #include <iostream>
 //#ifdef _OPENMP
     //#include "omp.h"

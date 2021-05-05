@@ -151,84 +151,82 @@ namespace UVLM
             }
         }
 		
-        template <typename t_zeta,
-                  typename t_sigma,
-                  typename t_normal,
-                  typename t_longitudinal,
-                  typename t_perpendicular,
-                  typename t_u_induced,
-                  typename t_uext_col,
-                  typename t_forces>
+        template <typename t_struct_nl_body>
         void calculate_static_forces_nonlifting_body
         (
-            const t_zeta& zeta,
-            const t_sigma& sigma,
-            const t_normal& normals,
-            const t_longitudinal& longitudinals,
-            const t_perpendicular& perpendiculars,
-            const t_uext_col uext_col,
-            const t_u_induced u_induced_col,
-            t_forces&  forces,
-            const UVLM::Types::VMopts options,
+            t_struct_nl_body& nl_body,
             const UVLM::Types::FlightConditions& flightconditions
         )
 		{
             // Set forces to 0
-            UVLM::Types::initialise_VecVecMat(forces);
+            UVLM::Types::initialise_VecVecMat(nl_body.forces);
 
             // allocate 
-            UVLM::Types::VecVecMatrixX velocities;
-            UVLM::Types::VecMatrixX pressure_coefficients;
-            UVLM::Types::allocate_VecVecMat(velocities, uext_col);
+            UVLM::Types::VecVecMatrixX velocities, forces_collocation;
+            UVLM::Types::VecMatrixX pressure_coefficients, forces_norm, forces_norm_collocation;
+            UVLM::Types::allocate_VecVecMat(velocities, nl_body.uext_col);            
+            UVLM::Types::allocate_VecVecMat(forces_collocation, nl_body.uext_col);
 			double freestream_velocity_squared;
 			double induced_velocity_squared;
-            UVLM::Types::allocate_VecMat(pressure_coefficients, sigma);
+            UVLM::Types::allocate_VecMat(pressure_coefficients, nl_body.sigma);
+            UVLM::Types::allocate_VecMat(forces_norm, nl_body.sigma, 1);
+            UVLM::Types::allocate_VecMat(forces_norm_collocation, nl_body.sigma);
 
-			UVLM::PostProc::get_local_panel_velocity(normals,
-													 longitudinals,
-													 perpendiculars,
-													 uext_col,
-													 u_induced_col,
+			UVLM::PostProc::get_local_panel_velocity(nl_body.normals,
+													 nl_body.longitudinals,
+													 nl_body.perpendiculars,
+													 nl_body.uext_col,
+													 nl_body.u_induced_col,
 													 velocities
 													 );
-
-			const uint n_surf = zeta.size();
+			const uint n_surf = nl_body.zeta.size();
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
-                const uint M = sigma[i_surf].rows();
-                const uint N = sigma[i_surf].cols();
+                const uint M = nl_body.sigma[i_surf].rows();
+                const uint N = nl_body.sigma[i_surf].cols();
 				
                 for (uint i_M=0; i_M<M; ++i_M)
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
-						freestream_velocity_squared = (uext_col[i_surf][0](i_M, i_N)*uext_col[i_surf][0](i_M, i_N)
-													  + uext_col[i_surf][1](i_M, i_N)*uext_col[i_surf][1](i_M, i_N)
-													  + uext_col[i_surf][2](i_M, i_N)*uext_col[i_surf][2](i_M, i_N));
-						induced_velocity_squared = (velocities[i_surf][0](i_M, i_N)*velocities[i_surf][0](i_M, i_N) 
-													+ velocities[i_surf][1](i_M, i_N)*velocities[i_surf][1](i_M, i_N)
-												    + velocities[i_surf][2](i_M, i_N)*velocities[i_surf][2](i_M, i_N));
+						freestream_velocity_squared = UVLM::Types::norm_Vec_squared(nl_body.uext_col[i_surf][0](i_M, i_N),
+                                                                                    nl_body.uext_col[i_surf][1](i_M, i_N),
+                                                                                    nl_body.uext_col[i_surf][2](i_M, i_N));
+						induced_velocity_squared = UVLM::Types::norm_Vec_squared(velocities[i_surf][0](i_M, i_N),
+                                                                                 velocities[i_surf][1](i_M, i_N), 
+                                                                                 velocities[i_surf][2](i_M, i_N));                        
 						
 						pressure_coefficients[i_surf](i_M, i_N) = 1.0 - induced_velocity_squared/freestream_velocity_squared;
 						
 						UVLM::Types::Real area = 0;
                         area = UVLM::Geometry::panel_area
                         (
-                            zeta[i_surf][0].template block<2,2>(i_M, i_N),
-                            zeta[i_surf][1].template block<2,2>(i_M, i_N),
-                            zeta[i_surf][2].template block<2,2>(i_M, i_N)
+                            nl_body.zeta[i_surf][0].template block<2,2>(i_M, i_N),
+                            nl_body.zeta[i_surf][1].template block<2,2>(i_M, i_N),
+                            nl_body.zeta[i_surf][2].template block<2,2>(i_M, i_N)
                         );
 						// no moments considered 
 						for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
 						{
-							forces[i_surf][i_dim](i_M, i_N) = -0.5*flightconditions.rho*freestream_velocity_squared
+							forces_collocation[i_surf][i_dim](i_M, i_N) = -0.5*flightconditions.rho*freestream_velocity_squared
 							                                  *pressure_coefficients[i_surf](i_M, i_N)
-															  *area*normals[i_surf][i_dim](i_M, i_N);
+															  *area*nl_body.normals[i_surf][i_dim](i_M, i_N);
 						}
 					}
 				}
 			}
-		}
+
+            // export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
+            // Transform forces from collocation points to nodes
+            UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces);
+            // export_data_to_csv_file("forces_nodes_y.csv", nl_body.forces[0][1]);
+            // export_data_to_csv_file("forces_collo_y.csv", forces_collocation[0][1]);
+            // get_norm_forces(nl_body.forces, forces_norm);
+            // get_norm_forces(forces_collocation, forces_norm_collocation);
+            // export_data_to_csv_file("forces_norm.csv", forces_norm[0]);
+            // export_data_to_csv_file("forces_norm_collo.csv", forces_norm_collocation[0]);
+            
+        }
 
         template <typename t_zeta,
                   typename t_zeta_dot,

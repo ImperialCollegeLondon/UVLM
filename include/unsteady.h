@@ -19,34 +19,11 @@ namespace UVLM
 {
     namespace Unsteady
     {
-        template <typename t_zeta,
-                  typename t_zeta_dot,
-                  typename t_uext,
-                  typename t_uext_star,
-                  typename t_zeta_star,
-                  typename t_gamma,
-                  typename t_gamma_star,
-                  typename t_dist_to_orig,
-                  typename t_normals,
-                //   typename t_previous_gamma,
-                  typename t_rbm_velocity,
-                  typename t_forces>
+        template <typename t_lifting_surfaces>
         void solver
         (
             const uint& i_iter,
-            t_zeta& zeta,
-            t_zeta_dot& zeta_dot,
-            t_uext& uext,
-            t_uext_star& uext_star,
-            t_zeta_star& zeta_star,
-            t_gamma& gamma,
-            t_gamma_star& gamma_star,
-            t_dist_to_orig& dist_to_orig,
-            t_normals& normals,
-            // const t_previous_gamma& previous_gamma,
-            t_rbm_velocity& rbm_velocity,
-            t_forces& forces,
-            t_forces& dynamic_forces,
+            t_lifting_surfaces& lifting_surfaces_unsteady,
             const UVLM::Types::UVMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
         );
@@ -139,34 +116,11 @@ void UVLM::Unsteady::initialise
 }
 
 
-template <typename t_zeta,
-          typename t_zeta_dot,
-          typename t_uext,
-          typename t_uext_star,
-          typename t_zeta_star,
-          typename t_gamma,
-          typename t_gamma_star,
-          typename t_dist_to_orig,
-          typename t_normals,
-        //   typename t_previous_gamma,
-          typename t_rbm_velocity,
-          typename t_forces>
+template <typename t_lifting_surfaces>
 void UVLM::Unsteady::solver
 (
     const uint& i_iter,
-    t_zeta& zeta,
-    t_zeta_dot& zeta_dot,
-    t_uext& uext,
-    t_uext_star& uext_star,
-    t_zeta_star& zeta_star,
-    t_gamma& gamma,
-    t_gamma_star& gamma_star,
-    t_dist_to_orig& dist_to_orig,
-    t_normals& normals,
-    // const t_previous_gamma& previous_gamma,
-    t_rbm_velocity& rbm_velocity,
-    t_forces& forces,
-    t_forces& dynamic_forces,
+    t_lifting_surfaces& lifting_surfaces_unsteady,
     const UVLM::Types::UVMopts& options,
     const UVLM::Types::FlightConditions& flightconditions
 )
@@ -176,28 +130,120 @@ void UVLM::Unsteady::solver
     const double dt = options.dt;
     // Generate collocation points info
     //  Declaration
-    UVLM::Types::VecVecMatrixX zeta_col;
-    UVLM::Types::VecVecMatrixX uext_total;
-    UVLM::Types::VecVecMatrixX solid_vel;
-    UVLM::Types::allocate_VecVecMat(uext_total, uext);
-    UVLM::Types::copy_VecVecMat(uext, uext_total);
-    UVLM::Types::allocate_VecVecMat(solid_vel, uext);
+    lifting_surfaces_unsteady.get_surface_parameters();
 
-    UVLM::Types::VecVecMatrixX uext_total_col;
-    UVLM::Types::allocate_VecVecMat(uext_total_col, uext, -1);
+    UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
+    (
+        lifting_surfaces_unsteady.zeta,
+        lifting_surfaces_unsteady.zeta_dot,
+        lifting_surfaces_unsteady.u_ext,
+        lifting_surfaces_unsteady.rbm_vel_g,
+        lifting_surfaces_unsteady.uext_total,
+        lifting_surfaces_unsteady.solid_vel
+    );
 
+    //  Allocation and mapping
+    // Same in steady    
+    UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
+                                            lifting_surfaces_unsteady.uext_total_col);
+
+    // Unsteady specific
+    UVLM::Types::VecVecMatrixX uext_star_total;
+    UVLM::Types::allocate_VecVecMat(uext_star_total, lifting_surfaces_unsteady.uext_star);
+
+    // for what is extra gamma star?
     UVLM::Types::VecMatrixX extra_gamma_star;
     UVLM::Types::VecVecMatrixX extra_zeta_star;
     extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
         extra_gamma_star.push_back(UVLM::Types::MatrixX());
-        extra_gamma_star[i_surf].setZero(1, gamma_star[i_surf].cols());
+        extra_gamma_star[i_surf].setZero(1, lifting_surfaces_unsteady.gamma_star[i_surf].cols());
         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
         {
             extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
-                                                                   gamma_star[i_surf].cols() + 1));
+                                                                   lifting_surfaces_unsteady.gamma_star[i_surf].cols() + 1));
         }
+    }
+
+    UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
+
+    // different than in steady
+    if (options.convect_wake)
+    {
+        UVLM::Unsteady::Utils::convect_unsteady_wake
+        (
+            options,
+            lifting_surfaces_unsteady.zeta,
+            lifting_surfaces_unsteady.zeta_star,
+            lifting_surfaces_unsteady.gamma,
+            lifting_surfaces_unsteady.gamma_star,
+            lifting_surfaces_unsteady.u_ext,
+            lifting_surfaces_unsteady.uext_star,
+            uext_star_total,
+            lifting_surfaces_unsteady.rbm_vel_g,
+            extra_gamma_star,
+            extra_zeta_star
+        );
+    }
+
+    UVLM::Wake::Discretised::circulation_transfer(lifting_surfaces_unsteady.zeta,
+                                                  lifting_surfaces_unsteady.zeta_star,
+                                                  lifting_surfaces_unsteady.gamma,
+                                                  lifting_surfaces_unsteady.gamma_star,
+                                                  lifting_surfaces_unsteady.uext_total_col,
+                                                  dt);
+
+    if (!options.cfl1)
+    {
+        UVLM::Wake::Discretised::cfl_n1(options,
+                                        lifting_surfaces_unsteady.zeta_star,
+                                        lifting_surfaces_unsteady.gamma_star,
+                                        extra_gamma_star,
+                                        extra_zeta_star,
+                                        lifting_surfaces_unsteady.dist_to_orig,
+                                        uext_star_total,
+                                        lifting_surfaces_unsteady.solid_vel,
+                                        dt);
+    }
+
+    // we can use UVLM::Steady::solve_discretised if uext_col
+    // is the total velocity including non-steady contributions.
+    // TODO: Check if struct for unsteady surfaces can be transformed to steady to save mem and time?
+    UVLM::Steady::solve_discretised
+    (
+        lifting_surfaces_unsteady,
+        steady_options,
+        flightconditions
+    );
+
+    if (options.quasi_steady)
+    {
+        UVLM::Wake::Horseshoe::circulation_transfer(lifting_surfaces_unsteady.gamma,
+                                                    lifting_surfaces_unsteady.gamma_star,
+                                                    -1);
+    }
+
+    // forces calculation
+    // set forces to 0 just in case
+    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.forces);
+    // static:
+    UVLM::PostProc::calculate_static_forces_unsteady
+    (
+        lifting_surfaces_unsteady.zeta,
+        lifting_surfaces_unsteady.zeta_dot,
+        lifting_surfaces_unsteady.zeta_star,
+        lifting_surfaces_unsteady.gamma,
+        lifting_surfaces_unsteady.gamma_star,
+        lifting_surfaces_unsteady.u_ext,
+        lifting_surfaces_unsteady.rbm_vel_g,
+        lifting_surfaces_unsteady.forces,
+        steady_options,
+        flightconditions
+    );
+    // TODO: Check if delete?
+    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.dynamic_forces);
+
     }
 
     // total stream velocity
