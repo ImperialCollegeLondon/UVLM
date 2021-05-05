@@ -57,8 +57,11 @@ namespace UVLM
         	bool NewAIC;
         	double DelTime;
         	bool Rollup;
+            bool only_lifting;
+            bool only_nonlifting;
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
+        	unsigned int NumSurfacesNonlifting;
             double dt;
             unsigned int n_rollup;
             double rollup_tolerance;
@@ -76,6 +79,9 @@ namespace UVLM
             double dt;
             uint NumCores;
             uint NumSurfaces;
+            uint NumSurfacesNonlifting;
+            bool only_lifting;
+            bool only_nonlifting;
             // uint steady_n_rollup;
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
@@ -102,6 +108,7 @@ namespace UVLM
             vm.dt = uvm.dt;
             vm.NumCores = uvm.NumCores;
             vm.NumSurfaces = uvm.NumSurfaces;
+            vm.NumSurfacesNonlifting = uvm.NumSurfacesNonlifting;
             // vm.Mstar = uvm.Mstar;
             vm.ImageMethod = uvm.ImageMethod;
             vm.iterative_solver = uvm.iterative_solver;
@@ -110,12 +117,10 @@ namespace UVLM
             vm.horseshoe = false;
             vm.vortex_radius = uvm.vortex_radius;
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
-            if (uvm.quasi_steady)
-            {
-                vm.Steady = true;
-            } else {
-                vm.Steady = false;
-            }
+            vm.only_lifting = uvm.only_lifting;
+            vm.only_nonlifting = uvm.only_nonlifting;
+            vm.Steady = uvm.quasi_steady;
+           
             return vm;
         };
 
