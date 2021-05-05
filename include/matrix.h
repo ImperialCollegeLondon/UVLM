@@ -163,7 +163,8 @@ namespace UVLM
 			std::vector<uint>& offset
 		);
         
-        uint get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in);
+        template<typename t_mat_in>
+        uint get_total_VecVecMat_size(t_mat_in mat_in);
     }
 }
 // SOURCE CODE
@@ -708,7 +709,8 @@ void UVLM::Matrix::aic_combined
     UVLM::Types::copy_Mat_to_block(circulation_bc_phantom, aic, Ktotal_lifting_and_nonlifting, 0);
 }
 
-uint UVLM::Matrix::get_total_VecVecMat_size(UVLM::Types::VecVecMatrixX mat_in)
+template<typename t_mat_in>
+uint UVLM::Matrix::get_total_VecVecMat_size(t_mat_in mat_in)
 {
     uint n_surf = mat_in.size();
     uint ii = 0;

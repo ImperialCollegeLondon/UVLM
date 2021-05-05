@@ -350,9 +350,10 @@ namespace UVLM
             }
         }
 
+        template<typename mat_in>
         inline void copy_Mat_to_block
         (
-            UVLM::Types::MatrixX& in,
+            mat_in& in,
             UVLM::Types::MatrixX& out,
             uint i_start,
             uint j_start
