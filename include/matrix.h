@@ -48,7 +48,6 @@ namespace UVLM
             const t_surf_vec_col& longitudinals_col,
             const t_surf_vec_col& perpendiculars_col,
             const t_surf_vec_col& normals_col,
-            const UVLM::Types::VMopts& options,
             t_aic& aic_sources_x,
             t_aic& aic_sources_y,
             t_aic& aic_sources_z,
@@ -307,7 +306,6 @@ void UVLM::Matrix::AIC_sources
     const t_surf_vec_col& longitudinals_col,
     const t_surf_vec_col& perpendiculars_col,
     const t_surf_vec_col& normals_col,
-    const UVLM::Types::VMopts& options,
     t_aic& aic_sources_x,
     t_aic& aic_sources_y,
     t_aic& aic_sources_z,
@@ -348,23 +346,20 @@ void UVLM::Matrix::AIC_sources
             UVLM::Types::Block block_aic_y = aic_sources_y.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
             UVLM::Types::Block block_aic_z = aic_sources_z.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
 
-            if (options.Steady)
-            {
-                same_surface=((icol_surf==jpanel_surf)&&(same_body));
-                UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
-                                                                zeta_col[icol_surf],
-                                                                block_aic_x,
-                                                                block_aic_y,
-                                                                block_aic_z,
-                                                                longitudinals_panel[jpanel_surf],
-                                                                perpendiculars_panel[jpanel_surf],
-                                                                normals_panel[jpanel_surf],
-                                                                longitudinals_col[icol_surf],
-                                                                perpendiculars_col[icol_surf],
-                                                                normals_col[icol_surf],
-                                                                same_surface
-                                                                );
-            }
+            same_surface=((icol_surf==jpanel_surf)&&(same_body));
+            UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
+                                                            zeta_col[icol_surf],
+                                                            block_aic_x,
+                                                            block_aic_y,
+                                                            block_aic_z,
+                                                            longitudinals_panel[jpanel_surf],
+                                                            perpendiculars_panel[jpanel_surf],
+                                                            normals_panel[jpanel_surf],
+                                                            longitudinals_col[icol_surf],
+                                                            perpendiculars_col[icol_surf],
+                                                            normals_col[icol_surf],
+                                                            same_surface
+                                                            );
         }
     }
 }
@@ -687,7 +682,7 @@ void UVLM::Matrix::aic_combined
                       false,
                       aic_phantom_on_nonlifting);
     
-    // Get matrix to enforce linear interpolated circulation on phantom panels
+    // Get matrix to enforce linear interpolated circulation on phantom panels   
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(phantom_surfaces.Ktotal, aic.size());
     UVLM::Matrix::aic_phantom_interp_condition(lifting_surfaces.Ktotal,
                                                nl_body.Ktotal, 
