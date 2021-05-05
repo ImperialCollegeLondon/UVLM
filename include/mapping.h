@@ -76,7 +76,7 @@ namespace UVLM
 
         void map_VecVec1(const UVLM::Types::VecDimensions& dimensions,
                         double** in,
-                        UVLM::Types::VecMapVX& map,,
+                        UVLM::Types::VecMapVX& map,
                         const int& correction=0)
         {
             // Generates a variable that will be indexed as map[i_surf](i_m)
