@@ -26,95 +26,10 @@ namespace UVLM
             t_lifting_surfaces& lifting_surfaces_unsteady,
             const UVLM::Types::UVMopts& options,
             const UVLM::Types::FlightConditions& flightconditions
-        );
+        );        
 
-        template <typename t_zeta,
-                  typename t_zeta_dot,
-                  typename t_zeta_star,
-                  typename t_zeta_star_dot,
-                  typename t_uext,
-                  typename t_gamma,
-                  typename t_gamma_star,
-                  typename t_rbm_velocity,
-                  typename t_forces>
-        void initialise
-        (
-            t_zeta& zeta,
-            t_zeta_dot& zeta_dot,
-            t_zeta_star& zeta_star,
-            t_zeta_star_dot& zeta_star_dot,
-            t_uext& uext,
-            t_gamma& gamma,
-            t_gamma_star& gamma_star,
-            t_rbm_velocity& rbm_velocity,
-            t_forces& forces,
-            const UVLM::Types::VMopts& options,
-            const UVLM::Types::FlightConditions& flightconditions
-        );
     }
 }
-
-// Initialisation routine for unsteady UVLM routines.
-// It runs VLM in different configurations and provides
-// a steady force calculation if required.
-// Input conditions should be the same as for the first time step.
-// In order to avoid force steps at initialisation for coupled simulations, the
-// wake modelling should be as close as possible to the model
-// used in the unsteady part.
-template <typename t_zeta,
-          typename t_zeta_dot,
-          typename t_zeta_star,
-          typename t_zeta_star_dot,
-          typename t_uext,
-          typename t_gamma,
-          typename t_gamma_star,
-          typename t_rbm_velocity,
-          typename t_forces>
-void UVLM::Unsteady::initialise
-(
-    t_zeta& zeta,
-    t_zeta_dot& zeta_dot,
-    t_zeta_star& zeta_star,
-    t_zeta_star_dot& zeta_star_dot,
-    t_uext& uext,
-    t_gamma& gamma,
-    t_gamma_star& gamma_star,
-    t_rbm_velocity& rbm_velocity,
-    t_forces& forces,
-    const UVLM::Types::VMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions
-)
-{
-    // incident velocity taking into account RBM, zeta_dot:
-    // UVLM::Types::VecVecMatrixX uext_resultant;
-    // UVLM::Types::allocate_VecVecMat(uext_resultant,
-    //                                 uext);
-    // UVLM::Unsteady::Utils::compute_resultant_grid_velocity
-    // (
-    //     zeta,
-    //     zeta_dot,
-    //     uext,
-    //     rbm_velocity,
-    //     uext_resultant
-    // );
-
-    // call steady solver
-    UVLM::Steady::solver
-    (
-        zeta,
-        zeta_dot,
-        uext,
-        zeta_star,
-        gamma,
-        gamma_star,
-        forces,
-        rbm_velocity,
-        options,
-        flightconditions
-    );
-    return;
-}
-
 
 template <typename t_lifting_surfaces>
 void UVLM::Unsteady::solver
