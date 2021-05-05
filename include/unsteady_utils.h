@@ -84,9 +84,16 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     t_uext_out& uext_out
 )
 {
-    const uint n_surf = zeta.size();
-    UVLM::Types::Vector3 w_cross_zeta;
-    UVLM::Types::Vector3 zeta_temp;
+    if (rbm_velocity.isZero(0))
+    {
+        // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
+        UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
+    }
+    else
+    {
+        const uint n_surf = zeta.size();
+        UVLM::Types::Vector3 w_cross_zeta;
+        UVLM::Types::Vector3 zeta_temp;
     UVLM::Types::initialise_VecVecMat(uext_out);
 
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -111,6 +118,7 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
                                             - rbm_velocity(i_dim);
                 }
             }
+            }
         }
     }
 }
@@ -131,9 +139,17 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
     t_solid_vel& solid_vel
 )
 {
-    const uint n_surf = zeta.size();
-    UVLM::Types::Vector3 w_cross_zeta;
-    UVLM::Types::Vector3 zeta_temp;
+    // TODO: Combine with "UVLM::Unsteady::Utils::compute_resultant_grid_velocity"
+    if (rbm_velocity.isZero(0))
+    {
+        // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
+        UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
+    }
+    else
+    {
+        const uint n_surf = zeta.size();
+        UVLM::Types::Vector3 w_cross_zeta;
+        UVLM::Types::Vector3 zeta_temp;
     UVLM::Types::initialise_VecVecMat(uext_out);
     UVLM::Types::initialise_VecVecMat(solid_vel);
 
@@ -163,6 +179,7 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
             }
         }
     }
+}
 }
 
 // wake convection
