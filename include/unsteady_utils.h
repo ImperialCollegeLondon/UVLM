@@ -80,31 +80,41 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     t_uext_out& uext_out
 )
 {
-    const uint n_surf = zeta.size();
-    UVLM::Types::Vector3 w_cross_zeta;
-    UVLM::Types::Vector3 zeta_temp;
-    UVLM::Types::initialise_VecVecMat(uext_out);
-
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    UVLM::Types::Vector6 vec_rbm_vel_g;
+    vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    if (vec_rbm_vel_g.isZero(0))
     {
-        const uint n_col = zeta[i_surf][0].cols();
-        const uint n_row = zeta[i_surf][0].rows();
-        for (uint i_col=0; i_col<n_col; ++i_col)
+        // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
+        UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
+    }
+    else
+    {
+        const uint n_surf = zeta.size();
+        UVLM::Types::Vector3 w_cross_zeta;
+        UVLM::Types::Vector3 zeta_temp;
+        UVLM::Types::initialise_VecVecMat(uext_out);
+
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
-            for (uint i_row=0; i_row<n_row; ++i_row)
+            const uint n_col = zeta[i_surf][0].cols();
+            const uint n_row = zeta[i_surf][0].rows();
+            for (uint i_col=0; i_col<n_col; ++i_col)
             {
-                zeta_temp << zeta[i_surf][0](i_row, i_col),
-                             zeta[i_surf][1](i_row, i_col),
-                             zeta[i_surf][2](i_row, i_col);
-                w_cross_zeta =
-                    rbm_velocity.template block<3,1> (3, 0).cross(zeta_temp);
-                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (uint i_row=0; i_row<n_row; ++i_row)
                 {
-                    uext_out[i_surf][i_dim](i_row, i_col) =
-                                              uext[i_surf][i_dim](i_row, i_col)
-                                            - w_cross_zeta(i_dim)
-                                            - zeta_dot[i_surf][i_dim](i_row, i_col)
-                                            - rbm_velocity(i_dim);
+                    zeta_temp << zeta[i_surf][0](i_row, i_col),
+                                zeta[i_surf][1](i_row, i_col),
+                                zeta[i_surf][2](i_row, i_col);
+                    w_cross_zeta =
+                        vec_rbm_vel_g.template block<3,1> (3, 0).cross(zeta_temp);
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        uext_out[i_surf][i_dim](i_row, i_col) =
+                                                uext[i_surf][i_dim](i_row, i_col)
+                                                - w_cross_zeta(i_dim)
+                                                - zeta_dot[i_surf][i_dim](i_row, i_col)
+                                                - vec_rbm_vel_g(i_dim);
+                    }
                 }
             }
         }
@@ -126,35 +136,47 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
     t_uext_out& uext_out,
     t_solid_vel& solid_vel
 )
-{
-    const uint n_surf = zeta.size();
-    UVLM::Types::Vector3 w_cross_zeta;
-    UVLM::Types::Vector3 zeta_temp;
-    UVLM::Types::initialise_VecVecMat(uext_out);
-    UVLM::Types::initialise_VecVecMat(solid_vel);
-
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+{   
+    UVLM::Types::Vector6 vec_rbm_vel_g;
+    vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    
+    // TODO: Combine with "UVLM::Unsteady::Utils::compute_resultant_grid_velocity"
+    if (vec_rbm_vel_g.isZero(0))
     {
-        const uint n_col = zeta[i_surf][0].cols();
-        const uint n_row = zeta[i_surf][0].rows();
-        for (uint i_col=0; i_col<n_col; ++i_col)
+        // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
+        UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
+    }
+    else
+    {
+        const uint n_surf = zeta.size();
+        UVLM::Types::Vector3 w_cross_zeta;
+        UVLM::Types::Vector3 zeta_temp;
+        UVLM::Types::initialise_VecVecMat(uext_out);
+        UVLM::Types::initialise_VecVecMat(solid_vel);
+
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
-            for (uint i_row=0; i_row<n_row; ++i_row)
+            const uint n_col = zeta[i_surf][0].cols();
+            const uint n_row = zeta[i_surf][0].rows();
+            for (uint i_col=0; i_col<n_col; ++i_col)
             {
-                zeta_temp << zeta[i_surf][0](i_row, i_col),
-                             zeta[i_surf][1](i_row, i_col),
-                             zeta[i_surf][2](i_row, i_col);
-                w_cross_zeta =
-                    rbm_velocity.template block<3,1> (3, 0).cross(zeta_temp);
-                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (uint i_row=0; i_row<n_row; ++i_row)
                 {
-                    solid_vel[i_surf][i_dim](i_row, i_col) =
-                                             w_cross_zeta(i_dim)
-                                            + zeta_dot[i_surf][i_dim](i_row, i_col)
-                                            + rbm_velocity(i_dim);
-                    uext_out[i_surf][i_dim](i_row, i_col) =
-                                              uext[i_surf][i_dim](i_row, i_col)
-                                            - solid_vel[i_surf][i_dim](i_row, i_col);
+                    zeta_temp << zeta[i_surf][0](i_row, i_col),
+                                zeta[i_surf][1](i_row, i_col),
+                                zeta[i_surf][2](i_row, i_col);
+                    w_cross_zeta =
+                        vec_rbm_vel_g.template block<3,1> (3, 0).cross(zeta_temp);
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                    {
+                        solid_vel[i_surf][i_dim](i_row, i_col) =
+                                                w_cross_zeta(i_dim)
+                                                + zeta_dot[i_surf][i_dim](i_row, i_col)
+                                                + vec_rbm_vel_g(i_dim);
+                        uext_out[i_surf][i_dim](i_row, i_col) =
+                                                uext[i_surf][i_dim](i_row, i_col)
+                                                - solid_vel[i_surf][i_dim](i_row, i_col);
+                    }
                 }
             }
         }
@@ -220,8 +242,12 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
         // total stream velocity
+        
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
-        rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+        UVLM::Types::Vector6 vec_rbm_vel_g;
+        vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    
+        rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
@@ -271,8 +297,11 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::VecVecMatrixX zeros;
         UVLM::Types::allocate_VecVecMat(zeros, uext_star);
         // total stream velocity
+        UVLM::Types::Vector6 vec_rbm_vel_g;
+        vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
-        rbm_no_omega.template head<3>() = rbm_velocity.template head<3>();
+        rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (

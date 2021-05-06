@@ -132,7 +132,7 @@ void UVLM::Steady::solver
         lifting_surfaces.zeta,
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
-        lifting_surfaces.rbm_vel_g,
+        options.rbm_vel_g,
         lifting_surfaces.uext_total
     );
 
@@ -198,7 +198,7 @@ void UVLM::Steady::solver
         lifting_surfaces.gamma,
         lifting_surfaces.gamma_star,
         lifting_surfaces.u_ext,
-        lifting_surfaces.rbm_vel_g,
+        options.rbm_vel_g,
         lifting_surfaces.forces,
         options,
         flightconditions
@@ -257,7 +257,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         lifting_surfaces.zeta,
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
-        lifting_surfaces.rbm_vel_g,
+        options.rbm_vel_g,
         lifting_surfaces.uext_total
     );
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);
@@ -265,11 +265,6 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     // -------- Phantom Panels -------   
     phantom_surfaces.get_surface_parameters();
     phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
-    if (phantom_surfaces.phantom_cell_required)
-    {   
-        std::cout << "\n Phantom cells required!\n";
-    }
-    std::cout << "\nGet surface parameters struct";
     nl_body.get_surface_parameters();
 
     // ########################################
@@ -297,7 +292,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         lifting_surfaces.gamma,
         lifting_surfaces.gamma_star,
         lifting_surfaces.u_ext,
-        lifting_surfaces.rbm_vel_g,
+        options.rbm_vel_g,
         lifting_surfaces.forces,
         options,
         flightconditions

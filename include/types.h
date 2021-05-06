@@ -72,6 +72,8 @@ namespace UVLM
             bool cfl1;
             double vortex_radius;
             double vortex_radius_wake_ind;
+            double centre_rot_g[3];
+            double rbm_vel_g[6];
         };
 
         struct UVMopts
@@ -100,6 +102,8 @@ namespace UVLM
             uint interp_method;
             double yaw_slerp;
             bool quasi_steady;
+            double centre_rot_g[3];
+            double rbm_vel_g[6];
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -120,6 +124,14 @@ namespace UVLM
             vm.only_lifting = uvm.only_lifting;
             vm.only_nonlifting = uvm.only_nonlifting;
             vm.Steady = uvm.quasi_steady;
+            for (uint i=0; i<6; ++i)
+            {
+                if (i < 3)
+                {
+                    vm.centre_rot_g[i] = uvm.centre_rot_g[i];
+                    vm.rbm_vel_g[i] = uvm.rbm_vel_g[i];
+                }
+            }
            
             return vm;
         };

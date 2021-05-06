@@ -27,7 +27,9 @@ namespace UVLM
                 unsigned int** p_dimensions,
                 double** p_zeta,
                 double** p_u_ext,
-                double** p_forces
+                double** p_forces//,
+                // double* rbm_vel_g,
+                // double* centre_rot_g
             )
             {
                 n_surf = n_surfaces;                
@@ -62,7 +64,7 @@ namespace UVLM
             UVLM::Types::VecMapX gamma, gamma_star;
             UVLM::Types::VecVecMapX zeta_dot, zeta_star;
             UVLM::Types::MatrixX aic;
-            UVLM::Types::VectorX rbm_vel_g;
+            // UVLM::Types::MapVectorX rbm_vel_g_1();// use vector x?
             
             // Constructor
             lifting_surface
@@ -76,7 +78,6 @@ namespace UVLM
                 double** p_zeta_dot,
                 double** p_gamma,
                 double** p_gamma_star,
-                double* p_rbm_vel_g,
                 unsigned int** p_dimensions_star
             ):surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces}
             {    
@@ -85,7 +86,6 @@ namespace UVLM
                 UVLM::Mapping::map_VecVecMat(dimensions, p_zeta_dot, zeta_dot, 1);
                 UVLM::Mapping::map_VecMat(dimensions, p_gamma, gamma, 0);
                 UVLM::Mapping::map_VecMat(dimensions_star, p_gamma_star, gamma_star, 0);
-                UVLM::Mapping::map_VecX(2*UVLM::Constants::NDIM, p_rbm_vel_g, rbm_vel_g);
             }
 
             //Functions
@@ -133,13 +133,14 @@ namespace UVLM
                 double** p_zeta_dot,
                 double** p_gamma,
                 double** p_gamma_star,
-                double* p_rbm_vel_g,
                 unsigned int** p_dimensions_star,
                 double**p_dist_to_orig,
                 double**p_dynamic_forces,
                 double** p_uext_star
-            ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_rbm_vel_g, p_dimensions_star}
+            ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_dimensions_star}
             {    
+                // std::cout << "\n INITIALISING LIFTING SURFACE UNSTEADY STRUCT!";
+                
                 UVLM::Mapping::map_VecVecMat(dimensions,
                                             p_dynamic_forces,
                                             dynamic_forces,

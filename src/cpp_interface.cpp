@@ -31,7 +31,6 @@ DLLEXPORT void run_VLM
             p_zeta_dot,
             p_gamma,
             p_gamma_star,
-            p_rbm_vel_g,
             p_dimensions_star);
 
     UVLM::Steady::solver(Lifting_surfaces,
@@ -101,7 +100,6 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
             p_zeta_dot,
             p_gamma,
             p_gamma_star,
-            p_rbm_vel_g,
             p_dimensions_star);
     
     // Setup Nonlifting Body  
@@ -165,7 +163,6 @@ DLLEXPORT void run_UVLM
             p_zeta_dot,
             p_gamma,
             p_gamma_star,
-            p_rbm_vel_g,
             p_dimensions_star,
             p_dist_to_orig,
             p_dynamic_forces,
@@ -221,7 +218,6 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
         p_zeta_dot,
         p_gamma,
         p_gamma_star,
-        p_rbm_vel_g,
         p_dimensions_star,
         p_dist_to_orig,
         p_dynamic_forces,
