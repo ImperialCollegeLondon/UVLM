@@ -106,9 +106,9 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
             {
                 for (uint i_row=0; i_row<n_row; ++i_row)
                 {
-                zeta_temp << zeta[i_surf][0](i_row, i_col) - centre_rot(0),
-                             zeta[i_surf][1](i_row, i_col) - centre_rot(1),
-                             zeta[i_surf][2](i_row, i_col) - centre_rot(2);
+                zeta_temp << zeta[i_surf][0](i_row, i_col) - centre_rot[0],
+                             zeta[i_surf][1](i_row, i_col) - centre_rot[1],
+                             zeta[i_surf][2](i_row, i_col) - centre_rot[2];
                     w_cross_zeta =
                         vec_rbm_vel_g.template block<3,1> (3, 0).cross(zeta_temp);
                     for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
@@ -121,7 +121,7 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
                     }
                 }
             }
-            }
+            
         }
     }
 }
@@ -187,7 +187,7 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
         }
     }
 }
-}
+
 
 // wake convection
 // the UVMopts flag convection_scheme determines how the

@@ -354,7 +354,8 @@ DLLEXPORT void UVLM_check_incidence_angle
     double** p_zeta_dot,
     double** p_normals,
     double*  p_rbm_vel,
-    double** p_incidence_angle
+    double** p_incidence_angle,
+    const UVLM::Types::UVMopts& options
 )
 {
     UVLM::Types::VecDimensions dimensions;
@@ -400,7 +401,7 @@ DLLEXPORT void UVLM_check_incidence_angle
         zeta,
         zeta_dot,
         normals,
-        rbm_velocity,
+        options,
         incidence_angle
     );
 }

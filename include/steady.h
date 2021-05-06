@@ -130,6 +130,7 @@ void UVLM::Steady::solver
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
         options.rbm_vel_g,
+        options.centre_rot_g,
         lifting_surfaces.uext_total
     );
 
@@ -253,6 +254,7 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
         options.rbm_vel_g,
+        options.centre_rot_g,
         lifting_surfaces.uext_total
     );
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);

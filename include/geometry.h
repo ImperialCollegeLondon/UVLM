@@ -637,15 +637,15 @@ namespace UVLM
                 to_next = dist_to_orig_conv(i_conv) - dist_to_orig(i_m);
                 prev_to_next = dist_to_orig_conv(i_conv) - dist_to_orig_conv(i_conv - 1);
 
-                mod_prev = std::sqrt((coord0(i_conv - 1) - centre_rot(0))*(coord0(i_conv - 1) - centre_rot(0)) +
-                                     (coord1(i_conv - 1) - centre_rot(1))*(coord1(i_conv - 1) - centre_rot(1)));
+                mod_prev = std::sqrt((coord0(i_conv - 1) - centre_rot[0])*(coord0(i_conv - 1) - centre_rot[0]) +
+                                     (coord1(i_conv - 1) - centre_rot[1])*(coord1(i_conv - 1) - centre_rot[1]));
                                      // coord2(i_conv - 1)*coord2(i_conv - 1));
-                mod_next = std::sqrt((coord0(i_conv) - centre_rot(0))*(coord0(i_conv) - centre_rot(0)) +
-                                     (coord1(i_conv) - centre_rot(1))*(coord1(i_conv) - centre_rot(1)));
+                mod_next = std::sqrt((coord0(i_conv) - centre_rot[0])*(coord0(i_conv) - centre_rot[0]) +
+                                     (coord1(i_conv) - centre_rot[1])*(coord1(i_conv) - centre_rot[1]));
                                      // coord2(i_conv)*coord2(i_conv));
 
-                omega = std::acos(((coord0(i_conv - 1) - centre_rot(0))*(coord0(i_conv) - centre_rot(0)) +
-                                   (coord1(i_conv - 1) - centre_rot(1))*(coord1(i_conv) - centre_rot(1)))/mod_prev/mod_next);
+                omega = std::acos(((coord0(i_conv - 1) - centre_rot[0])*(coord0(i_conv) - centre_rot[0]) +
+                                   (coord1(i_conv - 1) - centre_rot[1])*(coord1(i_conv) - centre_rot[1]))/mod_prev/mod_next);
                                   // coord2(i_conv - 1)*coord2(i_conv))/mod_prev/mod_next);
 
                 if (std::abs(std::sin(omega)) > 1e-6)
@@ -653,8 +653,8 @@ namespace UVLM
                     coef_prev = std::sin(to_next*omega/prev_to_next)/std::sin(omega);
                     coef_next = std::sin(to_prev*omega/prev_to_next)/std::sin(omega);
 
-                    new_coord0(i_m) = coef_next*(coord0(i_conv) - centre_rot(0)) + coef_prev*(coord0(i_conv - 1) - centre_rot(0)) + centre_rot(0);
-                    new_coord1(i_m) = coef_next*(coord1(i_conv) - centre_rot(1)) + coef_prev*(coord1(i_conv - 1) - centre_rot(1)) + centre_rot(1);
+                    new_coord0(i_m) = coef_next*(coord0(i_conv) - centre_rot[0]) + coef_prev*(coord0(i_conv - 1) - centre_rot[0]) + centre_rot[0];
+                    new_coord1(i_m) = coef_next*(coord1(i_conv) - centre_rot[1]) + coef_prev*(coord1(i_conv - 1) - centre_rot[1]) + centre_rot[1];
                 } else {
                     new_coord0(i_m) = (to_prev*coord0(i_conv) + to_next*coord0(i_conv - 1))/prev_to_next;
                     new_coord1(i_m) = (to_prev*coord1(i_conv) + to_next*coord1(i_conv - 1))/prev_to_next;
@@ -701,9 +701,9 @@ namespace UVLM
             // Transform the coordinates
             for (unsigned int i_m=0; i_m<M+1; ++i_m)
             {
-                aux_coord0(i_m) = coord0(i_m) - centre_rot(0);
-                aux_coord1(i_m) = (coord1(i_m) - centre_rot(1))*cos(yaw) + (coord2(i_m) - centre_rot(2))*sin(yaw);
-                aux_coord2(i_m) = -1.0*(coord1(i_m) - centre_rot(1))*sin(yaw) + (coord2(i_m) - centre_rot(2))*cos(yaw);
+                aux_coord0(i_m) = coord0(i_m) - centre_rot[0];
+                aux_coord1(i_m) = (coord1(i_m) - centre_rot[1])*cos(yaw) + (coord2(i_m) - centre_rot[2])*sin(yaw);
+                aux_coord2(i_m) = -1.0*(coord1(i_m) - centre_rot[1])*sin(yaw) + (coord2(i_m) - centre_rot[2])*cos(yaw);
             }
 
             // Compute the new coordinates in the yaw FoR
@@ -743,9 +743,9 @@ namespace UVLM
             // Transform back the coordinates
             for (unsigned int i_m=0; i_m<M; ++i_m)
             {
-                new_coord0(i_m) = aux_new_coord0(i_m) + centre_rot(0);
-                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw) + centre_rot(1);
-                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw) + centre_rot(2);
+                new_coord0(i_m) = aux_new_coord0(i_m) + centre_rot[0];
+                new_coord1(i_m) = aux_new_coord1(i_m)*cos(yaw) - aux_new_coord2(i_m)*sin(yaw) + centre_rot[1];
+                new_coord2(i_m) = aux_new_coord1(i_m)*sin(yaw) + aux_new_coord2(i_m)*cos(yaw) + centre_rot[2];
             }
 
         } // slerp_yaw

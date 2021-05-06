@@ -273,12 +273,14 @@ namespace UVLM
             UVLM::Types::copy_VecVecMat(uext, velocities);
 
             // u_ext taking into account unsteady contributions
+            // TODO: get rid of rbm velocity input in function calculate static forces
             UVLM::Unsteady::Utils::compute_resultant_grid_velocity
             (
                 zeta,
                 zeta_dot,
                 uext,
-                rbm_velocity,
+                options.rbm_vel_g,
+                options.centre_rot_g,
                 velocities
             );
 
@@ -654,7 +656,6 @@ namespace UVLM
                   typename t_zeta,
                   typename t_zeta_dot,
                   typename t_normals,
-                  typename t_rbm_velocity,
                   typename t_incidence_angle>
         void calculate_incidence_angle
         (
@@ -662,7 +663,7 @@ namespace UVLM
             const t_zeta& zeta,
             const t_zeta_dot& zeta_dot,
             const t_normals& normals,
-            const t_rbm_velocity& rbm_velocity,
+            const UVLM::Types::UVMopts& options,
             t_incidence_angle& incidence_angle
         )
         {
@@ -678,7 +679,8 @@ namespace UVLM
                 zeta,
                 zeta_dot,
                 u_ext,
-                rbm_velocity,
+                options.rbm_vel_g,
+                options.centre_rot_g,
                 velocities
             );
 

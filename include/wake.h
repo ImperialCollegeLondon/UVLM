@@ -179,8 +179,7 @@ namespace UVLM
                       typename t_extra_zeta_star,
                       typename t_dist_to_orig,
                       typename t_uext_star_total,
-                      typename t_solid_vel,
-                      typename t_centre_rot>
+                      typename t_solid_vel>
             void cfl_n1
             (
                 const UVLM::Types::UVMopts& options,
@@ -191,7 +190,6 @@ namespace UVLM
                 const t_dist_to_orig& dist_to_orig,
                 t_uext_star_total& uext_star_total,
                 t_solid_vel& solid_vel,
-                t_centre_rot& centre_rot,
                 double dt=0.
             )
             {
@@ -296,20 +294,20 @@ namespace UVLM
                                 // Cylindrical coordinates along the z axis
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
-                                    coord0(i_m) = std::sqrt((zeta_star[i_surf][0](i_m, i_n) - centre_rot(0))*(zeta_star[i_surf][0](i_m, i_n) - centre_rot(0)) +
-                                                            (zeta_star[i_surf][1](i_m, i_n) - centre_rot(1))*(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1)));
+                                    coord0(i_m) = std::sqrt((zeta_star[i_surf][0](i_m, i_n) - options.centre_rot_g[0])*(zeta_star[i_surf][0](i_m, i_n) - options.centre_rot_g[0]) +
+                                                            (zeta_star[i_surf][1](i_m, i_n) - options.centre_rot_g[1])*(zeta_star[i_surf][1](i_m, i_n) - options.centre_rot_g[1]));
                                     // https://math.stackexchange.com/questions/360113/how-does-one-interpolate-between-polar-coordinates
                                     // coord0(i_m) = 1./coord0(i_m)/coord0(i_m);
-                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1),
-                                                        zeta_star[i_surf][0](i_m, i_n) - centre_rot(0));
-                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) - centre_rot(2);
+                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n) - options.centre_rot_g[1],
+                                                        zeta_star[i_surf][0](i_m, i_n) - options.centre_rot_g[0]);
+                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) - options.centre_rot_g[2];
                                 }
-                                coord0(M + 1) = std::sqrt((extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0))*(extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0)) +
-                                                          (extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1))*(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1)));
+                                coord0(M + 1) = std::sqrt((extra_zeta_star[i_surf][0](0, i_n) - options.centre_rot_g[0])*(extra_zeta_star[i_surf][0](0, i_n) - options.centre_rot_g[0]) +
+                                                          (extra_zeta_star[i_surf][1](0, i_n) - options.centre_rot_g[1])*(extra_zeta_star[i_surf][1](0, i_n) - options.centre_rot_g[1]));
                                 // coord0(M + 1) = 1./coord0(M + 1)/coord0(M + 1);
-                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1),
-                                                      extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0));
-                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) - centre_rot(2);
+                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n) - options.centre_rot_g[1],
+                                                      extra_zeta_star[i_surf][0](0, i_n) - options.centre_rot_g[0]);
+                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) - options.centre_rot_g[2];
 
                                 if (coord1(2) >= coord1(1))
                                 {
@@ -391,7 +389,7 @@ namespace UVLM
                                 // Slerp interpolation
                                 // https://en.wikipedia.org/wiki/Slerp
                                 UVLM::Interpolation::slerp_z(M + 1,
-                                                            centre_rot,
+                                                            options.centre_rot_g,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
@@ -401,7 +399,7 @@ namespace UVLM
                                 // https://en.wikipedia.org/wiki/Slerp
                                 UVLM::Interpolation::slerp_yaw(M + 1,
                                                             options.yaw_slerp,
-                                                            centre_rot,
+                                                            options.centre_rot_g,
                                                             dist_to_orig[i_surf].col(i_n), dist_to_orig_conv,
                                                             coord0, coord1, coord2,
                                                             new_coord0, new_coord1, new_coord2);
@@ -430,9 +428,9 @@ namespace UVLM
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
                                     // new_coord0(i_m) = std::sqrt(1./new_coord0(i_m));
-                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m)) + centre_rot(0);
-                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m)) + centre_rot(1);
-                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + centre_rot(2);
+                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m)) + options.centre_rot_g[0];
+                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m)) + options.centre_rot_g[1];
+                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + options.centre_rot_g[2];
                                 }
                             }
 
