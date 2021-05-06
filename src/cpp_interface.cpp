@@ -270,22 +270,22 @@ DLLEXPORT void calculate_unsteady_forces
 #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions_star,
                                              dimensions_star);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+    UVLM::Mapping::map_VecVecMat(dimensions_star,
                                       p_zeta_star,
                                       zeta_star,
                                       1);
@@ -293,31 +293,31 @@ DLLEXPORT void calculate_unsteady_forces
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma,
                                    gamma,
                                    0);
 
     UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
+    UVLM::Mapping::map_VecMat(dimensions_star,
                                    p_gamma_star,
                                    gamma_star,
                                    0);
 
     UVLM::Types::VecMapX gamma_dot;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma_dot,
                                    gamma_dot,
                                    0);
 
     UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_normals,
                                       normals,
                                       0);
 
     UVLM::Types::VecVecMapX dynamic_forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_dynamic_forces,
                                       dynamic_forces,
                                       1,
@@ -356,30 +356,30 @@ DLLEXPORT void UVLM_check_incidence_angle
 )
 {
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
 
     UVLM::Types::VecVecMapX u_ext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_uext,
                                       u_ext,
                                       1);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta_dot,
                                       zeta_dot,
                                       1);
 
     UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_normals,
                                       normals,
                                       0);
@@ -387,7 +387,7 @@ DLLEXPORT void UVLM_check_incidence_angle
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX incidence_angle;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_incidence_angle,
                                    incidence_angle,
                                    0);
@@ -422,22 +422,22 @@ DLLEXPORT void total_induced_velocity_at_points
 #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions_star,
                                              dimensions_star);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+    UVLM::Mapping::map_VecVecMat(dimensions_star,
                                       p_zeta_star,
                                       zeta_star,
                                       1);
@@ -451,13 +451,13 @@ DLLEXPORT void total_induced_velocity_at_points
                                           UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma,
                                    gamma,
                                    0);
 
     UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
+    UVLM::Mapping::map_VecMat(dimensions_star,
                                    p_gamma_star,
                                    gamma_star,
                                    0);
@@ -504,45 +504,45 @@ DLLEXPORT void multisurface
     uint n_surf_target = 1;
 
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
 
     // UVLM::Types::VecDimensions dimensions_star;
-    // UVLM::CppInterface::transform_dimensions(n_surf,
+    // UVLM::Mapping::transform_dimensions(n_surf,
     //                                          p_dimensions_star,
     //                                          dimensions_star);
 
     UVLM::Types::VecDimensions dimensions_target;
-    UVLM::CppInterface::transform_dimensions(n_surf_target,
+    UVLM::Mapping::transform_dimensions(n_surf_target,
                                              p_dimensions_target,
                                              dimensions_target);
 
     UVLM::Types::VecDimensions dimensions_uout;
-    UVLM::CppInterface::transform_dimensions(n_surf_target,
+    UVLM::Mapping::transform_dimensions(n_surf_target,
                                              p_dimensions_uout,
                                              dimensions_uout);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     // UVLM::Types::VecMapX gamma;
-    // UVLM::CppInterface::map_VecMat(dimensions,
+    // UVLM::Mapping::map_VecMat(dimensions,
     //                               p_gamma,
     //                               gamma,
     //                               0);
     //
     // UVLM::Types::VecMatrixX target_surface;
-    // UVLM::CppInterface::map_VecMatrixX(dimensions_target,
+    // UVLM::Mapping::map_VecMatrixX(dimensions_target,
     //                                   p_target_surface,
     //                                   target_surface,
     //                                   1);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                   p_gamma,
                                   gamma,
                                   0);
@@ -552,13 +552,13 @@ DLLEXPORT void multisurface
     // std::cout << dimensions[1].first << std::endl;
 
     UVLM::Types::VecMapX uout;
-    UVLM::CppInterface::map_VecMat(dimensions_uout,
+    UVLM::Mapping::map_VecMat(dimensions_uout,
                                   p_uout,
                                   uout,
                                   0);
 
     UVLM::Types::VecVecMapX target_surface;
-    UVLM::CppInterface::map_VecVecMat(dimensions_target,
+    UVLM::Mapping::map_VecVecMat(dimensions_target,
                                       p_target_surface,
                                       target_surface,
                                       1);
