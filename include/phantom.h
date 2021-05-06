@@ -51,7 +51,6 @@ void UVLM::Phantom::create_phantom_zeta
     float phantom_dy=0.0;
     zeta_phantom.resize(n_surf);
     unsigned int N_phantom_cell, N_row_phantom;
-    std::cout <<flag_zeta_phantom;
     for(uint i_surf=0; i_surf<n_surf; i_surf++)
     {
         zeta_phantom[i_surf].resize(3);

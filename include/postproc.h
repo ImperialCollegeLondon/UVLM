@@ -202,9 +202,9 @@ namespace UVLM
                 {
                     for (uint i_N=0; i_N<N; ++i_N)
                     {
-						freestream_velocity_squared = UVLM::Types::norm_Vec_squared(uext_col[i_surf][0](i_M, i_N),
-                                                                                    uext_col[i_surf][1](i_M, i_N),
-                                                                                    uext_col[i_surf][2](i_M, i_N));
+						freestream_velocity_squared = UVLM::Types::norm_Vec_squared(nl_body.uext_col[i_surf][0](i_M, i_N),
+                                                                                    nl_body.uext_col[i_surf][1](i_M, i_N),
+                                                                                    nl_body.uext_col[i_surf][2](i_M, i_N));
 						induced_velocity_squared = UVLM::Types::norm_Vec_squared(velocities[i_surf][0](i_M, i_N),
                                                                                  velocities[i_surf][1](i_M, i_N), 
                                                                                  velocities[i_surf][2](i_M, i_N));                        
@@ -229,15 +229,15 @@ namespace UVLM
 				}
 			}
 
-            export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
+            // export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
             // Transform forces from collocation points to nodes
             UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces);
-            export_data_to_csv_file("forces_nodes_y.csv", nl_body.forces[0][1]);
-            export_data_to_csv_file("forces_collo_y.csv", forces_collocation[0][1]);
-            get_norm_forces(nl_body.forces, forces_norm);
-            get_norm_forces(forces_collocation, forces_norm_collocation);
-            export_data_to_csv_file("forces_norm.csv", forces_norm[0]);
-            export_data_to_csv_file("forces_norm_collo.csv", forces_norm_collocation[0]);
+            // export_data_to_csv_file("forces_nodes_y.csv", nl_body.forces[0][1]);
+            // export_data_to_csv_file("forces_collo_y.csv", forces_collocation[0][1]);
+            // get_norm_forces(nl_body.forces, forces_norm);
+            // get_norm_forces(forces_collocation, forces_norm_collocation);
+            // export_data_to_csv_file("forces_norm.csv", forces_norm[0]);
+            // export_data_to_csv_file("forces_norm_collo.csv", forces_norm_collocation[0]);
             
         }
 
