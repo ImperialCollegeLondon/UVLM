@@ -59,15 +59,13 @@ namespace UVLM
         void solve_discretised
         (
             t_struct_lifting_surface& lifting_surfaces,
-            const UVLM::Types::VMopts& options,
-            const UVLM::Types::FlightConditions& flightconditions
+            const UVLM::Types::VMopts& options
         );
         template <typename t_struct_nl_body>
         void solve_discretised_nonlifting_body
         (
             t_struct_nl_body& nl_body,
-            const UVLM::Types::VMopts& options,
-            const UVLM::Types::FlightConditions& flightconditions
+            const UVLM::Types::VMopts& options
         );
 
         template <typename t_struct_lifting_surfaces,
@@ -76,7 +74,6 @@ namespace UVLM
         void solve_discretised_lifting_and_nonlifting
         (
             const UVLM::Types::VMopts& options,
-            const UVLM::Types::FlightConditions& flightconditions,
             t_struct_lifting_surfaces& lifting_surfaces,
             t_struct_nl_body& nl_body,
             t_struct_phantom_surf& phantom_surfaces
@@ -180,8 +177,7 @@ void UVLM::Steady::solver
     UVLM::Steady::solve_discretised
     (
         lifting_surfaces,
-        options,
-        flightconditions
+        options
     );
     
     UVLM::Steady::wake_roll_up_lifting
@@ -220,8 +216,7 @@ void UVLM::Steady::solver_nonlifting_body
     UVLM::Steady::solve_discretised_nonlifting_body
     (
         nl_body,
-        options,
-        flightconditions
+        options
     );
     // export_data_to_csv_file("zeta_x.csv", nl_body.zeta[0][0]);
     // export_data_to_csv_file("zeta_x_col.csv", nl_body.zeta_col[0][0]);
@@ -272,7 +267,6 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
         options,
-        flightconditions,
         lifting_surfaces,
         nl_body,
         phantom_surfaces
@@ -350,8 +344,7 @@ template <typename t_struct_lifting_surface>
 void UVLM::Steady::solve_discretised
 (
     t_struct_lifting_surface& lifting_surfaces,
-    const UVLM::Types::VMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions
+    const UVLM::Types::VMopts& options
 )
 {
     lifting_surfaces.get_aerodynamic_solver_inputs(options);
@@ -395,8 +388,7 @@ template <typename t_struct_nl_body>
 void UVLM::Steady::solve_discretised_nonlifting_body
 (
     t_struct_nl_body& nl_body,
-    const UVLM::Types::VMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions
+    const UVLM::Types::VMopts& options
 )
 {
     // Get AIC and RHS 
@@ -434,7 +426,6 @@ template <typename t_struct_lifting_surfaces,
 void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 (
     const UVLM::Types::VMopts& options,
-    const UVLM::Types::FlightConditions& flightconditions,
     t_struct_lifting_surfaces& lifting_surfaces,
     t_struct_nl_body& nl_body,
     t_struct_phantom_surf& phantom_surfaces
@@ -560,8 +551,7 @@ void UVLM::Steady::wake_roll_up_lifting
             UVLM::Steady::solve_discretised
             (
                 lifting_surfaces,
-                options,
-                flightconditions
+                options
             );
             
          }

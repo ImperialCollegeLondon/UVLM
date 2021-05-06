@@ -140,8 +140,7 @@ void UVLM::Unsteady::solver
     UVLM::Steady::solve_discretised
     (
         lifting_surfaces_unsteady,
-        steady_options,
-        flightconditions
+        steady_options
     );
 
     if (options.quasi_steady)
@@ -279,7 +278,6 @@ void UVLM::Unsteady::solver
         UVLM::Steady::solve_discretised_lifting_and_nonlifting
         (
             steady_options,
-            flightconditions,
             lifting_surfaces_unsteady,
             nl_body,
             phantom_surfaces
@@ -295,8 +293,7 @@ void UVLM::Unsteady::solver
         UVLM::Steady::solve_discretised
         (
             lifting_surfaces_unsteady,
-            steady_options,
-            flightconditions
+            steady_options
         );
     }
     if (options.quasi_steady)
