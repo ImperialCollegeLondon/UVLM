@@ -341,20 +341,12 @@ namespace UVLM
                             v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                               gamma[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
                         }
@@ -399,20 +391,12 @@ namespace UVLM
                             v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                               gamma[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
                         }
@@ -472,20 +456,12 @@ namespace UVLM
                         v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                           gamma[ii_surf],
                                                                           rp,
-                                                                          0,
-                                                                          0,
-                                                                          -1,
-                                                                          -1,
                                                                           options.ImageMethod,
                                                                           options.vortex_radius);
 
                         v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                           gamma_star[ii_surf],
                                                                           rp,
-                                                                          0,
-                                                                          0,
-                                                                          -1,
-                                                                          -1,
                                                                           options.ImageMethod,
                                                                           options.vortex_radius);
                     }
