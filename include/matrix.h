@@ -70,7 +70,6 @@ namespace UVLM
             void aic_phantom_interp_condition
             (
                 const uint& Ktotal_lifting,
-                const uint& Ktotal_nonlifting, 
                 const uint& Ktotal_phantom, 
                 t_zeta_col& zeta_col,
                 t_zeta_phantom_col& zeta_phantom_col,
@@ -681,7 +680,6 @@ void UVLM::Matrix::aic_combined
     // Get matrix to enforce linear interpolated circulation on phantom panels   
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(phantom_surfaces.Ktotal, aic.cols());
     UVLM::Matrix::aic_phantom_interp_condition(lifting_surfaces.Ktotal,
-                                               nl_body.Ktotal, 
                                                phantom_surfaces.Ktotal, 
                                                lifting_surfaces.zeta_col,
                                                phantom_surfaces.zeta_col,
@@ -777,7 +775,6 @@ template<typename t_zeta_col,
 void UVLM::Matrix::aic_phantom_interp_condition
 (
     const uint& Ktotal_lifting,
-    const uint& Ktotal_nonlifting, 
     const uint& Ktotal_phantom, 
     t_zeta_col& zeta_col,
     t_zeta_phantom_col& zeta_phantom_col,
