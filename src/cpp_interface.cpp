@@ -14,9 +14,7 @@ DLLEXPORT void run_VLM
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_forces,
-    double* p_rbm_vel_g,
-    double* p_centre_rot_g
+    double** p_forces
 )
 {
 #if defined(_OPENMP)
@@ -79,7 +77,6 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     double** p_gamma_star,
     double** p_forces,
     int* p_flag_zeta_phantom,
-    double* p_rbm_vel_g,
     unsigned int** p_dimensions_nonlifting,
     double** p_zeta_nonlifting,
     double** p_u_ext_nonlifting,
