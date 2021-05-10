@@ -52,7 +52,7 @@ DLLEXPORT void run_VLM_nonlifting_body
     omp_set_num_threads(options.NumCores);
 #endif
 
-    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfaces,
+    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfacesNonlifting,
                                                     p_dimensions,
                                                     p_zeta,
                                                     p_u_ext,
