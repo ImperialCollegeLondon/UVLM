@@ -44,8 +44,7 @@ namespace UVLM
             UVLM::Types::Vector3 f;
             UVLM::Types::Vector3 v_ind;
             UVLM::Types::Vector3 rp;
-            uint start;
-            uint end;
+            uint start, end;
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
                 const uint M = gamma[i_surf].rows();
@@ -65,8 +64,8 @@ namespace UVLM
                                 // trailing edge
                                 continue;
                             }
-                            unsigned int start = i_segment;
-                            unsigned int end = (start + 1)%n_segment;
+                            start = i_segment;
+                            end = (start + 1)%n_segment;
                             uint i_start = i_M + UVLM::Mapping::vortex_indices(start, 0);
                             uint j_start = i_N + UVLM::Mapping::vortex_indices(start, 1);
                             uint i_end = i_M + UVLM::Mapping::vortex_indices(end, 0);
@@ -142,6 +141,7 @@ namespace UVLM
                   typename t_gamma_star,
                   typename t_uext,
                   typename t_rbm_velocity,
+                  typename t_centre_rot,
                   typename t_forces>
         void calculate_static_forces_unsteady
         (
@@ -152,6 +152,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             const t_uext& uext,
             const t_rbm_velocity& rbm_velocity,
+            const t_centre_rot& centre_rot,
             t_forces&  forces,
             const UVLM::Types::VMopts options,
             const UVLM::Types::FlightConditions& flightconditions
@@ -173,6 +174,7 @@ namespace UVLM
                 zeta_dot,
                 uext,
                 rbm_velocity,
+                centre_rot,
                 velocities
             );
 
@@ -233,20 +235,12 @@ namespace UVLM
                             v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                               gamma[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
                         }
@@ -291,20 +285,12 @@ namespace UVLM
                             v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
                                                                               gamma[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
                                                                               gamma_star[ii_surf],
                                                                               rp,
-                                                                              0,
-                                                                              0,
-                                                                              -1,
-                                                                              -1,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
                         }
@@ -362,24 +348,16 @@ namespace UVLM
                     for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                     {
                         v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
-                                                                          gamma[ii_surf],
-                                                                          rp,
-                                                                          0,
-                                                                          0,
-                                                                          -1,
-                                                                          -1,
-                                                                          options.ImageMethod,
-                                                                          options.vortex_radius);
+                                                                gamma[ii_surf],
+                                                                rp,
+                                                                options.ImageMethod,
+                                                                options.vortex_radius);
 
                         v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
-                                                                          gamma_star[ii_surf],
-                                                                          rp,
-                                                                          0,
-                                                                          0,
-                                                                          -1,
-                                                                          -1,
-                                                                          options.ImageMethod,
-                                                                          options.vortex_radius);
+                                                                gamma_star[ii_surf],
+                                                                rp,
+                                                                options.ImageMethod,
+                                                                options.vortex_radius);
                     }
 
                     dl = r2-r1;
@@ -453,7 +431,6 @@ namespace UVLM
             const UVLM::Types::FlightConditions& flightconditions
         )
         {
-            const UVLM::Types::Real dt = options.dt;
             const uint n_surf = zeta.size();
 
             UVLM::Types::VecVecMatrixX unsteady_force;
@@ -565,6 +542,7 @@ namespace UVLM
             UVLM::Types::allocate_VecVecMat(velocities, zeta);
             // free stream contribution
             UVLM::Types::copy_VecVecMat(u_ext, velocities);
+            UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
             // u_ext taking into account unsteady contributions
             UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -573,6 +551,7 @@ namespace UVLM
                 zeta_dot,
                 u_ext,
                 rbm_velocity,
+                centre_rot,
                 velocities
             );
 
