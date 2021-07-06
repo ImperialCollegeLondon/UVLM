@@ -530,7 +530,8 @@ void UVLM::Steady::wake_roll_up_lifting
         UVLM::Types::allocate_VecVecMat(u_ind,
                                         lifting_surfaces.zeta_star);
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_wake(
+        UVLM::BiotSavart::total_induced_velocity_on_col(
+            lifting_surfaces.zeta_star,
             lifting_surfaces.zeta,
             lifting_surfaces.zeta_star,
             lifting_surfaces.gamma,
@@ -604,7 +605,8 @@ void UVLM::Steady::wake_roll_up
         UVLM::Types::allocate_VecVecMat(u_ind, lifting_surfaces.zeta_star);
         
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_wake(
+        UVLM::BiotSavart::total_induced_velocity_on_col(
+            lifting_surfaces.zeta_star,
             lifting_surfaces.zeta,
             lifting_surfaces.zeta_star,
             lifting_surfaces.gamma,

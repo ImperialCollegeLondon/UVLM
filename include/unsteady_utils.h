@@ -322,8 +322,9 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             uext_star_total
         );
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_wake
+        UVLM::BiotSavart::total_induced_velocity_on_col
         (
+            zeta_star,
             zeta,
             zeta_star,
             gamma,

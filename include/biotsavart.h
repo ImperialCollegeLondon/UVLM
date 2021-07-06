@@ -176,25 +176,23 @@ namespace UVLM
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
 
-
-
-        template <typename t_zeta,
+        template <typename t_zeta_col,
+                  typename t_zeta,
                   typename t_zeta_star,
                   typename t_gamma,
                   typename t_gamma_star,
                   typename t_uout>
-        void total_induced_velocity_on_wake
+        void total_induced_velocity_on_col
         (
-            const t_zeta&       zeta,
+            const t_zeta_col&   zeta_col,
+            const t_zeta&   zeta,
             const t_zeta_star&  zeta_star,
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
             t_uout&             uout,
-            const bool&         image_method = false,
-            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
+            const bool&         image_method,
+            const UVLM::Types::Real& vortex_radius
         );
-
-
 
         template <typename t_zeta,
                   typename t_gamma,
@@ -1218,14 +1216,18 @@ UVLM::Types::Vector3 UVLM::BiotSavart::whole_surface
     return uout;
 }
 
-template <typename t_zeta,
+
+
+template <typename t_zeta_col,
+          typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
           typename t_gamma_star,
           typename t_uout>
-void UVLM::BiotSavart::total_induced_velocity_on_wake
+void UVLM::BiotSavart::total_induced_velocity_on_col
 (
-    const t_zeta&       zeta,
+    const t_zeta_col&   zeta_col,
+    const t_zeta&   zeta,
     const t_zeta_star&  zeta_star,
     const t_gamma&      gamma,
     const t_gamma_star& gamma_star,
@@ -1234,17 +1236,18 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     const UVLM::Types::Real& vortex_radius
 )
 {
-    const uint n_surf = zeta.size();
-    for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
+    const uint n_surf_col = zeta_col.size();
+    const uint n_surf_panel = zeta.size();
+    for (uint col_i_surf=0; col_i_surf<n_surf_col; ++col_i_surf)
     {
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        for (uint i_surf=0; i_surf<n_surf_panel; ++i_surf)
         {
             // wake on wake
             UVLM::BiotSavart::whole_surface_on_surface
             (
                 zeta_star[i_surf],
                 gamma_star[i_surf],
-                zeta_star[col_i_surf],
+                zeta_col[col_i_surf],
                 uout[col_i_surf],
                 image_method,
                 vortex_radius
@@ -1254,7 +1257,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
             (
                 zeta[i_surf],
                 gamma[i_surf],
-                zeta_star[col_i_surf],
+                zeta_col[col_i_surf],
                 uout[col_i_surf],
                 image_method,
                 vortex_radius
@@ -1262,7 +1265,6 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
         }
     }
 }
-
 template <typename t_ttriad,
           typename t_zeta,
           typename t_zeta_star,
