@@ -156,14 +156,7 @@ void UVLM::Unsteady::solver
     // static:
     UVLM::PostProc::calculate_static_forces_unsteady
     (
-        lifting_surfaces_unsteady.zeta,
-        lifting_surfaces_unsteady.zeta_dot,
-        lifting_surfaces_unsteady.zeta_star,
-        lifting_surfaces_unsteady.gamma,
-        lifting_surfaces_unsteady.gamma_star,
-        lifting_surfaces_unsteady.u_ext,
-        options.rbm_vel_g,
-        lifting_surfaces_unsteady.forces,
+        lifting_surfaces_unsteady,
         steady_options,
         flightconditions
     );
@@ -311,14 +304,7 @@ void UVLM::Unsteady::solver
     UVLM::Types::Vector3 centre_rot_g = UVLM::Types::Vector3::Zero();
     UVLM::PostProc::calculate_static_forces_unsteady
     (
-        lifting_surfaces_unsteady.zeta,
-        lifting_surfaces_unsteady.zeta_dot,
-        lifting_surfaces_unsteady.zeta_star,
-        lifting_surfaces_unsteady.gamma,
-        lifting_surfaces_unsteady.gamma_star,
-        lifting_surfaces_unsteady.u_ext,
-        options.rbm_vel_g,
-        lifting_surfaces_unsteady.forces,
+        lifting_surfaces_unsteady,
         steady_options,
         flightconditions
     );

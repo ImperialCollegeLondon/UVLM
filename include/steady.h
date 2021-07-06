@@ -189,14 +189,7 @@ void UVLM::Steady::solver
     );
     UVLM::PostProc::calculate_static_forces_unsteady
     (
-        lifting_surfaces.zeta,
-        lifting_surfaces.zeta_dot,
-        lifting_surfaces.zeta_star,
-        lifting_surfaces.gamma,
-        lifting_surfaces.gamma_star,
-        lifting_surfaces.u_ext,
-        options.rbm_vel_g,
-        lifting_surfaces.forces,
+        lifting_surfaces,
         options,
         flightconditions
     );
@@ -225,7 +218,8 @@ void UVLM::Steady::solver_nonlifting_body
     UVLM::PostProc::calculate_static_forces_nonlifting_body
     (
         nl_body,
-        flightconditions
+        flightconditions,
+        false
     );
 }
 
@@ -276,22 +270,17 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
 
     UVLM::PostProc::calculate_static_forces_nonlifting_body
     (
-        nl_body,
-        flightconditions
+        nl_body, 
+        flightconditions,
+        true
     );
 
-   UVLM::PostProc::calculate_static_forces_unsteady
+       UVLM::PostProc::calculate_static_forces_unsteady
     (
-        lifting_surfaces.zeta,
-        lifting_surfaces.zeta_dot,
-        lifting_surfaces.zeta_star,
-        lifting_surfaces.gamma,
-        lifting_surfaces.gamma_star,
-        lifting_surfaces.u_ext,
-        options.rbm_vel_g,
-        lifting_surfaces.forces,
+        lifting_surfaces,
         options,
-        flightconditions
+        flightconditions,
+        false
     );
 }
 
@@ -493,9 +482,22 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 												   nl_body.aic_sources_z,
 												   nl_body.u_induced_col);
    
+    lifting_surfaces.get_induced_col_from_sources(sigma_flat, 
+                                                  nl_body);
+    UVLM::BiotSavart::total_induced_velocity_on_col
+        (
+            nl_body.zeta_col,
+            lifting_surfaces.zeta,
+            lifting_surfaces.zeta_star,
+            lifting_surfaces.gamma,
+            lifting_surfaces.gamma_star,
+            nl_body.u_induced_col_vertices,
+            options.ImageMethod,
+            options.vortex_radius
+        );
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     nl_body.sigma,
-                                    nl_body.zeta_col);
+                                    nl_body.uext_col);
 }
 
 template <typename t_struct_lifting_surface>

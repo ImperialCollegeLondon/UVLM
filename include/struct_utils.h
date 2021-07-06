@@ -63,7 +63,8 @@ namespace UVLM
             UVLM::Types::VecDimensions dimensions_star;
             UVLM::Types::VecMapX gamma, gamma_star;
             UVLM::Types::VecVecMapX zeta_dot, zeta_star;
-            UVLM::Types::MatrixX aic;
+            UVLM::Types::MatrixX aic;            
+            UVLM::Types::VecVecMatrixX u_induced_col_sources;
             // UVLM::Types::MapVectorX rbm_vel_g_1();// use vector x?
             
             // Constructor
@@ -86,6 +87,8 @@ namespace UVLM
                 UVLM::Mapping::map_VecVecMat(dimensions, p_zeta_dot, zeta_dot, 1);
                 UVLM::Mapping::map_VecMat(dimensions, p_gamma, gamma, 0);
                 UVLM::Mapping::map_VecMat(dimensions_star, p_gamma_star, gamma_star, 0);
+            
+                UVLM::Types::allocate_VecVecMat(u_induced_col_sources, u_ext, -1);        
             }
 
             //Functions
@@ -113,7 +116,42 @@ namespace UVLM
                                 normals,
                                 options,
                                 false,
-                                aic);          }
+                                aic);          
+            }
+            template <typename t_struct_nl_body>
+            void get_induced_col_from_sources(UVLM::Types::VectorX& sigma_flat,
+                                              t_struct_nl_body& nl_body)
+            {
+                 
+                                // get induced_velocity_col_nonlifting_on_lifting
+                    // Nonlifting on lifting surfaces
+                UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+                UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+                UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+                UVLM::Matrix::AIC_sources(nl_body.zeta,
+                                        zeta_col,
+                                        nl_body.longitudinals,
+                                        nl_body.perpendiculars,
+                                        nl_body.normals,
+                                        longitudinals, //collocation
+                                        perpendiculars, //collocation
+                                        normals, //collocation
+                                        aic_nonlifting_on_lifting_x,
+                                        aic_nonlifting_on_lifting_y,
+                                        aic_nonlifting_on_lifting_z,
+                                        false);  
+
+                // desingularization
+                UVLM::Types::MatrixX desingularization_matrix = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+                    UVLM::Types::allocate_VecVecMat(u_induced_col_sources, uext_col);
+                    UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+                                                            aic_nonlifting_on_lifting_x,
+                                                            aic_nonlifting_on_lifting_y,
+                                                            aic_nonlifting_on_lifting_z,
+                                                            u_induced_col_sources,
+                                                            desingularization_matrix);    
+        
+            }
         };
 
         struct lifting_surface_unsteady : lifting_surface
