@@ -74,6 +74,20 @@ namespace UVLM
             }
         }
 
+        void map_VecMatInt(const UVLM::Types::VecDimensions& dimensions,
+                        int** in,
+                        UVLM::Types::VecMapXint& map,
+                        const int& correction=0)
+        {
+            const unsigned int n_surf = dimensions.size();
+            for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                map.push_back(UVLM::Types::MapMatrixXint (in[i_surf],
+                                                          dimensions[i_surf].second + correction,
+                                                          1));
+            }
+        }
+
         void map_VecVec1(const UVLM::Types::VecDimensions& dimensions,
                         double** in,
                         UVLM::Types::VecMapVX& map,

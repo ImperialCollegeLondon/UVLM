@@ -203,11 +203,12 @@ namespace UVLM
         {
             bool phantom_cell_required;
             uint Ktotal, n_surf;
+            UVLM::Types::VecMapXint flag_zeta_phantom; // Introduce VecVecX
             UVLM::Types::VecVecMatrixX zeta, zeta_col, zeta_star, normals, longitudinals, perpendiculars;
 
             phantom_surface
             (
-                int* p_flag_zeta_phantom,
+                int** p_flag_zeta_phantom,
                 uint n_surfaces,
                 UVLM::Types::VecVecMapX zeta_lifting,
                 UVLM::Types::VecVecMapX zeta_lifting_star,
@@ -215,13 +216,13 @@ namespace UVLM
             )
             {   
                 n_surf = n_surfaces;
-                // TODO: Change flag_zeta_phantom to VecMat type
-                UVLM::Types::MapMatrixXint flag_zeta_phantom(p_flag_zeta_phantom, dimensions_lifting[0].second, n_surf);
+                UVLM::Mapping::map_VecMatInt(dimensions_lifting,
+                                             p_flag_zeta_phantom,
+                                             flag_zeta_phantom);
                 phantom_cell_required = UVLM::Phantom::check_for_true_in_bool_vec_mat(flag_zeta_phantom);
                 if (phantom_cell_required)
                 {
                     UVLM::Phantom::create_phantom_zeta(zeta_lifting, zeta, flag_zeta_phantom);                     
-
                 }
                 else
                 {

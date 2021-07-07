@@ -58,7 +58,7 @@ void UVLM::Phantom::create_phantom_zeta
         //To-Do: Check why -1 necessary (bug probably in datastructres.py or aerogrid.py)
         for(uint index_phantom=0;index_phantom<zeta[0][0].cols()-1;++index_phantom)
         {
-            if (flag_zeta_phantom(index_phantom, i_surf)==1)
+            if (flag_zeta_phantom[i_surf](index_phantom, 0)==1)
             {
                 phantom_dy= zeta[i_surf][1](0, index_phantom+1)-zeta[i_surf][1](0, index_phantom);
                 N_col = abs(round(zeta[i_surf][1](0, index_phantom)/phantom_dy));
@@ -150,11 +150,11 @@ bool UVLM::Phantom::check_for_true_in_bool_vec_mat
     t_flag_zeta_phantom& flag_zeta_phantom
 )
 {
-    for(uint i_surf=0; i_surf<flag_zeta_phantom.cols(); ++i_surf)
+    for(uint i_surf=0; i_surf<flag_zeta_phantom.size(); ++i_surf)
     {
-        for(uint i_row=0; i_row < flag_zeta_phantom.rows();++i_row)
+        for(uint i_row=0; i_row < flag_zeta_phantom[i_surf].rows();++i_row)
         {
-            if (flag_zeta_phantom(i_row, i_surf))
+            if (flag_zeta_phantom[i_surf](i_row, 0))
             {
                 return true;
             }
