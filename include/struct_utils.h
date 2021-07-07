@@ -246,13 +246,15 @@ namespace UVLM
             {
                 UVLM::Phantom::create_phantom_zeta_star(zeta, zeta_lifting_star, zeta_star);   
             }
+
+            
         };
 
         struct nonlifting_body : surface
         {
             // Nonlifting body specifix
             UVLM::Types::VecMapX sigma;
-            UVLM::Types::VecVecMatrixX u_induced_col;
+            UVLM::Types::VecVecMatrixX u_induced_col, u_induced_col_vertices;
 
             // Aerodynamic Solver Inputs
             UVLM::Types::MatrixX aic_sources_x, aic_sources_y,aic_sources_z;            
@@ -267,7 +269,8 @@ namespace UVLM
                 double** p_sigma
             ):surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces}
             {   
-                UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);
+                UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);                
+                UVLM::Types::allocate_VecVecMat(u_induced_col_vertices, zeta, -1);
             }
             void get_surface_parameters()
             {
