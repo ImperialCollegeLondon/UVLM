@@ -46,59 +46,73 @@ void UVLM::Phantom::create_phantom_zeta
     t_flag_zeta_phantom& flag_zeta_phantom
 )
 {
+    // Parameter initialisation
     const uint n_surf = zeta.size();
     int N_col, i_col;
-    float phantom_dy=0.0;
+    double phantom_dy=0.0;  
+    double ratio_vector_length = 0.0;
+    bool phantom_surface = false;
+    bool phantom_surface_already_set = false;
     zeta_phantom.resize(n_surf);
-    unsigned int N_phantom_cell, N_row_phantom;
+    uint N_phantom_cell, N_row_phantom, index_phantom_0, index_phantom_1;
+    uint i_surf_partner_junction = 0;
+    UVLM::Types::Vector3 junction_point_0, junction_point_1, junction_connection_vector;
+    UVLM::Types::Vector3 interpolated_point_0, interpolated_point_1;
+
+    // Resize surfaces beforehand to avoid problems with empty phantom surfaces
     for(uint i_surf=0; i_surf<n_surf; i_surf++)
     {
         zeta_phantom[i_surf].resize(3);
+        for(uint i_dim=0; i_dim<3; ++i_dim)
+        {
+            zeta_phantom[i_surf][i_dim].resize(0, 0);
+        }
+    }
+    for(uint i_surf=0; i_surf<n_surf; i_surf++)
+    {
+        phantom_surface = false;        
         N_row_phantom = zeta[i_surf][0].rows();
         //To-Do: Check why -1 necessary (bug probably in datastructres.py or aerogrid.py)
-        for(uint index_phantom=0;index_phantom<zeta[0][0].cols()-1;++index_phantom)
-        {
-            if (flag_zeta_phantom[i_surf](index_phantom, 0)==1)
+        for(uint index_phantom=0;index_phantom<zeta[i_surf][0].cols()-1;++index_phantom)
+        {            
+            // if partner junnction surface in flag lower than current surface
+            // than the surface has already been created
+            if (flag_zeta_phantom[i_surf](index_phantom, 0) > i_surf)
             {
+                i_surf_partner_junction = flag_zeta_phantom[i_surf](index_phantom, 0);
                 phantom_dy= zeta[i_surf][1](0, index_phantom+1)-zeta[i_surf][1](0, index_phantom);
-                N_col = abs(round(zeta[i_surf][1](0, index_phantom)/phantom_dy));
+                N_col = abs(round((zeta[i_surf][1](0, index_phantom)-zeta[i_surf_partner_junction][1](0, index_phantom))/(2.0*phantom_dy)));
                 
                 for(uint i_dim=0; i_dim<3; ++i_dim)
                 {
                     zeta_phantom[i_surf][i_dim].resize(N_row_phantom, N_col+1);
-                    
+                    zeta_phantom[i_surf_partner_junction][i_dim].resize(N_row_phantom, N_col+1);
                     zeta_phantom[i_surf][i_dim].block(0, 0,N_row_phantom, 1) = zeta[i_surf][i_dim].block(0, index_phantom,N_row_phantom, 1);
-                    i_col = N_col;
-                    for(i_col = N_col;  i_col>=0;--i_col)
+                    zeta_phantom[i_surf_partner_junction][i_dim].block(0, 0,N_row_phantom, 1) = zeta[i_surf_partner_junction][i_dim].block(0, index_phantom,N_row_phantom, 1);
+                }
+                phantom_surface = true;
+                break;
+            }
+        }
+        if (phantom_surface)
+        {
+            // Dynamic phantom surface creation depending on vectors between junction surfaces
+            for(uint i_row=0;i_row<N_row_phantom;++i_row)
+            {
+                // get vector between boundaries
+                junction_point_0 << zeta_phantom[i_surf][0](i_row, 0), zeta_phantom[i_surf][1](i_row, 0), zeta_phantom[i_surf][2](i_row, 0);
+                junction_point_1 << zeta_phantom[i_surf_partner_junction][0](i_row, 0), zeta_phantom[i_surf_partner_junction][1](i_row, 0), zeta_phantom[i_surf_partner_junction][2](i_row, 0);
+                junction_connection_vector = junction_point_0 - junction_point_1;
+                for(uint i_col=0;i_col<N_col+1;++i_col)
+                {
+                    ratio_vector_length =double(N_col - i_col) / double(N_col);
+                    interpolated_point_0 = junction_point_0 - (0.5 * ratio_vector_length ) * junction_connection_vector;
+                    interpolated_point_1 = junction_point_1 + (0.5 * ratio_vector_length ) * junction_connection_vector;
+                    
+                    for(uint i_dim=0; i_dim<3; ++i_dim)
                     {
-                        if(i_dim==1)
-                        {
-                            //TO-DO:
-                            // - Symmetry plane is used for end of panel
-                            // - Here symmetry plane is assumed to be at y = 0 --> adjust e.g. if sideslip angle != 0
-                            for(uint i_row=0;i_row<N_row_phantom;++i_row)
-                            {
-                                if(i_col==0 && N_col>1)
-                                {
-                                    zeta_phantom[i_surf][i_dim](i_row, i_col) = 0.0;
-                                }
-                                else if(i_col==N_col)
-                                {
-                                     zeta_phantom[i_surf][i_dim](i_row, i_col) =  zeta[i_surf][i_dim](i_row, index_phantom);
-                                }
-                                else
-                                {
-
-                                    zeta_phantom[i_surf][i_dim](i_row, i_col) = zeta_phantom[i_surf][i_dim](i_row, i_col+1) -phantom_dy;
-                                }
-                            }
-                        }
-                        else
-                        {      
-                            // TO-DO:
-                            // - here only unswept wings are covered
-                            zeta_phantom[i_surf][i_dim].col(i_col) = zeta_phantom[i_surf][i_dim].col(index_phantom);
-                        }
+                        zeta_phantom[i_surf][i_dim](i_row, i_col) = interpolated_point_0(i_dim);                    
+                        zeta_phantom[i_surf_partner_junction][i_dim](i_row, i_col) = interpolated_point_1(i_dim);
                     }
                 }
             }
@@ -123,22 +137,24 @@ void UVLM::Phantom::create_phantom_zeta_star
     for (uint i_surf=0; i_surf <n_surf_phantom; ++i_surf)
     {
         zeta_phantom_star[i_surf].resize(UVLM::Constants::NDIM);
-        N_rows = zeta_star[i_surf][0].rows();
         N_cols = zeta_phantom[i_surf][0].cols();
-        N_rows_zeta_phantom =zeta_phantom[i_surf][0].rows();
+        N_rows = zeta_phantom[i_surf][0].rows();
         for(uint i_dim=0; i_dim<UVLM::Constants::NDIM;++i_dim)
         {
             zeta_phantom_star[i_surf][i_dim].resize(N_rows, N_cols);
         }
-        // set coordinates of zeta phantom star
-        for (uint i_row=0; i_row<N_rows;++i_row)
+        if (zeta_phantom_star[i_surf][0].size() > 0)
         {
-            for (uint i_col=0; i_col<N_cols;++i_col)
+            // set coordinates of zeta phantom star
+            for (uint i_row=0; i_row<N_rows;++i_row)
             {
-                // TO-DO: Generalize case, or outsource whole phantom panels generation to SHARPy
-                zeta_phantom_star[i_surf][1](i_row, i_col) = zeta_phantom[i_surf][1](N_rows_zeta_phantom-1, i_col);
-                zeta_phantom_star[i_surf][0](i_row, i_col) = zeta_star[i_surf][0](i_row, 0);
-                zeta_phantom_star[i_surf][2](i_row, i_col) = zeta_star[i_surf][2](i_row, 0);
+                for (uint i_col=0; i_col<N_cols;++i_col)
+                {
+                    // TO-DO: Generalize case, or outsource whole phantom panels generation to SHARPy
+                    zeta_phantom_star[i_surf][1](i_row, i_col) = zeta_phantom[i_surf][1](N_rows-1, i_col);
+                    zeta_phantom_star[i_surf][0](i_row, i_col) = zeta_star[i_surf][0](i_row, 0);
+                    zeta_phantom_star[i_surf][2](i_row, i_col) = zeta_star[i_surf][2](i_row, 0);
+                }
             }
         }
     }
