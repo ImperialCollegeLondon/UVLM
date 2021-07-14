@@ -144,6 +144,23 @@ namespace UVLM
             double c_ref = 1.0;
         };
 
+
+        inline int correct_dimensions
+        (
+            const int correction,
+            int dimension
+        )
+        {
+            if (correction < 0 && dimension < abs(correction))
+            {
+                return 0;
+            }
+            else
+            {
+                return dimension + correction;
+            }
+        }
+
         template <typename t_mat>
         inline void generate_dimensions
         (
@@ -152,14 +169,14 @@ namespace UVLM
             const int& correction = 0
         )
         {
+            int M, N;
             dimensions.resize(mat.size());
+            
             for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
             {
-                dimensions[i_surf] = UVLM::Types::IntPair
-                                                    (
-                                                        mat[i_surf][0].rows() + correction,
-                                                        mat[i_surf][0].cols() + correction
-                                                    );
+                M = correct_dimensions(correction, mat[i_surf][0].rows());
+                N = correct_dimensions(correction, mat[i_surf][0].cols());
+                dimensions[i_surf] = UVLM::Types::IntPair(M, N);
             }
         }
 
@@ -296,11 +313,12 @@ namespace UVLM
         )
         {
             unsigned int n_surf = dimensions.size();
+            int M, N;
             mat.resize(n_surf);
             for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
             {
-                int M = dimensions[i_surf].first + correction;
-                int N = dimensions[i_surf].second + correction;
+                M = correct_dimensions(correction, dimensions[i_surf].first);
+                N = correct_dimensions(correction, dimensions[i_surf].second);
                 mat[i_surf].resize(n_dim);
                 for (unsigned int i_dim=0; i_dim<n_dim; ++i_dim)
                 {
@@ -320,11 +338,13 @@ namespace UVLM
         )
         {
             unsigned int n_surf = in_dimensions.size();
+            int M, N;
             mat.resize(n_surf);
             for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
             {
-                const unsigned int M = in_dimensions[i_surf][0].rows() + correction;
-                const unsigned int N = in_dimensions[i_surf][0].cols() + correction;
+                
+                M = correct_dimensions(correction, in_dimensions[i_surf][0].rows());
+                N = correct_dimensions(correction, in_dimensions[i_surf][0].cols());  
                 mat[i_surf].resize(in_dimensions[i_surf].size());
                 for (unsigned int i_dim=0; i_dim<in_dimensions[i_surf].size(); ++i_dim)
                 {

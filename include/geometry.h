@@ -420,13 +420,7 @@ namespace UVLM
         {
             // Size of surfaces contained in a vector of tuples
             UVLM::Types::VecDimensions dimensions;
-            dimensions.resize(vortex_mesh.size());
-            for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
-            {
-                dimensions[i_surf] = UVLM::Types::IntPair(
-                                                    vortex_mesh[i_surf][0].rows(),
-                                                    vortex_mesh[i_surf][0].cols());
-            }
+            UVLM::Types::generate_dimensions(vortex_mesh, dimensions);
 
             if (collocation_mesh.empty())
             {
