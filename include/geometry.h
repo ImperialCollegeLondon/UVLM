@@ -222,47 +222,52 @@ namespace UVLM
                                       type_out& long_vec,
                                       type_out& perpendicular_vec)
         {
-            UVLM::Types::Vector3 temp_long_vec;
-            UVLM::Types::Vector3 temp_tangential_vec;
-            UVLM::Types::Vector3 temp_normal_vec;
-            UVLM::Types::Vector3 temp_perpendicular_vec;
+            UVLM::Types::Vector3 temp_long_vec, temp_tangential_vec, temp_normal_vec, temp_perpendicular_vec;
+            int M, N;
             for (unsigned int i_surf=0; i_surf<zeta.size(); ++i_surf)
             {
-                const int M = zeta[i_surf][0].rows() - 1;
-                const int N = zeta[i_surf][0].cols() - 1;
-
-                for (unsigned int iM=0; iM<M; ++iM)
+                if (zeta[i_surf][0].size() == 0)
                 {
-                    for (unsigned int jN=0; jN<N; ++jN)
+                    continue;
+                }
+                else
+                {                
+                    M = zeta[i_surf][0].rows() - 1;
+                    N = zeta[i_surf][0].cols() - 1;
+
+                    for (unsigned int iM=0; iM<M; ++iM)
                     {
-                        panel_longitudinal_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
+                        for (unsigned int jN=0; jN<N; ++jN)
+                        {
+                            panel_longitudinal_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
+                                                        zeta[i_surf][1].template block<2,2>(iM,jN),
+                                                        zeta[i_surf][2].template block<2,2>(iM,jN),
+                                                        temp_long_vec);
+                            // To Do: Create function to put vecotr in VecVecMatrix
+                            long_vec[i_surf][0](iM,jN) = temp_long_vec[0];
+                            long_vec[i_surf][1](iM,jN) = temp_long_vec[1];
+                            long_vec[i_surf][2](iM,jN) = temp_long_vec[2];
+                            temp_long_vec.normalize();
+                            
+                            panel_tangential_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
                                                     zeta[i_surf][1].template block<2,2>(iM,jN),
                                                     zeta[i_surf][2].template block<2,2>(iM,jN),
-                                                    temp_long_vec);
+                                                    temp_tangential_vec);
+                            temp_tangential_vec.normalize();
 
-                        long_vec[i_surf][0](iM,jN) = temp_long_vec[0];
-                        long_vec[i_surf][1](iM,jN) = temp_long_vec[1];
-                        long_vec[i_surf][2](iM,jN) = temp_long_vec[2];
-                        temp_long_vec.normalize();
-                        
-                        panel_tangential_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
-                                                zeta[i_surf][1].template block<2,2>(iM,jN),
-                                                zeta[i_surf][2].template block<2,2>(iM,jN),
-                                                temp_tangential_vec);
-                        temp_tangential_vec.normalize();
+                            temp_normal_vec = temp_tangential_vec.cross(temp_long_vec);
+                            temp_normal_vec.normalize();
 
-                        temp_normal_vec = temp_tangential_vec.cross(temp_long_vec);
-                        temp_normal_vec.normalize();
+                            normal[i_surf][0](iM,jN) = temp_normal_vec[0];
+                            normal[i_surf][1](iM,jN) = temp_normal_vec[1];
+                            normal[i_surf][2](iM,jN) = temp_normal_vec[2];
 
-                        normal[i_surf][0](iM,jN) = temp_normal_vec[0];
-                        normal[i_surf][1](iM,jN) = temp_normal_vec[1];
-                        normal[i_surf][2](iM,jN) = temp_normal_vec[2];
-
-                        temp_perpendicular_vec = -temp_normal_vec.cross(temp_long_vec);
-                        temp_perpendicular_vec.normalize();
-                        perpendicular_vec[i_surf][0](iM,jN) = temp_perpendicular_vec[0];
-                        perpendicular_vec[i_surf][1](iM,jN) = temp_perpendicular_vec[1];
-                        perpendicular_vec[i_surf][2](iM,jN) = temp_perpendicular_vec[2];
+                            temp_perpendicular_vec = -temp_normal_vec.cross(temp_long_vec);
+                            temp_perpendicular_vec.normalize();
+                            perpendicular_vec[i_surf][0](iM,jN) = temp_perpendicular_vec[0];
+                            perpendicular_vec[i_surf][1](iM,jN) = temp_perpendicular_vec[1];
+                            perpendicular_vec[i_surf][2](iM,jN) = temp_perpendicular_vec[2];
+                        }
                     }
                 }
                 
