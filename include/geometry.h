@@ -189,10 +189,7 @@ namespace UVLM
                                          zeta[i_surf][1].template block<2,2>(iM,jN),
                                          zeta[i_surf][2].template block<2,2>(iM,jN),
                                          temp_normal);
-
-                            normal[i_surf][0](iM,jN) = temp_normal[0];
-                            normal[i_surf][1](iM,jN) = temp_normal[1];
-                            normal[i_surf][2](iM,jN) = temp_normal[2];
+                            UVLM::Types::pass_3D_Vector_to_VecMatrix(normal[i_surf], temp_normal, iM, jN);
                         }
                     }
                 }
@@ -243,30 +240,23 @@ namespace UVLM
                                                         zeta[i_surf][1].template block<2,2>(iM,jN),
                                                         zeta[i_surf][2].template block<2,2>(iM,jN),
                                                         temp_long_vec);
-                            // To Do: Create function to put vecotr in VecVecMatrix
-                            long_vec[i_surf][0](iM,jN) = temp_long_vec[0];
-                            long_vec[i_surf][1](iM,jN) = temp_long_vec[1];
-                            long_vec[i_surf][2](iM,jN) = temp_long_vec[2];
-                            temp_long_vec.normalize();
+                            UVLM::Types::pass_3D_Vector_to_VecMatrix(long_vec[i_surf],temp_long_vec,iM,jN);
+
                             
                             panel_tangential_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
                                                     zeta[i_surf][1].template block<2,2>(iM,jN),
                                                     zeta[i_surf][2].template block<2,2>(iM,jN),
                                                     temp_tangential_vec);
-                            temp_tangential_vec.normalize();
 
                             temp_normal_vec = temp_tangential_vec.cross(temp_long_vec);
                             temp_normal_vec.normalize();
 
-                            normal[i_surf][0](iM,jN) = temp_normal_vec[0];
-                            normal[i_surf][1](iM,jN) = temp_normal_vec[1];
-                            normal[i_surf][2](iM,jN) = temp_normal_vec[2];
+                            UVLM::Types::pass_3D_Vector_to_VecMatrix(normal[i_surf],temp_normal_vec,iM,jN);
 
                             temp_perpendicular_vec = -temp_normal_vec.cross(temp_long_vec);
                             temp_perpendicular_vec.normalize();
-                            perpendicular_vec[i_surf][0](iM,jN) = temp_perpendicular_vec[0];
-                            perpendicular_vec[i_surf][1](iM,jN) = temp_perpendicular_vec[1];
-                            perpendicular_vec[i_surf][2](iM,jN) = temp_perpendicular_vec[2];
+                            
+                            UVLM::Types::pass_3D_Vector_to_VecMatrix(perpendicular_vec[i_surf],temp_perpendicular_vec,iM,jN);
                         }
                     }
                 }

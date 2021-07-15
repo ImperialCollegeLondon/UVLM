@@ -480,6 +480,22 @@ namespace UVLM
             UVLM::Types::Vector3 vec;
             vec.setZero();
             return vec;
+        }   
+
+        template<typename t_vecmatrix>
+        inline void pass_3D_Vector_to_VecMatrix
+        (
+            t_vecmatrix& mat,
+            UVLM::Types::Vector3& vec,
+            const uint row,
+            const uint col
+
+        )
+        {
+            for (uint i_dim=0; i_dim<3; i_dim++)
+            {
+                mat[i_dim](row, col) = vec(i_dim);
+            }
         }
 
         void remove_row_from_VectorX
