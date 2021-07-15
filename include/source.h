@@ -13,7 +13,7 @@
 
 namespace UVLM
 {
-    namespace UnitSourceDensity
+    namespace Source
     {
         // DECLARATIONS
         template <typename t_zeta,
@@ -80,7 +80,7 @@ template <typename t_zeta,
 		  typename t_surf_vec_panel,
 		  typename t_surf_vec_col>
 
-void UVLM::UnitSourceDensity::get_influence_coefficient
+void UVLM::Source::get_influence_coefficient
     (
     const t_zeta&       zeta,
     const t_tsurface&   target_surface,
@@ -139,7 +139,7 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
         for (unsigned int j_panel=0; j_panel<cols_panel; ++j_panel)
         {
             collocation_id = 0;
-            longitudinal_panel_vec = UVLM::Types::Vector3(longitudinal_panel[0](i_panel, j_panel), longitudinal_panel[1](i_panel, j_panel), longitudinal_panel[2](i_panel, j_panel));
+			longitudinal_panel_vec = UVLM::Types::Vector3(longitudinal_panel[0](i_panel, j_panel), longitudinal_panel[1](i_panel, j_panel), longitudinal_panel[2](i_panel, j_panel));
             perpendicular_panel_vec = UVLM::Types::Vector3(perpendicular_panel[0](i_panel, j_panel), perpendicular_panel[1](i_panel, j_panel), perpendicular_panel[2](i_panel, j_panel));
             normal_panel_vec = UVLM::Types::Vector3(normal_panel[0](i_panel, j_panel), normal_panel[1](i_panel, j_panel), normal_panel[2](i_panel, j_panel));
             UVLM::Geometry::convert_to_panel_coordinate_system(zeta[0].template block<2,2>(i_panel, j_panel),
@@ -183,15 +183,17 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 					delta_eta_y_vec = panel_coordinates_eta.array()- collocation_point_transf[1];
 					radius_vec = (delta_epsilon_x_vec.array().pow(2) + delta_eta_y_vec.array().pow(2)+collocation_point_transf[2]*collocation_point_transf[2]).sqrt();
 				
-					UVLM::UnitSourceDensity::get_q_vec(radius_vec,
+					UVLM::Source::get_q_vec(radius_vec,
 													   d_vec,
 													   Q_vec);
-					induced_velocity_vec[0] = UVLM::UnitSourceDensity::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
-					induced_velocity_vec[1] = -UVLM::UnitSourceDensity::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
+					induced_velocity_vec[0] = UVLM::Source::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
+					induced_velocity_vec[1] = -UVLM::Source::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
 					if((same_surface) && (i_col==i_panel)&&(j_col==j_panel))
 					{
-						//std::cout << "\nInduced Vx = " << induced_velocity_vec[0] << std::endl;
+						// std::cout << "\nInduced Vx = " << induced_velocity_vec[0] << std::endl;
 						//std::cout << "\nInduced Vy = " << induced_velocity_vec[1] << std::endl;
+						induced_velocity_vec[0] = 0;
+						induced_velocity_vec[1] = 0; 
 						induced_velocity_vec[2] = 0.5;
 					}
 					else
@@ -201,7 +203,7 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
 						induced_velocity_vec[2] = 0;
 						if (abs(collocation_point_transf[2])!= 0.0)
 						{
-							induced_velocity_vec[2] = UVLM::UnitSourceDensity::get_j_sum(radius_vec,
+							induced_velocity_vec[2] = UVLM::Source::get_j_sum(radius_vec,
 																						delta_epsilon_vec,
 																						delta_eta_vec,
 																						delta_epsilon_x_vec,
@@ -235,7 +237,7 @@ void UVLM::UnitSourceDensity::get_influence_coefficient
     }
 }
 
-void UVLM::UnitSourceDensity::get_q_vec(
+void UVLM::Source::get_q_vec(
     UVLM::Types::VectorX& radius_vec,
     UVLM::Types::VectorX& d_vec,
     UVLM::Types::VectorX& Q_vec
@@ -258,7 +260,7 @@ void UVLM::UnitSourceDensity::get_q_vec(
     }
 }
 
-double UVLM::UnitSourceDensity::get_j_sum
+double UVLM::Source::get_j_sum
 (
     const UVLM::Types::VectorX& radius_vec,
     const UVLM::Types::VectorX& diff_epsilon,
@@ -290,7 +292,7 @@ double UVLM::UnitSourceDensity::get_j_sum
 }
 
 template <typename vector>
-double UVLM::UnitSourceDensity::dot_product
+double UVLM::Source::dot_product
 (
      const vector& vec1,
      const vector& vec2
@@ -308,7 +310,7 @@ template <typename t_S_vec,
 		  typename t_C_vec,
 		  typename t_delta_eps_x_vec,
 		  typename t_delta_eta_y_vec>
-bool UVLM::UnitSourceDensity::check_if_col_on_panel
+bool UVLM::Source::check_if_col_on_panel
 (
 	const t_S_vec& S_vec,
 	const t_C_vec& C_vec,

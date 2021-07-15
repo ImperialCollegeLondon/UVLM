@@ -3,7 +3,7 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include "biotsavart.h"
-#include "unitsourcedensity.h"
+#include "source.h"
 
 #include <fstream>
 
@@ -346,7 +346,7 @@ void UVLM::Matrix::AIC_sources
             UVLM::Types::Block block_aic_z = aic_sources_z.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col_i, k_surf_panel_j);
 
             same_surface=((icol_surf==jpanel_surf)&&(same_body));
-            UVLM::UnitSourceDensity::get_influence_coefficient(zeta[jpanel_surf],
+            UVLM::Source::get_influence_coefficient(zeta[jpanel_surf],
                                                             zeta_col[icol_surf],
                                                             block_aic_x,
                                                             block_aic_y,
