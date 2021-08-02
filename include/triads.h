@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "constants.h"
 
 #include <iostream>
 
@@ -53,7 +54,7 @@ namespace UVLM
         {
             for (unsigned int i_surf=0; i_surf<mat1.size(); ++i_surf)
             {
-                for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
+                for (unsigned int i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                 {
                     mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] - mat2[i_surf][i_dim];
                 }
@@ -70,7 +71,7 @@ namespace UVLM
         {
             for (unsigned int i_surf=0; i_surf<mat1.size(); ++i_surf)
             {
-                for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
+                for (unsigned int i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                 {
                     mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] + mat2[i_surf][i_dim];
                 }
