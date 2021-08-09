@@ -82,8 +82,6 @@ namespace UVLM
             uint NumCores;
             uint NumSurfaces;
             uint NumSurfacesNonlifting;
-            bool only_lifting;
-            bool only_nonlifting;
             // uint steady_n_rollup;
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
@@ -103,7 +101,8 @@ namespace UVLM
             double yaw_slerp;
             bool quasi_steady;
             double centre_rot_g[3];
-            double rbm_vel_g[6];
+            double rbm_vel_g[6];            
+            bool only_lifting;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -122,7 +121,6 @@ namespace UVLM
             vm.vortex_radius = uvm.vortex_radius;
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
             vm.only_lifting = uvm.only_lifting;
-            vm.only_nonlifting = uvm.only_nonlifting;
             vm.Steady = uvm.quasi_steady;
             for (uint i=0; i<6; ++i)
             {
