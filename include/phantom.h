@@ -54,6 +54,20 @@ namespace UVLM
             const uint& i_surf,
             const uint& i_surf_partner_junction
         );
+        template<typename t_gamma_out,
+         typename t_gamma_in,
+         typename t_zeta_col_out,
+         typename t_zeta_col_in>
+        void interpolate_circulation_strength
+        (
+            t_gamma_out& gamma_out,
+            const t_gamma_in& gamma_in,
+            const t_zeta_col_out& zeta_col_out,
+            const t_zeta_col_in& zeta_col_in,
+            const uint& idx_junction,
+            const uint& i_surf,
+            const uint& i_surf_partner_junction
+        );
     }
 }
 
@@ -222,6 +236,73 @@ void UVLM::Phantom::interpolate_geometry_coordinates
             {
                 zeta_out[i_surf][i_dim](i_row, i_col) = interpolated_point_0(i_dim);                    
                 zeta_out[i_surf_partner_junction][i_dim](i_row, i_col) = interpolated_point_1(i_dim);
+            }
+        }
+    }
+}
+template<typename t_gamma_out,
+         typename t_gamma_in,
+         typename t_zeta_col_out,
+         typename t_zeta_col_in>
+void UVLM::Phantom::interpolate_circulation_strength
+(
+    t_gamma_out& gamma_out,
+    const t_gamma_in& gamma_in,
+    const t_zeta_col_out& zeta_col_out,
+    const t_zeta_col_in& zeta_col_in,
+    const uint& idx_junction,
+    const uint& i_surf,
+    const uint& i_surf_partner_junction
+)
+{
+    
+    // To-Do: - final interpolation in function to avoid double code for i_surf and partner surface
+    //        - Create function to read Vector from i_surf, i_row, i_col
+    //        - avoid abs(gamma) and then multpzing by -1 (reargannge surface vectors?)
+    UVLM::Types::Vector3 junction_point_0, junction_point_1,
+                         collocation_point_phantom, collocation_point_phantom_partner;
+       uint N_col, N_row, updated_surf, partner_surf;
+    double distance_0, distance_1 = 0.0;
+
+    // Allocate
+    N_row = zeta_col_out[i_surf][0].rows();
+    N_col =  zeta_col_out[i_surf][0].cols();
+    gamma_out[i_surf].resize(N_row, N_col);
+    gamma_out[i_surf_partner_junction].resize(N_row, N_col);
+    
+    // Dynamic phantom surface creation depending on vectors between junction surfaces
+    for(uint i_row=0;i_row<N_row;++i_row)
+    {
+        // get vector between boundaries
+        junction_point_0 << zeta_col_in[i_surf][0](i_row, idx_junction), zeta_col_in[i_surf][1](i_row, idx_junction), zeta_col_in[i_surf][2](i_row, idx_junction);
+        junction_point_1 << zeta_col_in[i_surf_partner_junction][0](i_row, idx_junction), zeta_col_in[i_surf_partner_junction][1](i_row, idx_junction), zeta_col_in[i_surf_partner_junction][2](i_row, idx_junction);
+        
+        for(uint i_col=0;i_col<N_col;++i_col)
+        {
+            for (uint idx_surf=0; idx_surf<2; idx_surf++)
+            {
+                // extra loop to avoid duplicate code for i_surf and i_surf_partner junction interpolation
+                if (idx_surf==0)
+                {
+                    updated_surf = i_surf;
+                    partner_surf = i_surf_partner_junction;
+                }
+                else
+                {
+                    updated_surf = i_surf_partner_junction;
+                    partner_surf = i_surf;
+                }
+                collocation_point_phantom << zeta_col_out[updated_surf][0](i_row, i_col), zeta_col_out[updated_surf][1](i_row, i_col), zeta_col_out[updated_surf][2](i_row, i_col);                  
+                distance_0 = (collocation_point_phantom - junction_point_0).norm();
+                distance_1 = (collocation_point_phantom - junction_point_1).norm();
+                
+                gamma_out[updated_surf](i_row, i_col) = (abs(gamma_in[i_surf](i_row,idx_junction)) * distance_0 +abs(gamma_in[i_surf_partner_junction](i_row,idx_junction)) * distance_1)
+                                                /(distance_0 + distance_1);
+                                                
+                if (gamma_in[updated_surf](i_row, idx_junction) < 0.0)
+                {
+                    gamma_out[updated_surf](i_row, i_col) *= -1;
+                }                              
             }
         }
     }
