@@ -54,7 +54,7 @@ namespace UVLM
         {
             for (unsigned int i_surf=0; i_surf<mat1.size(); ++i_surf)
             {
-                for (unsigned int i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
                 {
                     mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] - mat2[i_surf][i_dim];
                 }
@@ -71,7 +71,7 @@ namespace UVLM
         {
             for (unsigned int i_surf=0; i_surf<mat1.size(); ++i_surf)
             {
-                for (unsigned int i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (unsigned int i_dim=0; i_dim<mat1[i_surf].size(); ++i_dim)
                 {
                     mat_out[i_surf][i_dim].noalias() = mat1[i_surf][i_dim] + mat2[i_surf][i_dim];
                 }
@@ -84,9 +84,22 @@ namespace UVLM
         {
             for ( uint i_surf=0; i_surf<mat_in_and_out.size(); ++i_surf)
             {
-                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                for (uint i_dim=0; i_dim<mat_in_and_out[i_surf].size(); ++i_dim)
                 {
                     mat_in_and_out[i_surf][i_dim] += mat_in[i_surf][i_dim];
+                }
+            }
+        }
+        template <typename t_1,
+                  typename t_2>
+        void VecVecMatrix_difference(t_1& mat_in_and_out,
+                                     const t_2& mat_in)
+        {
+            for ( uint i_surf=0; i_surf<mat_in_and_out.size(); ++i_surf)
+            {
+                for (uint i_dim=0; i_dim<mat_in_and_out[i_surf].size(); ++i_dim)
+                {
+                    mat_in_and_out[i_surf][i_dim] -= mat_in[i_surf][i_dim];
                 }
             }
         }
