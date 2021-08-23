@@ -70,11 +70,13 @@ namespace UVLM
             void aic_phantom_interp_condition
             (
                 const uint& Ktotal_lifting,
-                const uint& Ktotal_phantom, 
-                t_zeta_col& zeta_col,
-                t_zeta_phantom_col& zeta_phantom_col,
-                t_aic_phantom_out& aic_phantom_out
-            );
+            const uint& Ktotal_phantom, 
+            t_zeta_col& zeta_col,
+            t_zeta_phantom_col& zeta_phantom_col,
+            t_aic_phantom_out& aic_phantom_out,
+            const bool only_for_update = false
+        );
+
         template<typename t_aic_phantom,
                 typename t_aic,
                 typename t_zeta,
@@ -778,24 +780,33 @@ void UVLM::Matrix::aic_phantom_interp_condition
     const uint& Ktotal_phantom, 
     t_zeta_col& zeta_col,
     t_zeta_phantom_col& zeta_phantom_col,
-    t_aic_phantom_out& aic_phantom_out
+    t_aic_phantom_out& aic_phantom_out,
+    const bool only_for_update
 )
 {
     uint N_phantom_panels, M_phantom_panels, counter_row, N_spanwise_panels;
     double yL0_minus_yR0, interpolated_value;
     const uint n_surf = zeta_col.size();
+    // std::cout << "\nAIC phantom out = " << aic_phantom_out;
     // set influence of phantom panel on own collocation point
-    aic_phantom_out.topRightCorner(Ktotal_phantom, Ktotal_phantom).setIdentity();
-    aic_phantom_out *= -1;
-
-    // get offsets beforehand    
+    if (!only_for_update)
+    {
+        // if matrix is calculated due to update gamma (e.g. for unsteady wake convection)
+        // we don`t need the identy matrix
+        aic_phantom_out.topRightCorner(Ktotal_phantom, Ktotal_phantom).setIdentity();
+        aic_phantom_out *= -1;
+    }
+    // get offsets beforehand 
+    // Check if better dimensions and offsets are better to be stored in structs   
     std::vector<uint> offset_panel, offset_phantom_panel;
     UVLM::Types::VecDimensions dimensions_panel, dimensions_phantom_panel;
     UVLM::Types::generate_dimensions(zeta_col, dimensions_panel, 0);
     UVLM::Types::generate_dimensions(zeta_phantom_col, dimensions_phantom_panel, 0);
+    
 	UVLM::Matrix::build_offsets(n_surf, dimensions_panel,offset_panel);
 	UVLM::Matrix::build_offsets(n_surf, dimensions_phantom_panel,offset_phantom_panel);
-
+    UVLM::Types::Vector3 col_point_lifting, col_point_phantom;
+    
     for(uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         counter_row = 0;
