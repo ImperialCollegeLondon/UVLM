@@ -1085,13 +1085,13 @@ void UVLM::BiotSavart::whole_surface_on_surface
     const uint col_n_M = zeta_col[0].rows();
     const uint col_n_N = zeta_col[0].cols();
 
+    UVLM::Types::Vector3 target_triad;
+    UVLM::Types::Vector3 uout;
     #pragma omp parallel for collapse(2)
     for (uint col_i_M=0; col_i_M<col_n_M; ++col_i_M)
     {
         for (uint col_j_N=0; col_j_N<col_n_N; ++col_j_N)
         {
-            UVLM::Types::Vector3 target_triad;
-            UVLM::Types::Vector3 uout;
 
             target_triad << zeta_col[0](col_i_M, col_j_N),
                             zeta_col[1](col_i_M, col_j_N),
