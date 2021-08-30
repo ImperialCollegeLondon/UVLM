@@ -377,7 +377,7 @@ void UVLM::Matrix::RHS
 (
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
-    const t_uext_col& uinc_col,
+    const t_uext_col& uext_col,
     const t_gamma_star& gamma_star,
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
@@ -385,7 +385,7 @@ void UVLM::Matrix::RHS
     const uint& Ktotal
 )
 {
-    const uint n_surf = options.NumSurfaces;
+    const uint n_surf = uext_col.size();
 
     rhs.setZero(Ktotal);
 
@@ -394,8 +394,8 @@ void UVLM::Matrix::RHS
     int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        uint M = uinc_col[i_surf][0].rows();
-        uint N = uinc_col[i_surf][0].cols();
+        uint M = uext_col[i_surf][0].rows();
+        uint N = uext_col[i_surf][0].cols();
 
         if (!options.Steady)
         {
@@ -408,9 +408,9 @@ void UVLM::Matrix::RHS
                     UVLM::Types::Vector3 collocation_coords;
                     UVLM::Types::Vector3 u_col;
 
-                    u_col << uinc_col[i_surf][0](i,j),
-                             uinc_col[i_surf][1](i,j),
-                             uinc_col[i_surf][2](i,j);
+                    u_col << uext_col[i_surf][0](i,j),
+                             uext_col[i_surf][1](i,j),
+                             uext_col[i_surf][2](i,j);
                     // we have to add the wake effect on the induced velocity.
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
@@ -445,9 +445,9 @@ void UVLM::Matrix::RHS
                 {
                     rhs(++ii) =
                     -(
-                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                        uext_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uext_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uext_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                     );
                 }
             }
@@ -462,7 +462,7 @@ template <typename t_uext_col,
           typename t_normal>
 void UVLM::Matrix:: RHS_nonlifting_body
 (
-    const t_uext_col& uinc_col,
+    const t_uext_col& uext_col,
     const t_normal& normal,
     UVLM::Types::VectorX& rhs,
     const uint& Ktotal,
@@ -476,17 +476,17 @@ void UVLM::Matrix:: RHS_nonlifting_body
     int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        uint M = uinc_col[i_surf][0].rows();
-        uint N = uinc_col[i_surf][0].cols();
+        uint M = uext_col[i_surf][0].rows();
+        uint N = uext_col[i_surf][0].cols();
         for (uint i=0; i<M; ++i)
         {
             for (uint j=0; j<N; ++j)
             {
                 rhs(++ii) =
                 -(
-                    uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                    uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                    uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    uext_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                    uext_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                    uext_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                 );
             }
         }
