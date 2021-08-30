@@ -74,6 +74,7 @@ namespace UVLM
             double vortex_radius_wake_ind;
             double centre_rot_g[3];
             double rbm_vel_g[6];
+            bool phantom_test;
         };
 
         struct UVMopts
@@ -103,6 +104,7 @@ namespace UVLM
             double centre_rot_g[3];
             double rbm_vel_g[6];            
             bool only_lifting;
+            bool phantom_test;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -122,6 +124,8 @@ namespace UVLM
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
             vm.only_lifting = uvm.only_lifting;
             vm.Steady = uvm.quasi_steady;
+            vm.phantom_test = uvm.phantom_test;
+            
             for (uint i=0; i<6; ++i)
             {
                 if (i < 3)

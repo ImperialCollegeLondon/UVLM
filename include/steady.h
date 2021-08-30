@@ -430,13 +430,24 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     // Create RHS phantom and merge all RHS vectors
     UVLM::Types::VectorX rhs_phantom;
     rhs_phantom.setZero(phantom_surfaces.Ktotal);
+    UVLM::Types::VectorX rhs;
+    // rhs.setZero(Ktotal);
+    if (options.phantom_test)
+    {
 
+        nl_body.Ktotal = 0;
+        rhs = UVLM::Types::join_vectors(lifting_surfaces.rhs, rhs_phantom);
+    }
+    else
+    {
     UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(lifting_surfaces.rhs, nl_body.rhs);
-    UVLM::Types::VectorX rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
+        rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
+    }
     uint Ktotal = nl_body.Ktotal + lifting_surfaces.Ktotal + phantom_surfaces.Ktotal;
-
-    // AIC generation
+    // AIC generationc
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+
+    std::cout << "\nget aic combinec!";
     UVLM::Matrix::aic_combined(lifting_surfaces,
                                 nl_body, 
                                 phantom_surfaces,   
@@ -465,6 +476,9 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     lifting_surfaces.gamma,
                                     lifting_surfaces.zeta_col);
+    UVLM::Matrix::reconstruct_gamma(gamma_phantom_flat,
+                                    phantom_surfaces.gamma,
+                                    phantom_surfaces.zeta_col);
   
     if (options.Steady) 
     {  
@@ -500,6 +514,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
                                     nl_body.uext_col);
 }
 
+}
 template <typename t_struct_lifting_surface>
 void UVLM::Steady::wake_roll_up_lifting
 (
