@@ -180,6 +180,7 @@ void UVLM::Unsteady::solver
       // SOLVE------------------------------------------
     const uint n_surf = options.NumSurfaces;
     const double dt = options.dt;
+
     // Generate collocation points info
     //  Declaration
     lifting_surfaces_unsteady.get_surface_parameters();
@@ -193,17 +194,14 @@ void UVLM::Unsteady::solver
         lifting_surfaces_unsteady.uext_total,
         lifting_surfaces_unsteady.solid_vel
     );
-
+    
     //  Allocation and mapping
-    // Same in steady    
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
                                             lifting_surfaces_unsteady.uext_total_col);
 
-    // Unsteady specific
     UVLM::Types::VecVecMatrixX uext_star_total;
     UVLM::Types::allocate_VecVecMat(uext_star_total, lifting_surfaces_unsteady.uext_star);
 
-    // for what is extra gamma star?
     UVLM::Types::VecMatrixX extra_gamma_star;
     UVLM::Types::VecVecMatrixX extra_zeta_star;
     extra_zeta_star.resize(n_surf);
@@ -217,15 +215,53 @@ void UVLM::Unsteady::solver
                                                                    lifting_surfaces_unsteady.gamma_star[i_surf].cols() + 1));
         }
     }
-
+    
+    if (!options.only_lifting)
+    {
+        // nonlifting parameters/geometry attributes        
+        nl_body.get_surface_parameters();
+        // phantom TO-DO: case if no phantom panels required? what is the input to the function below?
+        phantom_surfaces.get_surface_parameters();
+        phantom_surfaces.update_wake(lifting_surfaces_unsteady.zeta_star);
+        phantom_surfaces.update_gamma(lifting_surfaces_unsteady.Ktotal,
+                                     lifting_surfaces_unsteady.zeta_col,
+                                     lifting_surfaces_unsteady.gamma);
+        phantom_surfaces.update_gamma_wake(lifting_surfaces_unsteady.zeta_star, lifting_surfaces_unsteady.gamma_star);
+        
+    }
     UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
 
-    // different than in steady
+    // // different than in steady
     if (options.convect_wake)
     {
-        UVLM::Unsteady::Utils::convect_unsteady_wake
-        (
-            options,
+        
+    // std::cout <<"\nlifting gamma wake = " << lifting_surfaces_unsteady.gamma_star[0].template topRows<4>() << std::endl;
+        if (!options.only_lifting)
+        {
+            // To-Do: add nonlifting_surface convection influence
+            
+            UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
+            (
+                options,
+                lifting_surfaces_unsteady.zeta,
+                lifting_surfaces_unsteady.zeta_star,
+                lifting_surfaces_unsteady.gamma,
+                lifting_surfaces_unsteady.gamma_star,
+                lifting_surfaces_unsteady.u_ext,
+                lifting_surfaces_unsteady.uext_star,
+                uext_star_total,
+                options.rbm_vel_g,
+                extra_gamma_star,
+                extra_zeta_star,
+                nl_body,
+                phantom_surfaces
+            );
+        }
+        else
+        {
+            UVLM::Unsteady::Utils::convect_unsteady_wake
+            (
+                options,
             lifting_surfaces_unsteady.zeta,
             lifting_surfaces_unsteady.zeta_star,
             lifting_surfaces_unsteady.gamma,
@@ -236,15 +272,18 @@ void UVLM::Unsteady::solver
             options.rbm_vel_g,
             extra_gamma_star,
             extra_zeta_star
-        );
+            );
+        }
+        
     }
-
+    
     UVLM::Wake::Discretised::circulation_transfer(lifting_surfaces_unsteady.zeta,
                                                   lifting_surfaces_unsteady.zeta_star,
                                                   lifting_surfaces_unsteady.gamma,
                                                   lifting_surfaces_unsteady.gamma_star,
                                                   lifting_surfaces_unsteady.uext_total_col,
                                                   dt);
+
 
     if (!options.cfl1)
     {
@@ -264,10 +303,12 @@ void UVLM::Unsteady::solver
     if (!options.only_lifting)
     {
         // nonlifting parameters/geometry attributes        
-        nl_body.get_surface_parameters();
-        // phantom TO-DO: case if no phantom panels required? what is the input to the function below?
-        phantom_surfaces.get_surface_parameters();
         phantom_surfaces.update_wake(lifting_surfaces_unsteady.zeta_star);
+        phantom_surfaces.update_gamma(lifting_surfaces_unsteady.Ktotal,
+                                     lifting_surfaces_unsteady.zeta_col,
+                                     lifting_surfaces_unsteady.gamma);
+        phantom_surfaces.update_gamma_wake(lifting_surfaces_unsteady.zeta_star, lifting_surfaces_unsteady.gamma_star);
+
         UVLM::Steady::solve_discretised_lifting_and_nonlifting
         (
             steady_options,
@@ -288,13 +329,21 @@ void UVLM::Unsteady::solver
             lifting_surfaces_unsteady,
             steady_options
         );
-    }
+           }
     if (options.quasi_steady)
     {
+        // TO-DO: Check if function has to be adjusted for NL Bodies
         UVLM::Wake::Horseshoe::circulation_transfer(lifting_surfaces_unsteady.gamma,
                                                     lifting_surfaces_unsteady.gamma_star,
                                                     -1);
+
+        if (!options.only_lifting)
+        {
+               phantom_surfaces.update_gamma_wake(lifting_surfaces_unsteady.zeta_star,
+                                                  lifting_surfaces_unsteady.gamma_star);                                         
+        }
     }
+
 
     // forces calculation
     // set forces to 0 just in case
@@ -308,7 +357,6 @@ void UVLM::Unsteady::solver
         steady_options,
         flightconditions
     );
+    
     UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.dynamic_forces);
-    // export_data_to_csv_file("zeta_star_x.csv", zeta_star[0][0]);
- 
 }
