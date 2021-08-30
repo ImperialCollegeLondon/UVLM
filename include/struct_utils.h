@@ -313,7 +313,6 @@ namespace UVLM
                 {                    
                     N_col = zeta_col_phantom_star[i_surf][0].cols();
                     N_row = zeta_col_phantom_star[i_surf][0].rows();
-                    gamma_star[i_surf].resize(N_row, N_col);
                     if (zeta_star[i_surf][0].size() > 0)
                     {
                         UVLM::Phantom::get_parameter_phantom_setup(flag_zeta_phantom, i_surf,i_surf_partner_junction,idx_junction, uninitiliased_phantom_surface);
