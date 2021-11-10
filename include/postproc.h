@@ -38,15 +38,6 @@ namespace UVLM
             const t_forces_node& forces_node,
             t_forces_norm& forces_norm
 		);
-
-        template <typename t_struct_nl_body>
-        void calculate_static_forces_nonlifting_body
-        (
-            t_struct_nl_body& nl_body,         
-            const UVLM::Types::FlightConditions& flightconditions,
-            const bool& include_vertices = false
-        );
-
         template <typename t_zeta,
                   typename t_zeta_star,
                   typename t_gamma,
@@ -177,8 +168,7 @@ namespace UVLM
         void calculate_static_forces_nonlifting_body
         (
             t_struct_nl_body& nl_body,
-            const UVLM::Types::FlightConditions& flightconditions,
-            const bool& include_vertices
+            const UVLM::Types::FlightConditions& flightconditions
         )
 		{
             // Set forces to 0
@@ -189,7 +179,8 @@ namespace UVLM
             UVLM::Types::VecMatrixX pressure_coefficients, forces_norm, forces_norm_collocation;
             UVLM::Types::allocate_VecVecMat(velocities, nl_body.uext_col);            
             UVLM::Types::allocate_VecVecMat(forces_collocation, nl_body.uext_col);
-			double freestream_velocity_squared, induced_velocity_squared;
+			double freestream_velocity_squared;
+			double induced_velocity_squared;
             UVLM::Types::allocate_VecMat(pressure_coefficients, nl_body.sigma);
             UVLM::Types::allocate_VecMat(forces_norm, nl_body.sigma, 1);
             UVLM::Types::allocate_VecMat(forces_norm_collocation, nl_body.sigma);
@@ -201,10 +192,6 @@ namespace UVLM
 													 nl_body.u_induced_col,
 													 velocities
 													 );
-            if (include_vertices)
-            {
-                UVLM::Triads::VecVecMatrix_addition(velocities, nl_body.u_induced_col_vertices, velocities);
-            }
 			const uint n_surf = nl_body.zeta.size();
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
             {
@@ -647,7 +634,7 @@ namespace UVLM
                                   velocities[i_surf][2](i_M, i_N+1));
 
                         v = (v + v_ind).eval();
-
+                        
                         if (i_M == 0){
                             delta_gamma = -lifting_surfaces.gamma[i_surf](i_M, i_N);
                         } else if (i_M == M){
@@ -1146,6 +1133,49 @@ namespace UVLM
 						for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
 						{
 							u_total_panel[i_surf][dim](i_col, j_col)= u_induced_col_global[dim] + uext_col[i_surf][dim](i_col, j_col);
+						}
+						
+					}
+				}
+			}
+        }
+
+        template <typename t_normal,
+				  typename t_longitudinal,
+				  typename t_perpendicular,
+				  typename t_u_induced>
+		void transform_VecVecMatrix_to_global_coordinate_system
+		(
+		const t_normal& normal,
+		const t_longitudinal& longitudinal,
+		const t_perpendicular& perpendicular,
+        t_u_induced& u_induced_col
+		)
+		{
+            // ToDo: Outsource to geometry? integrate in function above
+			const uint n_surf = u_induced_col.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+			{
+				const uint M = u_induced_col[i_surf][0].rows();
+                const uint N = u_induced_col[i_surf][0].cols();
+                for (uint i_col=0; i_col<M; ++i_col)
+                {
+	                for (uint j_col=0; j_col<N; ++j_col)
+					{
+			            UVLM::Types::Vector3 vector_trans_tmp;
+			            UVLM::Types::Vector3 u_induced_col_global = UVLM::Types::Vector3(u_induced_col[i_surf][0](i_col, j_col),
+																						 u_induced_col[i_surf][1](i_col, j_col),
+																						 u_induced_col[i_surf][2](i_col, j_col));
+						UVLM::Types::Vector3 longitudinal_panel = UVLM::Types::Vector3(longitudinal[i_surf][0](i_col, j_col), longitudinal[i_surf][1](i_col, j_col), longitudinal[i_surf][2](i_col, j_col));
+						UVLM::Types::Vector3 perpendicular_panel = UVLM::Types::Vector3(perpendicular[i_surf][0](i_col, j_col), perpendicular[i_surf][1](i_col, j_col), perpendicular[i_surf][2](i_col, j_col));
+			            UVLM::Types::Vector3 normal_panel = UVLM::Types::Vector3(normal[i_surf][0](i_col, j_col), normal[i_surf][1](i_col, j_col), normal[i_surf][2](i_col, j_col));
+						UVLM::Geometry::convert_to_global_coordinate_system(u_induced_col_global,
+															longitudinal_panel,
+															perpendicular_panel,
+															normal_panel);
+						for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
+						{
+							u_induced_col[i_surf][dim](i_col, j_col)= u_induced_col_global[dim];
 						}
 						
 					}
