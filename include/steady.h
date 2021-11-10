@@ -476,16 +476,16 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(lifting_surfaces.Ktotal);
     UVLM::Types::VectorX gamma_phantom_flat = gamma_and_sigma_flat.tail(phantom_surfaces.Ktotal);    
     UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.block(lifting_surfaces.Ktotal, 0, nl_body.Ktotal, 1);  
-
+    
     // gamma flat to gamma
     // probably could be done better with a Map
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     lifting_surfaces.gamma,
-                                    lifting_surfaces.zeta_col);
+                                    lifting_surfaces.zeta_col);    
     UVLM::Matrix::reconstruct_gamma(gamma_phantom_flat,
                                     phantom_surfaces.gamma,
                                     phantom_surfaces.zeta_col);
-  
+    
     if (options.Steady) 
     {  
         // copy gamma from trailing edge to wake
@@ -496,31 +496,42 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     }
 
     // ---- Post-processing nonlifting body ----
+    if (nl_body.Ktotal > 0)
+    {
 	UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
 												   nl_body.aic_sources_x,
 												   nl_body.aic_sources_y,
 												   nl_body.aic_sources_z,
 												   nl_body.u_induced_col);
-   
+
+    // ToDo: Integrate in function below!
+	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Matrix::AIC_sources(nl_body.zeta,
+                              lifting_surfaces.zeta_col,
+                              nl_body.longitudinals,
+                              nl_body.perpendiculars,
+                              nl_body.normals,
+                              lifting_surfaces.longitudinals, //collocation
+                              lifting_surfaces.perpendiculars, //collocation
+                              lifting_surfaces.normals, //collocation
+							  aic_nonlifting_on_lifting_x,
+							  aic_nonlifting_on_lifting_y,
+                              aic_nonlifting_on_lifting_z,
+                              false);  
     lifting_surfaces.get_induced_col_from_sources(sigma_flat, 
-                                                  nl_body);
-    UVLM::BiotSavart::total_induced_velocity_on_col
-        (
-            nl_body.zeta_col,
-            lifting_surfaces.zeta,
-            lifting_surfaces.zeta_star,
-            lifting_surfaces.gamma,
-            lifting_surfaces.gamma_star,
-            nl_body.u_induced_col_vertices,
-            options.ImageMethod,
-            options.vortex_radius
-        );
+                                                    aic_nonlifting_on_lifting_x,
+                                                    aic_nonlifting_on_lifting_y,
+                                                    aic_nonlifting_on_lifting_z, 
+                                                    nl_body.Ktotal);
+                                    
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     nl_body.sigma,
-                                    nl_body.uext_col);
+                                    nl_body.zeta_col);
+    }
 }
 
-}
 template <typename t_struct_lifting_surface>
 void UVLM::Steady::wake_roll_up_lifting
 (
@@ -553,8 +564,7 @@ void UVLM::Steady::wake_roll_up_lifting
         UVLM::Types::allocate_VecVecMat(u_ind,
                                         lifting_surfaces.zeta_star);
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_col(
-            lifting_surfaces.zeta_star,
+        UVLM::BiotSavart::total_induced_velocity_on_wake(
             lifting_surfaces.zeta,
             lifting_surfaces.zeta_star,
             lifting_surfaces.gamma,
@@ -628,8 +638,7 @@ void UVLM::Steady::wake_roll_up
         UVLM::Types::allocate_VecVecMat(u_ind, lifting_surfaces.zeta_star);
         
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_col(
-            lifting_surfaces.zeta_star,
+        UVLM::BiotSavart::total_induced_velocity_on_wake(
             lifting_surfaces.zeta,
             lifting_surfaces.zeta_star,
             lifting_surfaces.gamma,
@@ -675,11 +684,11 @@ void UVLM::Steady::wake_roll_up
 
             UVLM::Types::VecVecMatrixX u_induced_star_sources;
             UVLM::Types::allocate_VecVecMat(u_induced_star_sources, u_ind);
-	    UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
-												       u_induced_x,
-												       u_induced_y,
-                                                        u_induced_z,
-                                                        u_induced_star_sources);
+	        UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+                                                            u_induced_x,
+                                                            u_induced_y,
+                                                            u_induced_z,
+                                                            u_induced_star_sources);
             u_ind += u_induced_star_sources;
         }
 
