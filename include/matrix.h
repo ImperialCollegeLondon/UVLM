@@ -109,6 +109,27 @@ namespace UVLM
             const uint& Ktotal
         );
 
+        template <typename t_zeta_col,
+          typename t_zeta_star,
+          typename t_uext_col,
+          typename t_gamma_star,
+          typename t_normal,
+          typename t_phantom_gamma_star,
+          typename t_phantom_zeta_star>
+        void RHS_lifting_unsteady
+        (
+            const t_zeta_col& zeta_col,
+            const t_zeta_star& zeta_star,
+            const t_uext_col& uinc_col,
+            const t_gamma_star& gamma_star,
+            const t_normal& normal,
+            const UVLM::Types::VMopts& options,
+            UVLM::Types::VectorX& rhs,
+            const uint& Ktotal,
+            const t_phantom_gamma_star& phantom_gamma_star,
+            const t_phantom_zeta_star& phantom_zeta_star
+        );
+
 
         template <typename t_uext_col,
                   typename t_normal>
@@ -379,7 +400,7 @@ void UVLM::Matrix::RHS
 (
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
-    const t_uext_col& uext_col,
+    const t_uext_col& uinc_col,
     const t_gamma_star& gamma_star,
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
@@ -387,8 +408,7 @@ void UVLM::Matrix::RHS
     const uint& Ktotal
 )
 {
-    const uint n_surf = uext_col.size();
-
+    const uint n_surf = options.NumSurfaces;
     rhs.setZero(Ktotal);
 
     // filling up RHS
@@ -396,12 +416,11 @@ void UVLM::Matrix::RHS
     int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
-
+        uint M = uinc_col[i_surf][0].rows();
+        uint N = uinc_col[i_surf][0].cols();
         if (!options.Steady)
         {
-            #pragma omp parallel for collapse(2)
+            // #pragma omp parallel for collapse(2)
             for (uint i=0; i<M; ++i)
             {
                 for (uint j=0; j<N; ++j)
@@ -410,14 +429,13 @@ void UVLM::Matrix::RHS
                     UVLM::Types::Vector3 collocation_coords;
                     UVLM::Types::Vector3 u_col;
 
-                    u_col << uext_col[i_surf][0](i,j),
-                             uext_col[i_surf][1](i,j),
-                             uext_col[i_surf][2](i,j);
+                    u_col << uinc_col[i_surf][0](i,j),
+                             uinc_col[i_surf][1](i,j),
+                             uinc_col[i_surf][2](i,j);
                     // we have to add the wake effect on the induced velocity.
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
                                           zeta_col[i_surf][2](i,j);
-
                     v_ind.setZero();
                     for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
                     {
@@ -427,6 +445,7 @@ void UVLM::Matrix::RHS
                                                                     options.ImageMethod,
                                                                     options.vortex_radius);
                     }
+                    
                     u_col += v_ind;
 
                     // dot product of uinc and panel normal
@@ -447,16 +466,111 @@ void UVLM::Matrix::RHS
                 {
                     rhs(++ii) =
                     -(
-                        uext_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                        uext_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                        uext_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                     );
                 }
             }
         }
     }
 }
+template <typename t_zeta_col,
+          typename t_zeta_star,
+          typename t_uext_col,
+          typename t_gamma_star,
+          typename t_normal,
+          typename t_phantom_gamma_star,
+          typename t_phantom_zeta_star>
+void UVLM::Matrix::RHS_lifting_unsteady
+(
+    const t_zeta_col& zeta_col,
+    const t_zeta_star& zeta_star,
+    const t_uext_col& uinc_col,
+    const t_gamma_star& gamma_star,
+    const t_normal& normal,
+    const UVLM::Types::VMopts& options,
+    UVLM::Types::VectorX& rhs,
+    const uint& Ktotal,
+    const t_phantom_gamma_star& phantom_gamma_star,
+    const t_phantom_zeta_star& phantom_zeta_star
+)
+{
+    // TODO: Merge with RHS Function above
+    const uint n_surf = options.NumSurfaces;
+    rhs.setZero(Ktotal);
 
+    // filling up RHS
+    int ii = -1;
+    int istart = 0;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        uint M = uinc_col[i_surf][0].rows();
+        uint N = uinc_col[i_surf][0].cols();
+        if (!options.Steady)
+        {
+            #pragma omp parallel for collapse(2)
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    UVLM::Types::Vector3 v_ind;
+                    UVLM::Types::Vector3 collocation_coords;
+                    UVLM::Types::Vector3 u_col;
+
+                    u_col << uinc_col[i_surf][0](i,j),
+                             uinc_col[i_surf][1](i,j),
+                             uinc_col[i_surf][2](i,j);
+                    
+                    // we have to add the wake effect on the induced velocity.
+                    collocation_coords << zeta_col[i_surf][0](i,j),
+                                          zeta_col[i_surf][1](i,j),
+                                          zeta_col[i_surf][2](i,j);
+                    v_ind.setZero();
+                    for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                    {
+                        v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                    gamma_star[ii_surf],
+                                                                    collocation_coords,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
+                                                                    
+                        v_ind += UVLM::BiotSavart::whole_surface(phantom_zeta_star[ii_surf],
+                                                                    phantom_gamma_star[ii_surf],
+                                                                    collocation_coords,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
+                    }
+                    
+                    u_col += v_ind;
+
+                    // dot product of uinc and panel normal
+                    uint counter = istart + j + i*N;
+                    rhs(counter) =
+                    -(
+                        u_col(0)*normal[i_surf][0](i,j) +
+                        u_col(1)*normal[i_surf][1](i,j) +
+                        u_col(2)*normal[i_surf][2](i,j)
+                    );
+                }
+            }
+            istart += M*N; //???
+        } else {
+            for (uint i=0; i<M; ++i)
+            {
+                for (uint j=0; j<N; ++j)
+                {
+                    rhs(++ii) =
+                    -(
+                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    );
+                }
+            }
+        }
+    }
+}
 /*-----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------*/
@@ -464,7 +578,7 @@ template <typename t_uext_col,
           typename t_normal>
 void UVLM::Matrix:: RHS_nonlifting_body
 (
-    const t_uext_col& uext_col,
+    const t_uext_col& uinc_col,
     const t_normal& normal,
     UVLM::Types::VectorX& rhs,
     const uint& Ktotal,
@@ -478,17 +592,17 @@ void UVLM::Matrix:: RHS_nonlifting_body
     int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        uint M = uext_col[i_surf][0].rows();
-        uint N = uext_col[i_surf][0].cols();
+        uint M = uinc_col[i_surf][0].rows();
+        uint N = uinc_col[i_surf][0].cols();
         for (uint i=0; i<M; ++i)
         {
             for (uint j=0; j<N; ++j)
             {
                 rhs(++ii) =
                 -(
-                    uext_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                    uext_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                    uext_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                    uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                    uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                    uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                 );
             }
         }
@@ -582,7 +696,6 @@ void UVLM::Matrix::reconstruct_MatrixX
             }
         }
     }
-
 }
 template <typename t_gamma,
           typename t_zeta_col>
