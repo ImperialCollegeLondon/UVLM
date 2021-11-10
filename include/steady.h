@@ -134,6 +134,8 @@ void UVLM::Steady::solver
         lifting_surfaces.uext_total
     );
 
+    // To-DO: Interpolate to collocation points
+    // To-Do: Check if Interpolation is needed afterall
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);
 
     // if options.horseshoe, it is finished.
@@ -158,7 +160,6 @@ void UVLM::Steady::solver
             options,
             flightconditions
         );
-        
         double delta_x = options.dt * UVLM::Types::norm_Vec(lifting_surfaces.u_ext[0][0](0,0),
                                                             lifting_surfaces.u_ext[0][1](0,0),
                                                             lifting_surfaces.u_ext[0][2](0,0));
@@ -181,18 +182,26 @@ void UVLM::Steady::solver
         options
     );
     
-    UVLM::Steady::wake_roll_up_lifting
-    (
-        options,
-        flightconditions,
-        lifting_surfaces
-    );
+    // UVLM::Steady::wake_roll_up_lifting
+    // (
+    //     options,
+    //     flightconditions,
+    //     lifting_surfaces
+    // );
     UVLM::PostProc::calculate_static_forces_unsteady
     (
-        lifting_surfaces,
+        lifting_surfaces.zeta,
+        lifting_surfaces.zeta_dot,
+        lifting_surfaces.zeta_star,
+        lifting_surfaces.gamma,
+        lifting_surfaces.gamma_star,
+        lifting_surfaces.u_ext,
+        options.rbm_vel_g,
+        lifting_surfaces.forces,
         options,
         flightconditions
     );
+    
 }
 
 /*-----------------------------------------------------------------------------
@@ -241,7 +250,6 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     // Lifting surfaces
     lifting_surfaces.get_surface_parameters();    
      // total stream velocity
-     //TO-DO: Adjust for nonlifting bodies as well and put into function in struct???
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     (
         lifting_surfaces.zeta,
@@ -251,15 +259,16 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         options.centre_rot_g,
         lifting_surfaces.uext_total
     );
+    
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);
+
 
     // -------- Phantom Panels -------   
     phantom_surfaces.get_surface_parameters();
     phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
+    
     nl_body.get_surface_parameters();
-
     // ########################################
-    //To-Do: Check if special solver for horseshoe needed
     UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
         options,
@@ -268,21 +277,19 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         phantom_surfaces
     );
 
-    UVLM::PostProc::calculate_static_forces_nonlifting_body
-    (
-        nl_body, 
-        flightconditions,
-        true
-    );
-
-       UVLM::PostProc::calculate_static_forces_unsteady
-    (
-        lifting_surfaces,
-        options,
-        flightconditions,
-        false
-    );
-}
+    // UVLM::PostProc::calculate_static_forces_nonlifting_body
+    // (
+    //     nl_body,
+    //     flightconditions
+    // );
+        UVLM::PostProc::calculate_static_forces_unsteady
+        (
+            lifting_surfaces,
+            phantom_surfaces,
+            options,
+            flightconditions
+        );
+    }
 
 
 /*-----------------------------------------------------------------------------
@@ -339,15 +346,11 @@ void UVLM::Steady::solve_discretised
 )
 {
     lifting_surfaces.get_aerodynamic_solver_inputs(options);
-
     // linear system solution
     UVLM::Types::VectorX gamma_flat;
     UVLM::Matrix::deconstruct_gamma(lifting_surfaces.gamma,
                                     gamma_flat,
                                     lifting_surfaces.zeta_col);
-
-    // export_data_to_csv_file("AIC_wing_only.csv",
-    //                         aic);
     UVLM::LinearSolver::solve_system
     (
         lifting_surfaces.aic,
@@ -384,13 +387,11 @@ void UVLM::Steady::solve_discretised_nonlifting_body
 {
     // Get AIC and RHS 
     nl_body.get_aerodynamic_solver_inputs();
-    //std::cout << "\nAIC Z = " << nl_body.aic_sources_z;
     // linear system solution
     UVLM::Types::VectorX sigma_flat;
     UVLM::Matrix::deconstruct_gamma(nl_body.sigma,
                                     sigma_flat,
                                     nl_body.zeta_col);
-
 
     UVLM::LinearSolver::solve_system
     (
@@ -424,30 +425,38 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 {
     // Setup Lifting and Lifting Surfaces
     lifting_surfaces.get_aerodynamic_solver_inputs(options);
+    if (!options.Steady)
+    {
+        UVLM::Matrix::RHS_lifting_unsteady(lifting_surfaces.zeta_col,
+            lifting_surfaces.zeta_star,
+            lifting_surfaces.uext_col,
+            lifting_surfaces.gamma_star,
+            lifting_surfaces.normals,
+            options,
+            lifting_surfaces.rhs,
+            lifting_surfaces.Ktotal,
+            phantom_surfaces.gamma_star,
+            phantom_surfaces.zeta_star
+        );
+    }
     nl_body.get_aerodynamic_solver_inputs();
 
     // RHS generation
     // Create RHS phantom and merge all RHS vectors
-    UVLM::Types::VectorX rhs_phantom;
+    UVLM::Types::VectorX rhs_phantom, rhs;
     rhs_phantom.setZero(phantom_surfaces.Ktotal);
-    UVLM::Types::VectorX rhs;
-    // rhs.setZero(Ktotal);
-    if (options.phantom_test)
+    if (nl_body.Ktotal > 0)
     {
-
-        nl_body.Ktotal = 0;
-        rhs = UVLM::Types::join_vectors(lifting_surfaces.rhs, rhs_phantom);
+    UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(lifting_surfaces.rhs, nl_body.rhs);
+    rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
     }
     else
     {
-    UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(lifting_surfaces.rhs, nl_body.rhs);
-        rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
+        rhs = UVLM::Types::join_vectors(lifting_surfaces.rhs, rhs_phantom);     
     }
     uint Ktotal = nl_body.Ktotal + lifting_surfaces.Ktotal + phantom_surfaces.Ktotal;
-    // AIC generationc
+    // AIC generation
     UVLM::Types::MatrixX aic = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-
-    std::cout << "\nget aic combinec!";
     UVLM::Matrix::aic_combined(lifting_surfaces,
                                 nl_body, 
                                 phantom_surfaces,   
@@ -463,9 +472,6 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
         options,
         gamma_and_sigma_flat
     );
-    
-    /*export_data_to_csv_file("Gamma_and_Sigma_interference_flat.csv",
-                            gamma_and_sigma_flat);*/
     // split gamma and sigma Vector
     UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(lifting_surfaces.Ktotal);
     UVLM::Types::VectorX gamma_phantom_flat = gamma_and_sigma_flat.tail(phantom_surfaces.Ktotal);    
