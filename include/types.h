@@ -74,7 +74,6 @@ namespace UVLM
             double vortex_radius_wake_ind;
             double centre_rot_g[3];
             double rbm_vel_g[6];
-            bool phantom_test;
         };
 
         struct UVMopts
@@ -83,6 +82,8 @@ namespace UVLM
             uint NumCores;
             uint NumSurfaces;
             uint NumSurfacesNonlifting;
+            bool only_lifting;
+            bool only_nonlifting;
             // uint steady_n_rollup;
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
@@ -102,9 +103,8 @@ namespace UVLM
             double yaw_slerp;
             bool quasi_steady;
             double centre_rot_g[3];
-            double rbm_vel_g[6];            
-            bool only_lifting;
-            bool phantom_test;
+            double rbm_vel_g[6];
+            uint num_spanwise_panels_wo_induced_velocity;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -123,16 +123,16 @@ namespace UVLM
             vm.vortex_radius = uvm.vortex_radius;
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
             vm.only_lifting = uvm.only_lifting;
+            vm.only_nonlifting = uvm.only_nonlifting;
             vm.Steady = uvm.quasi_steady;
-            vm.phantom_test = uvm.phantom_test;
-            
             for (uint i=0; i<6; ++i)
             {
                 if (i < 3)
                 {
                     vm.centre_rot_g[i] = uvm.centre_rot_g[i];
-                    vm.rbm_vel_g[i] = uvm.rbm_vel_g[i];
                 }
+                
+                vm.rbm_vel_g[i] = uvm.rbm_vel_g[i];
             }
            
             return vm;
@@ -181,7 +181,7 @@ namespace UVLM
                 dimensions[i_surf] = UVLM::Types::IntPair(M, N);
             }
         }
-
+        
 
         inline void allocate_VecMat
         (
@@ -230,7 +230,37 @@ namespace UVLM
                     dimensions_in[i].rows(),
                     dimensions_in[i].cols(),
                     initial_value
+
                 );
+            }
+        }
+
+        inline void allocate_VecMat_from_VecVecMat
+        (
+            UVLM::Types::VecMatrixX& mat,
+            const UVLM::Types::VecVecMatrixX& dimensions_in,
+            const int& correction = 0,
+            const double& initial_value = 0.0
+        )
+        {
+            const unsigned int n_mats = dimensions_in.size();
+            mat.resize(n_mats);
+            for (unsigned int i=0; i<n_mats; ++i)
+            {
+                if ((dimensions_in[i][0].rows() == 0 )|| (dimensions_in[i][0].cols() == 0))
+                {
+                    mat[i].resize(0,0);
+                }
+
+                else
+                {
+                    mat[i].setConstant
+                    (
+                        dimensions_in[i][0].rows() + correction,
+                        dimensions_in[i][0].cols() + correction,
+                        initial_value
+                    );
+                }
             }
         }
 

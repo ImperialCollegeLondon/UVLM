@@ -63,7 +63,7 @@ namespace UVLM
             UVLM::Types::VecDimensions dimensions_star;
             UVLM::Types::VecMapX gamma, gamma_star;
             UVLM::Types::VecVecMapX zeta_dot, zeta_star;
-            UVLM::Types::MatrixX aic;            
+            UVLM::Types::MatrixX aic;
             UVLM::Types::VecVecMatrixX u_induced_col_sources;
             // UVLM::Types::MapVectorX rbm_vel_g_1();// use vector x?
             
@@ -116,41 +116,35 @@ namespace UVLM
                                 normals,
                                 options,
                                 false,
-                                aic);          
+                                aic);      
             }
-            template <typename t_struct_nl_body>
             void get_induced_col_from_sources(UVLM::Types::VectorX& sigma_flat,
-                                              t_struct_nl_body& nl_body)
+                                              UVLM::Types::MatrixX& aic_nonlifting_on_lifting_x,
+                                              UVLM::Types::MatrixX& aic_nonlifting_on_lifting_y,
+                                              UVLM::Types::MatrixX& aic_nonlifting_on_lifting_z,
+                                              const uint Ktotal_nonlifting)
             {
                  
-                                // get induced_velocity_col_nonlifting_on_lifting
-                    // Nonlifting on lifting surfaces
-                UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
-                UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
-                UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
-                UVLM::Matrix::AIC_sources(nl_body.zeta,
-                                        zeta_col,
-                                        nl_body.longitudinals,
-                                        nl_body.perpendiculars,
-                                        nl_body.normals,
-                                        longitudinals, //collocation
-                                        perpendiculars, //collocation
-                                        normals, //collocation
-                                        aic_nonlifting_on_lifting_x,
-                                        aic_nonlifting_on_lifting_y,
-                                        aic_nonlifting_on_lifting_z,
-                                        false);  
-
-                // desingularization
-                UVLM::Types::MatrixX desingularization_matrix = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
                     UVLM::Types::allocate_VecVecMat(u_induced_col_sources, uext_col);
+                    // UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
+                    //                                         aic_nonlifting_on_lifting_x,
+                    //                                         aic_nonlifting_on_lifting_y,
+                    //                                         aic_nonlifting_on_lifting_z,
+                    //                                         u_induced_col_sources,
+                    //                                         desingularization_matrix);
                     UVLM::PostProc::calculate_induced_velocity_col(sigma_flat,
                                                             aic_nonlifting_on_lifting_x,
                                                             aic_nonlifting_on_lifting_y,
                                                             aic_nonlifting_on_lifting_z,
-                                                            u_induced_col_sources,
-                                                            desingularization_matrix);    
-        
+                                                            u_induced_col_sources);
+
+                    UVLM::PostProc::transform_VecVecMatrix_to_global_coordinate_system
+                    (
+                    normals,
+                    longitudinals,
+                    perpendiculars,
+                    u_induced_col_sources
+                    );
             }
         };
 
@@ -207,7 +201,7 @@ namespace UVLM
             UVLM::Types::VecMatrixX gamma, gamma_star;
             UVLM::Types::VectorX gamma_flat;
             UVLM::Types::MatrixXint flag_zeta_phantom;
-
+                
             phantom_surface
             (
                 int* p_flag_zeta_phantom,
@@ -233,37 +227,40 @@ namespace UVLM
                 phantom_cell_required = UVLM::Phantom::check_for_true_in_bool_vec_mat(flag_zeta_phantom);
                 if (phantom_cell_required)
                 {
-                    // Create phantom surface and wake geometry
                     UVLM::Phantom::create_phantom_zeta(zeta_lifting, zeta, flag_zeta_phantom);                     
-                    update_wake(zeta_lifting_star);   
-                    // Allocate phantom gamma
+                    // Allocate phantom gamma                    
                     UVLM::Types::allocate_VecMat_from_VecVecMat(gamma, zeta, -1);
+                    gamma_flat.resize(Ktotal);
+                    // Allocate phantom gamma star 
+                    // Allocate with all surfaces (Will cause error in Wing-tail combinations)                   
+                    UVLM::Types::allocate_VecMat(gamma_star,
+                                                 n_surf,
+                                                 zeta_lifting_star[0][0].rows()-1,
+                                                 zeta[0][0].cols()-1);
+                    update_wake(zeta_lifting_star);   
                 }
                 else
                 {
                     // TODO: Check if code adaptions needed for this case
                     Ktotal = 0;
                 }                
-                UVLM::Types::generate_dimensions(zeta, dimensions, - 1);
-                UVLM::Types::allocate_VecVecMat(normals, zeta, -1);   
-                UVLM::Types::allocate_VecVecMat(longitudinals , zeta,-1 );
-                UVLM::Types::allocate_VecVecMat(perpendiculars, zeta, -1); 
-                
             }
 
             void get_surface_parameters()
             {
-                UVLM::Types::allocate_VecVecMat(zeta_col, zeta, -1);   
                 UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
-                Ktotal = UVLM::Matrix::get_total_VecVecMat_size(zeta_col);
-                gamma_flat.resize(Ktotal);
+                Ktotal = UVLM::Matrix::get_total_VecVecMat_size(zeta_col);                
+                UVLM::Types::allocate_VecVecMat(normals, zeta, -1);   
+                UVLM::Types::allocate_VecVecMat(longitudinals , zeta,-1 );
+                UVLM::Types::allocate_VecVecMat(perpendiculars, zeta, -1); 
                 UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);                
             }
 
             void update_wake(UVLM::Types::VecVecMapX zeta_lifting_star)
             {
-                UVLM::Phantom::create_phantom_zeta_star(flag_zeta_phantom,zeta, zeta_lifting_star, zeta_star);   
+                UVLM::Phantom::create_phantom_zeta_star(flag_zeta_phantom, zeta, zeta_lifting_star, zeta_star);   
             }
+
             void update_gamma(const uint Ktotal_lifting,
                               UVLM::Types::VecVecMatrixX& zeta_col_lifting,
                               UVLM::Types::VecMapX& gamma_lifting)
@@ -276,28 +273,27 @@ namespace UVLM
                     Ktotal_lifting,
                     Ktotal, //phantom
                     zeta_col_lifting,
-                    zeta_col, //phantom
+                    zeta_col, //phantompha
                     aic,
+                    flag_zeta_phantom,
                     true
                 );
+                // get gamma phantom gamma = aic*gamma_lifting;
                 gamma_flat.setZero();
-                
                 UVLM::Types::VectorX gamma_lifting_flat;
                 UVLM::Matrix::deconstruct_gamma(gamma_lifting,
                                                 gamma_lifting_flat,
                                                 zeta_col_lifting);
                                                 
-                
+           
                 for (uint i_row = 0; i_row < Ktotal; ++i_row)
                 {
-                    gamma_flat(i_row) = 0.0;
                     for (uint i_col = 0; i_col < Ktotal_lifting; ++i_col)
                     {
                         gamma_flat(i_row) += aic(i_row, i_col)* gamma_lifting_flat(i_col);
                     }
                     
                 }
-                
                 UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                                 gamma,
                                                 zeta_col);
@@ -306,47 +302,39 @@ namespace UVLM
                                    UVLM::Types::VecMapX gamma_lifting_star)
             {
                 double factor = 0.0;
-                uint N_col, N_row;
-                uint i_surf_partner_junction,idx_junction = 0;
-                bool uninitiliased_phantom_surface = false;
-                // ToDo: Use lifting star collocation points as input
-                UVLM::Types::VecVecMatrixX zeta_col_lifting_star, zeta_col_phantom_star;
+                uint N_spanwise_panels, N_streamwise_panels;
+                UVLM::Types::VecVecMatrixX zeta_col_lifting_star;
                 UVLM::Geometry::generate_colocationMesh(zeta_lifting_star,zeta_col_lifting_star);
-                UVLM::Geometry::generate_colocationMesh(zeta_star,zeta_col_phantom_star);
-                
-                gamma_star.resize(n_surf);
                 for(uint i_surf=0; i_surf<n_surf; ++i_surf)
                 {                    
-                    N_col = zeta_col_phantom_star[i_surf][0].cols();
-                    N_row = zeta_col_phantom_star[i_surf][0].rows();
-                    if (zeta_star[i_surf][0].size() > 0)
-                    {
-                        UVLM::Phantom::get_parameter_phantom_setup(flag_zeta_phantom, i_surf,i_surf_partner_junction,idx_junction, uninitiliased_phantom_surface);
-                        // Note: phantom surface can be false, if phantom surface is already initiliased
-                        if (uninitiliased_phantom_surface)
-                        {              
-                            UVLM::Phantom::interpolate_circulation_strength
-                            (
-                                gamma_star,
-                                gamma_lifting_star,
-                                zeta_col_phantom_star,
-                                zeta_col_lifting_star,
-                                idx_junction,
-                                i_surf,
-                                i_surf_partner_junction
-                            );
-                        }
-                    }
-                    
+                    N_spanwise_panels = gamma_star[i_surf].cols();
+                    N_streamwise_panels = gamma_star[i_surf].rows();
+                          
+                    for (uint i_row=0; i_row<N_streamwise_panels; ++i_row)
+                    {                
+                        factor = (abs(gamma_lifting_star[1](i_row, 0)) - abs(gamma_lifting_star[0](i_row, 0)))
+                                 /(zeta_lifting_star[1][1](i_row, 0) - zeta_lifting_star[0][1](i_row, 0));
+                        for (uint i_col=0; i_col<N_spanwise_panels; ++i_col) 
+                        {
+                            gamma_star[i_surf](i_row, i_col) = abs(gamma_lifting_star[0](i_row, 0))
+                                                                + (zeta_star[i_surf][1](i_row, i_col) - zeta_lifting_star[0][1](i_row, 0))
+                                                                * factor;
+                            if (gamma_lifting_star[i_surf](i_row, 0) < 0.0)
+                            {
+                                gamma_star[i_surf](i_row, i_col) *= -1;
+                            }
+                        
+                        }              
+                     }
                 }
-            }      
+            }
         };
-
+        
         struct nonlifting_body : surface
         {
             // Nonlifting body specifix
             UVLM::Types::VecMapX sigma;
-            UVLM::Types::VecVecMatrixX u_induced_col, u_induced_col_vertices;
+            UVLM::Types::VecVecMatrixX u_induced_col;
 
             // Aerodynamic Solver Inputs
             UVLM::Types::MatrixX aic_sources_x, aic_sources_y,aic_sources_z;            
@@ -361,26 +349,27 @@ namespace UVLM
                 double** p_sigma
             ):surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces}
             {   
-                UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);       
+                UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);
             }
             void get_surface_parameters()
             {
                 surface::get_surface_parameters();
-                UVLM::Types::allocate_VecVecMat(u_induced_col, uext_col);       
-                UVLM::Types::allocate_VecVecMat(u_induced_col_vertices, zeta, -1);
+                Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
+                UVLM::Types::allocate_VecVecMat(u_induced_col, uext_col);
             }
             void get_aerodynamic_solver_inputs()
             {
-                rhs.resize(Ktotal); 
+                aic_sources_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+                aic_sources_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+                aic_sources_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+                if (Ktotal > 0)
+                {
+                rhs.resize(Ktotal);
                 UVLM::Matrix::RHS_nonlifting_body(uext_col,
                             normals,
                             rhs,
                             Ktotal,
                             n_surf);
-                            
-                aic_sources_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-                aic_sources_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-                aic_sources_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
                 UVLM::Matrix::AIC_sources(zeta,
                                         zeta_col,
                                         longitudinals,
@@ -392,7 +381,7 @@ namespace UVLM
                                         aic_sources_x,
                                         aic_sources_y,
                                         aic_sources_z);
-                
+                }                
             }
         };
     }
