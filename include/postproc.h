@@ -241,24 +241,297 @@ namespace UVLM
 					}
 				}
 			}
+
             export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
             // Transform forces from collocation points to nodes
             UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces);
+            
+        }
+
+        template <typename t_zeta,
+                  typename t_zeta_dot,
+                  typename t_zeta_star,
+                  typename t_gamma,
+                  typename t_gamma_star,
+                  typename t_uext,
+                  typename t_rbm_velocity,
+                  typename t_forces>
+        void calculate_static_forces_unsteady
+        (
+            const t_zeta& zeta,
+            const t_zeta_dot& zeta_dot,
+            const t_zeta_star& zeta_star,
+            const t_gamma& gamma,
+            const t_gamma_star& gamma_star,
+            const t_uext& uext,
+            const t_rbm_velocity& rbm_velocity,
+            t_forces&  forces,
+            const UVLM::Types::VMopts options,
+            const UVLM::Types::FlightConditions& flightconditions
+        )
+        {
+            // Set forces to 0
+            UVLM::Types::initialise_VecVecMat(forces);
+
+            // first calculate all the velocities at the corner points
+            UVLM::Types::VecVecMatrixX velocities;
+            UVLM::Types::allocate_VecVecMat(velocities, zeta);
+            // free stream contribution
+            UVLM::Types::copy_VecVecMat(uext, velocities);
+
+            // u_ext taking into account unsteady contributions
+            // TODO: get rid of rbm velocity input in function calculate static forces
+            UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+            (
+                zeta,
+                zeta_dot,
+                uext,
+                options.rbm_vel_g,
+                options.centre_rot_g,
+                velocities
+            );
+            // not bothered with effciency.
+            // if it is so critical, it could be improved
+            const uint n_surf = zeta.size();
+
+            UVLM::Types::VecVecMatrixX span_seg_forces;
+            UVLM::Types::VecVecMatrixX chord_seg_forces;
+
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                const uint M = gamma[i_surf].rows();
+                const uint N = gamma[i_surf].cols();
+
+                UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
+                UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
+
+                // UVLM::Types::Vector3 dl;
+                // UVLM::Types::Vector3 v;
+                // UVLM::Types::Vector3 f;
+                // UVLM::Types::Vector3 v_ind;
+                // UVLM::Types::Vector3 rp;
+                // UVLM::Types::Vector3 r1;
+                // UVLM::Types::Vector3 r2;
+                // UVLM::Types::Real delta_gamma;
+
+                // Computation of induced velocity in each segment
+                #pragma omp parallel for collapse(2)
+                for (uint i_M=0; i_M<M; ++i_M)
+                {
+                    for (uint i_N=0; i_N<N; ++i_N)
+                    {
+                        UVLM::Types::Vector3 dl;
+                        UVLM::Types::Vector3 v;
+                        UVLM::Types::Vector3 f;
+                        UVLM::Types::Vector3 v_ind;
+                        UVLM::Types::Vector3 rp;
+                        UVLM::Types::Vector3 r1;
+                        UVLM::Types::Vector3 r2;
+                        UVLM::Types::Real delta_gamma;
+
+                        // Spanwise vortices
+                        r1 << zeta[i_surf][0](i_M, i_N),
+                              zeta[i_surf][1](i_M, i_N),
+                              zeta[i_surf][2](i_M, i_N);
+                        r2 << zeta[i_surf][0](i_M, i_N+1),
+                              zeta[i_surf][1](i_M, i_N+1),
+                              zeta[i_surf][2](i_M, i_N+1);
+
+                        // position of the center point of the vortex filament
+                        rp = 0.5*(r1 + r2);
+
+                        // induced vel by vortices at vp
+                        v_ind.setZero();
+                        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                        {
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
+                                                                              gamma[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                              gamma_star[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+                        }
+
+                        dl = r2-r1;
+
+                        v << 0.5*(velocities[i_surf][0](i_M, i_N) +
+                                  velocities[i_surf][0](i_M, i_N+1)),
+                             0.5*(velocities[i_surf][1](i_M, i_N) +
+                                  velocities[i_surf][1](i_M, i_N+1)),
+                             0.5*(velocities[i_surf][2](i_M, i_N) +
+                                  velocities[i_surf][2](i_M, i_N+1));
+
+                        v = (v + v_ind).eval();
+                        // std::cout << "\ndl = " << dl << ", v = " << v << ", gamma = " << gamma[i_surf].template topRows<2>();
+                        if (i_M == 0){
+                            delta_gamma = -gamma[i_surf](i_M, i_N);
+                        } else if (i_M == M){
+                            // Might be needed if TE forces are computed
+                            delta_gamma = gamma[i_surf](i_M-1, i_N);
+                        } else {
+                            delta_gamma = gamma[i_surf](i_M-1, i_N) - gamma[i_surf](i_M, i_N);
+                        }
+
+                        f = flightconditions.rho*delta_gamma*v.cross(dl);
+                        span_seg_forces[0][0](i_M, i_N) = f(0);
+                        span_seg_forces[0][1](i_M, i_N) = f(1);
+                        span_seg_forces[0][2](i_M, i_N) = f(2);
+
+                        // Chordwise vortice
+                        r2 << zeta[i_surf][0](i_M+1, i_N),
+                              zeta[i_surf][1](i_M+1, i_N),
+                              zeta[i_surf][2](i_M+1, i_N);
+
+                        // position of the center point of the vortex filament
+                        rp = 0.5*(r1 + r2);
+
+                        // induced vel by vortices at vp
+                        v_ind.setZero();
+                        for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                        {
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
+                                                                              gamma[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                              gamma_star[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+                        }
+
+                        dl = r2-r1;
+
+                        v << 0.5*(velocities[i_surf][0](i_M, i_N) +
+                                  velocities[i_surf][0](i_M+1, i_N)),
+                             0.5*(velocities[i_surf][1](i_M, i_N) +
+                                  velocities[i_surf][1](i_M+1, i_N)),
+                             0.5*(velocities[i_surf][2](i_M, i_N) +
+                                  velocities[i_surf][2](i_M+1, i_N));
+
+                        v = (v + v_ind).eval();
+
+                        if (i_N == 0){
+                            delta_gamma = gamma[i_surf](i_M, i_N);
+                        } else if (i_N == N){
+                            delta_gamma = -gamma[i_surf](i_M, i_N-1);
+                        } else {
+                            delta_gamma = gamma[i_surf](i_M, i_N) - gamma[i_surf](i_M, i_N-1);
+                        }
+
+                        f = flightconditions.rho*delta_gamma*v.cross(dl);
+                        chord_seg_forces[0][0](i_M, i_N) = f(0);
+                        chord_seg_forces[0][1](i_M, i_N) = f(1);
+                        chord_seg_forces[0][2](i_M, i_N) = f(2);
+                    }
+                }
+
+                // Influence of the last chordwise column of vortices
+                UVLM::Types::Vector3 dl;
+                UVLM::Types::Vector3 v;
+                UVLM::Types::Vector3 f;
+                UVLM::Types::Vector3 v_ind;
+                UVLM::Types::Vector3 rp;
+                UVLM::Types::Vector3 r1;
+                UVLM::Types::Vector3 r2;
+                UVLM::Types::Real delta_gamma;
+                for (uint i_M=0; i_M<M; ++i_M){
+
+                    r1 << zeta[i_surf][0](i_M, N),
+                          zeta[i_surf][1](i_M, N),
+                          zeta[i_surf][2](i_M, N);
+                    r2 << zeta[i_surf][0](i_M+1, N),
+                          zeta[i_surf][1](i_M+1, N),
+                          zeta[i_surf][2](i_M+1, N);
+
+                    // position of the center point of the vortex filament
+                    rp = 0.5*(r1 + r2);
+
+                    // induced vel by vortices at vp
+                    v_ind.setZero();
+
+                    for (uint ii_surf=0; ii_surf<n_surf; ++ii_surf)
+                    {
+                        v_ind += UVLM::BiotSavart::whole_surface(zeta[ii_surf],
+                                                                          gamma[ii_surf],
+                                                                          rp,
+                                                                          options.ImageMethod,
+                                                                          options.vortex_radius);
+
+                        v_ind += UVLM::BiotSavart::whole_surface(zeta_star[ii_surf],
+                                                                          gamma_star[ii_surf],
+                                                                          rp,
+                                                                          options.ImageMethod,
+                                                                          options.vortex_radius);
+                    }
+
+                    dl = r2-r1;
+
+                    v << 0.5*(velocities[i_surf][0](i_M, N) +
+                              velocities[i_surf][0](i_M+1, N)),
+                         0.5*(velocities[i_surf][1](i_M, N) +
+                              velocities[i_surf][1](i_M+1, N)),
+                         0.5*(velocities[i_surf][2](i_M, N) +
+                              velocities[i_surf][2](i_M+1, N));
+
+                    v = (v + v_ind).eval();
+
+                    delta_gamma = -gamma[i_surf](i_M, N-1);
+                    f = flightconditions.rho*delta_gamma*v.cross(dl);
+                    chord_seg_forces[0][0](i_M, N) = f(0);
+                    chord_seg_forces[0][1](i_M, N) = f(1);
+                    chord_seg_forces[0][2](i_M, N) = f(2);
+
+                }
+
+                // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
+                // Transfer forces to nodes
+                for (uint i_M=0; i_M<M+1; ++i_M)
+                {
+                    for (uint i_N=0; i_N<N+1; ++i_N)
+                    {
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            // Spanwise segments
+                            if (i_N != 0){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
+                            }
+                            if (i_N != N){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
+                            }
+
+                            // Chordwise segments
+                            if (i_M != 0){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
+                            }
+                            if (i_M != M){
+                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
 
-        template <typename t_struct_lifting>
+        // TODO: Merge this function with the one above
+        template <typename t_struct_lifting_surfaces,
+                  typename t_struct_phantom>
         void calculate_static_forces_unsteady
         (
-            t_struct_lifting& lifting_surfaces,
+            t_struct_lifting_surfaces& lifting_surfaces,
+            const t_struct_phantom& phantom_surfaces,
             const UVLM::Types::VMopts options,
-            const UVLM::Types::FlightConditions& flightconditions,
-            const bool& include_sources = false
+            const UVLM::Types::FlightConditions& flightconditions
         )
         {
-            std::cout << "/nincluding sources!/n"; 
-            std::cout << "/nincluding sources = " << include_sources;
-
             // Set forces to 0
             UVLM::Types::initialise_VecVecMat(lifting_surfaces.forces);
 
@@ -320,7 +593,6 @@ namespace UVLM
                         UVLM::Types::Real delta_gamma;
 
                         // Spanwise vortices
-                        // ToDo: Function to setup vector from VecVecMatrixX
                         r1 << lifting_surfaces.zeta[i_surf][0](i_M, i_N),
                               lifting_surfaces.zeta[i_surf][1](i_M, i_N),
                               lifting_surfaces.zeta[i_surf][2](i_M, i_N);
@@ -346,15 +618,27 @@ namespace UVLM
                                                                               rp,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
-                        }
-                        if (include_sources)
-                        {
-                            v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
-                            v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
-                            v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);
-                        }  
-                        dl = r2-r1;
+                            
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta[ii_surf],
+                                                                              phantom_surfaces.gamma[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
 
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta_star[ii_surf],
+                                                                              phantom_surfaces.gamma_star[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+                                                                              
+                                                                    
+                        }
+                        
+                            // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
+                            // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
+                            // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);
+
+                        dl = r2-r1;
                         v << 0.5*(velocities[i_surf][0](i_M, i_N) +
                                   velocities[i_surf][0](i_M, i_N+1)),
                              0.5*(velocities[i_surf][1](i_M, i_N) +
@@ -401,13 +685,24 @@ namespace UVLM
                                                                               rp,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
+                                                                              
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta[ii_surf],
+                                                                              phantom_surfaces.gamma[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta_star[ii_surf],
+                                                                              phantom_surfaces.gamma_star[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+                                                                              
                         }
-                        if (include_sources)
-                        {
-                            v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
-                            v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
-                            v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);
-                        }
+                        // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
+                        // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
+                        // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);  
+
                         dl = r2-r1;
 
                         v << 0.5*(velocities[i_surf][0](i_M, i_N) +
@@ -471,8 +766,24 @@ namespace UVLM
                                                                           rp,
                                                                           options.ImageMethod,
                                                                           options.vortex_radius);
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta[ii_surf],
+                                                                              phantom_surfaces.gamma[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+
+                            v_ind += UVLM::BiotSavart::whole_surface(phantom_surfaces.zeta_star[ii_surf],
+                                                                              phantom_surfaces.gamma_star[ii_surf],
+                                                                              rp,
+                                                                              options.ImageMethod,
+                                                                              options.vortex_radius);
+                                                                              
+                                                                          
                     }
 
+                    // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,N);
+                    // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,N);
+                    // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,N);  
                     dl = r2-r1;
 
                     v << 0.5*(velocities[i_surf][0](i_M, N) +
