@@ -66,7 +66,8 @@ namespace UVLM
             );
             template<typename t_zeta_col, 
                     typename t_zeta_phantom_col,
-                    typename t_aic_phantom_out>
+                    typename t_aic_phantom_out,
+                    typename t_flag_zeta_phantom>
             void aic_phantom_interp_condition
             (
                 const uint& Ktotal_lifting,
@@ -74,6 +75,7 @@ namespace UVLM
             t_zeta_col& zeta_col,
             t_zeta_phantom_col& zeta_phantom_col,
             t_aic_phantom_out& aic_phantom_out,
+                t_flag_zeta_phantom& flag_zeta_phantom,
             const bool only_for_update = false
         );
 
@@ -650,16 +652,15 @@ void UVLM::Matrix::aic_combined
                       nl_body.uext_col,
                       nl_body.normals,
                       options,
-                        false,
-                        aic_lifting_on_nonlifting);
-        
-        UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-        UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-        UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-
-        UVLM::Matrix::AIC_sources(nl_body.zeta,
-                                lifting_surfaces.zeta_col,
-                                nl_body.longitudinals,
+                      false,
+                      aic_lifting_on_nonlifting);
+    // Nonlifting on lifting surfaces
+	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
+    UVLM::Matrix::AIC_sources(nl_body.zeta,
+                              lifting_surfaces.zeta_col,
+                              nl_body.longitudinals,
                               nl_body.perpendiculars,
                               nl_body.normals,
                               lifting_surfaces.longitudinals, //collocation
@@ -778,7 +779,8 @@ void UVLM::Matrix::add_phantom_AIC_to_AIC
 
 template<typename t_zeta_col, 
          typename t_zeta_phantom_col,
-         typename t_aic_phantom_out>
+         typename t_aic_phantom_out,
+         typename t_flag_zeta_phantom>
 void UVLM::Matrix::aic_phantom_interp_condition
 (
     const uint& Ktotal_lifting,
@@ -786,13 +788,13 @@ void UVLM::Matrix::aic_phantom_interp_condition
     t_zeta_col& zeta_col,
     t_zeta_phantom_col& zeta_phantom_col,
     t_aic_phantom_out& aic_phantom_out,
+    t_flag_zeta_phantom& flag_zeta_phantom,
     const bool only_for_update
 )
 {
     uint N_phantom_panels, M_phantom_panels, counter_row, N_spanwise_panels;
     double yL0_minus_yR0, interpolated_value;
     const uint n_surf = zeta_col.size();
-    // std::cout << "\nAIC phantom out = " << aic_phantom_out;
     // set influence of phantom panel on own collocation point
     if (!only_for_update)
     {
@@ -801,41 +803,43 @@ void UVLM::Matrix::aic_phantom_interp_condition
         aic_phantom_out.topRightCorner(Ktotal_phantom, Ktotal_phantom).setIdentity();
         aic_phantom_out *= -1;
     }
+    
+
     // get offsets beforehand 
     // Check if better dimensions and offsets are better to be stored in structs   
     std::vector<uint> offset_panel, offset_phantom_panel;
     UVLM::Types::VecDimensions dimensions_panel, dimensions_phantom_panel;
     UVLM::Types::generate_dimensions(zeta_col, dimensions_panel, 0);
     UVLM::Types::generate_dimensions(zeta_phantom_col, dimensions_phantom_panel, 0);
-    
-	UVLM::Matrix::build_offsets(n_surf, dimensions_panel,offset_panel);
+    UVLM::Matrix::build_offsets(n_surf, dimensions_panel,offset_panel);
 	UVLM::Matrix::build_offsets(n_surf, dimensions_phantom_panel,offset_phantom_panel);
     UVLM::Types::Vector3 col_point_lifting, col_point_phantom;
-    
-    for(uint i_surf=0; i_surf<n_surf; ++i_surf)
+    uint partner_surface = 0;
+     for(uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        counter_row = 0;
-        N_spanwise_panels = zeta_col[i_surf][0].cols();
-        N_phantom_panels= zeta_phantom_col[i_surf][0].rows();
+        if (flag_zeta_phantom(0, i_surf) > i_surf)
+        {
+            partner_surface = flag_zeta_phantom(0, i_surf);
+            counter_row = 0;
+            N_spanwise_panels = zeta_col[i_surf][0].cols();
+            N_phantom_panels= zeta_phantom_col[i_surf][0].rows();
         M_phantom_panels= zeta_phantom_col[i_surf][0].cols();
         
         for (uint i_row=0; i_row<N_phantom_panels; ++i_row)
         {
-            yL0_minus_yR0 = zeta_col[1][1](i_row, 0) - zeta_col[0][1](i_row, 0);
-            for (uint i_col=0; i_col<M_phantom_panels; ++i_col)
-            {
-                interpolated_value = (zeta_phantom_col[i_surf][1](i_row, i_col)-zeta_col[0][1](i_row, 0))/yL0_minus_yR0;
-                aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[0]+i_row*N_spanwise_panels) = 1-interpolated_value;
-                aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[1]+i_row*N_spanwise_panels) = interpolated_value;
-                if (i_surf==0)
+                yL0_minus_yR0 = zeta_col[1][1](i_row, 0) - zeta_col[0][1](i_row, 0);
+                for (uint i_col=0; i_col<M_phantom_panels; ++i_col)
                 {
-                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[1]+i_row*N_spanwise_panels)*=-1;
-                }
-                else
-                {
-                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[0]+i_row*N_spanwise_panels)*=-1;
-                }
-                counter_row++;
+                    interpolated_value = (zeta_phantom_col[i_surf][1](i_row, i_col)-zeta_col[i_surf][1](i_row, 0))/yL0_minus_yR0;
+                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[i_surf]+i_row*N_spanwise_panels) = 1-interpolated_value;
+                    aic_phantom_out(offset_phantom_panel[i_surf]+counter_row,offset_panel[partner_surface]+i_row*N_spanwise_panels) = -interpolated_value;
+                    interpolated_value = (zeta_phantom_col[partner_surface][1](i_row, i_col)-zeta_col[i_surf][1](i_row, 0))/yL0_minus_yR0;
+                    // ToDO; find a better solution than multiplying values by minues 1 because the circulation is negativ there
+                    aic_phantom_out(offset_phantom_panel[partner_surface]+counter_row,offset_panel[i_surf]+i_row*N_spanwise_panels) = (1-interpolated_value)*(-1.);
+                    aic_phantom_out(offset_phantom_panel[partner_surface]+counter_row,offset_panel[partner_surface]+i_row*N_spanwise_panels) = interpolated_value;
+                    
+                    counter_row++;
+                }                
             }
         }
     }
