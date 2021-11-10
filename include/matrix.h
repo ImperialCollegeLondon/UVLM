@@ -71,10 +71,10 @@ namespace UVLM
             void aic_phantom_interp_condition
             (
                 const uint& Ktotal_lifting,
-            const uint& Ktotal_phantom, 
-            t_zeta_col& zeta_col,
-            t_zeta_phantom_col& zeta_phantom_col,
-            t_aic_phantom_out& aic_phantom_out,
+                const uint& Ktotal_phantom, 
+                t_zeta_col& zeta_col,
+                t_zeta_phantom_col& zeta_phantom_col,
+                t_aic_phantom_out& aic_phantom_out,
                 t_flag_zeta_phantom& flag_zeta_phantom,
             const bool only_for_update = false
         );
@@ -271,7 +271,7 @@ void UVLM::Matrix::AIC
             } else // unsteady case
             {
                 dummy_gamma_star.setOnes(1,
-                                         dimensions_star[jpanel_surf].second);
+                                        dimensions_star[jpanel_surf].second);
                 UVLM::BiotSavart::multisurface_unsteady_wake
                 (
                     zeta[jpanel_surf],
@@ -286,7 +286,7 @@ void UVLM::Matrix::AIC
                     options.vortex_radius
                 );
             }
-        }
+        }   
     }
 }
 /*-----------------------------------------------------------------------------
@@ -744,24 +744,14 @@ void UVLM::Matrix::aic_combined
     )
     {
     const uint Ktotal_lifting_and_nonlifting = lifting_surfaces.Ktotal + nl_body.Ktotal;
-                 
-    //Phantom panels     
-    UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, phantom_surfaces.Ktotal);    
-    UVLM::Matrix::AIC(phantom_surfaces.zeta,
-                      lifting_surfaces.zeta_col,
-                      phantom_surfaces.zeta_star,
-                      lifting_surfaces.uext_col,
-                      lifting_surfaces.normals,
-                      options,
-                      false,
-                      aic_phantom_on_lifting);
+    if (nl_body.Ktotal > 0)
     if (!options.phantom_test)
     {
-        // Lifting on nonlifting surfaces
-        UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(nl_body.Ktotal, lifting_surfaces.Ktotal);
-        UVLM::Matrix::AIC(lifting_surfaces.zeta,
-                        nl_body.zeta_col,
-                        lifting_surfaces.zeta_star,
+    // Lifting on nonlifting surfaces
+	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(nl_body.Ktotal, lifting_surfaces.Ktotal);
+    UVLM::Matrix::AIC(lifting_surfaces.zeta,
+                      nl_body.zeta_col,
+                      lifting_surfaces.zeta_star,
                       nl_body.uext_col,
                       nl_body.normals,
                       options,
@@ -781,41 +771,49 @@ void UVLM::Matrix::aic_combined
                               lifting_surfaces.normals, //collocation
 							  aic_nonlifting_on_lifting_x,
 							  aic_nonlifting_on_lifting_y,
-                                aic_nonlifting_on_lifting_z,
-                                false);  
-        
-        UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(nl_body.Ktotal, phantom_surfaces.Ktotal);   
-
-        UVLM::Matrix::AIC(phantom_surfaces.zeta,
-                        nl_body.zeta_col,
-                        phantom_surfaces.zeta_star,
+                              aic_nonlifting_on_lifting_z,
+                              false);   
+                              
+    UVLM::Types::MatrixX aic_phantom_on_nonlifting = UVLM::Types::MatrixX::Zero(nl_body.Ktotal, phantom_surfaces.Ktotal);   
+    UVLM::Matrix::AIC(phantom_surfaces.zeta,
+                      nl_body.zeta_col,
+                      phantom_surfaces.zeta_star,
                       nl_body.uext_col,
                       nl_body.normals,
                       options,
-                        false,
-                        aic_phantom_on_nonlifting);
-                        
-        UVLM::Types::copy_Mat_to_block(nl_body.aic_sources_z, aic, lifting_surfaces.Ktotal, lifting_surfaces.Ktotal);
-        UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, lifting_surfaces.Ktotal,0);
-        UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, lifting_surfaces.Ktotal);
-        UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, lifting_surfaces.Ktotal, Ktotal_lifting_and_nonlifting);
+                      false,
+                      aic_phantom_on_nonlifting);
+                      
+    UVLM::Types::copy_Mat_to_block(nl_body.aic_sources_z, aic, lifting_surfaces.Ktotal, lifting_surfaces.Ktotal);
+    UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, lifting_surfaces.Ktotal,0);
+    UVLM::Types::copy_Mat_to_block(aic_nonlifting_on_lifting_z, aic, 0, lifting_surfaces.Ktotal);
+    UVLM::Types::copy_Mat_to_block(aic_phantom_on_nonlifting, aic, lifting_surfaces.Ktotal, Ktotal_lifting_and_nonlifting);
     
     }
     
+    
+    //Phantom panels     
+    UVLM::Types::MatrixX aic_phantom_on_lifting = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, phantom_surfaces.Ktotal);    
+    phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
+    UVLM::Matrix::AIC(phantom_surfaces.zeta,
+                      lifting_surfaces.zeta_col,
+                      phantom_surfaces.zeta_star,
+                      lifting_surfaces.uext_col,
+                      lifting_surfaces.normals,
+                      options,
+                      false,
+                      aic_phantom_on_lifting);
     // Get matrix to enforce linear interpolated circulation on phantom panels   
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(phantom_surfaces.Ktotal, aic.cols());
     UVLM::Matrix::aic_phantom_interp_condition(lifting_surfaces.Ktotal,
                                                phantom_surfaces.Ktotal, 
                                                lifting_surfaces.zeta_col,
                                                phantom_surfaces.zeta_col,
-                                               circulation_bc_phantom);
-
+                                               circulation_bc_phantom,
+                                               phantom_surfaces.flag_zeta_phantom);
     // Merge all matrices into combined aic matrix
     UVLM::Types::copy_Mat_to_block(lifting_surfaces.aic, aic, 0, 0); 
-    UVLM::Types::copy_Mat_to_block(nl_body.aic_sources_z, aic, lifting_surfaces.Ktotal, lifting_surfaces.Ktotal);
-    
     UVLM::Types::copy_Mat_to_block(aic_phantom_on_lifting, aic, 0, Ktotal_lifting_and_nonlifting);
-
     UVLM::Types::copy_Mat_to_block(circulation_bc_phantom, aic, Ktotal_lifting_and_nonlifting, 0);
 }
 
@@ -905,7 +903,7 @@ void UVLM::Matrix::aic_phantom_interp_condition
     const bool only_for_update
 )
 {
-    uint N_phantom_panels, M_phantom_panels, counter_row, N_spanwise_panels;
+     uint N_phantom_panels, M_phantom_panels, counter_row, N_spanwise_panels;
     double yL0_minus_yR0, interpolated_value;
     const uint n_surf = zeta_col.size();
     // set influence of phantom panel on own collocation point
@@ -936,10 +934,10 @@ void UVLM::Matrix::aic_phantom_interp_condition
             counter_row = 0;
             N_spanwise_panels = zeta_col[i_surf][0].cols();
             N_phantom_panels= zeta_phantom_col[i_surf][0].rows();
-        M_phantom_panels= zeta_phantom_col[i_surf][0].cols();
-        
-        for (uint i_row=0; i_row<N_phantom_panels; ++i_row)
-        {
+            M_phantom_panels= zeta_phantom_col[i_surf][0].cols();
+            
+            for (uint i_row=0; i_row<N_phantom_panels; ++i_row)
+            {
                 yL0_minus_yR0 = zeta_col[1][1](i_row, 0) - zeta_col[0][1](i_row, 0);
                 for (uint i_col=0; i_col<M_phantom_panels; ++i_col)
                 {
