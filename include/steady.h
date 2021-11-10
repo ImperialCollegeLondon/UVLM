@@ -227,8 +227,7 @@ void UVLM::Steady::solver_nonlifting_body
     UVLM::PostProc::calculate_static_forces_nonlifting_body
     (
         nl_body,
-        flightconditions,
-        false
+        flightconditions
     );
 }
 
