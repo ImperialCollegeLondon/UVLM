@@ -170,24 +170,7 @@ void UVLM::Sources::get_influence_coefficient
 			{
 				for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
 				{
-					UVLM::Geometry::convert_to_panel_coordinate_system(target_surface[0](i_col, j_col),
-															target_surface[1](i_col, j_col),
-															target_surface[2](i_col, j_col),
-															longitudinal_panel_vec,
-															perpendicular_panel_vec,
-															normal_panel_vec,
-															collocation_point_transf);
-					collocation_point_transf[2] -= panel_coordinates_z[0];
-				
-					delta_epsilon_x_vec = panel_coordinates_epsilon.array() - collocation_point_transf[0];
-					delta_eta_y_vec = panel_coordinates_eta.array()- collocation_point_transf[1];
-					radius_vec = (delta_epsilon_x_vec.array().pow(2) + delta_eta_y_vec.array().pow(2)+collocation_point_transf[2]*collocation_point_transf[2]).sqrt();
-				
-					UVLM::Sources::get_q_vec(radius_vec,
-													   d_vec,
-													   Q_vec);
-					induced_velocity_vec[0] = UVLM::Sources::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
-					induced_velocity_vec[1] = -UVLM::Sources::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;
+
 					if((same_surface) && (i_col==i_panel)&&(j_col==j_panel))
 					{
 						induced_velocity_vec[2] = 0.5;
@@ -196,9 +179,24 @@ void UVLM::Sources::get_influence_coefficient
 					}
 					else
 					{
-						
-						
-						induced_velocity_vec[2] = 0;
+						UVLM::Geometry::convert_to_panel_coordinate_system(target_surface[0](i_col, j_col),
+																target_surface[1](i_col, j_col),
+																target_surface[2](i_col, j_col),
+																longitudinal_panel_vec,
+																perpendicular_panel_vec,
+																normal_panel_vec,
+																collocation_point_transf);
+						collocation_point_transf[2] -= panel_coordinates_z[0];
+					
+						delta_epsilon_x_vec = panel_coordinates_epsilon.array() - collocation_point_transf[0];
+						delta_eta_y_vec = panel_coordinates_eta.array()- collocation_point_transf[1];
+						radius_vec = (delta_epsilon_x_vec.array().pow(2) + delta_eta_y_vec.array().pow(2)+collocation_point_transf[2]*collocation_point_transf[2]).sqrt();
+					
+						UVLM::Sources::get_q_vec(radius_vec,
+												d_vec,
+												Q_vec);
+						induced_velocity_vec[0] = UVLM::Sources::dot_product(S_vec, Q_vec)*UVLM::Constants::INV_PI4;
+						induced_velocity_vec[1] = -UVLM::Sources::dot_product(C_vec, Q_vec)*UVLM::Constants::INV_PI4;	
 						if (abs(collocation_point_transf[2])!= 0.0)
 						{
 							induced_velocity_vec[2] = UVLM::Sources::get_j_sum(radius_vec,
@@ -209,6 +207,10 @@ void UVLM::Sources::get_influence_coefficient
 																						collocation_point_transf[2]);
 							induced_velocity_vec[2] *= UVLM::Constants::INV_PI4;
 				
+						}
+						else
+						{					
+							induced_velocity_vec[2] = 0;
 						}
 						// convert induced panel velocity from panel coordinate system to collocation point coorindate system 
 						longitudinal_col_vec = UVLM::Types::Vector3(longitudinal_col[0](i_col, j_col), longitudinal_col[1](i_col, j_col), longitudinal_col[2](i_col, j_col));
