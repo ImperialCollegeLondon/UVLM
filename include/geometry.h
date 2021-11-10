@@ -426,8 +426,11 @@ namespace UVLM
             }
             for (unsigned int i_surf=0; i_surf<dimensions.size(); ++i_surf)
             {
-                UVLM::Mapping::BilinearMapping(vortex_mesh[i_surf],
-                                               collocation_mesh[i_surf]);
+                if ((dimensions[i_surf].first > 0) || (dimensions[i_surf].second > 0 ))
+                {
+                    UVLM::Mapping::BilinearMapping(vortex_mesh[i_surf],
+                                                collocation_mesh[i_surf]);
+                }
             }
         }
 
