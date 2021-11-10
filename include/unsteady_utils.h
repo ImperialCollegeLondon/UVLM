@@ -2,6 +2,7 @@
 
 #include "EigenInclude.h"
 #include "types.h"
+#include "sources.h"
 
 
 namespace UVLM
@@ -64,19 +65,18 @@ namespace UVLM
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star
             );
-            
             template <typename t_zeta,
-                    typename t_zeta_star,
-                    typename t_gamma,
+                      typename t_zeta_star,
+                      typename t_gamma,
                     typename t_gamma_star,
                     typename t_uext,
                     typename t_uext_star,
                     typename t_uext_star_total,
-                    typename t_rbm_velocity,
-                    typename t_extra_gamma_star,
-                    typename t_extra_zeta_star,
-                    typename t_struct_nonlifting,
-                    typename t_struct_phantom_surf>
+                      typename t_rbm_velocity,
+                      typename t_extra_gamma_star,
+                      typename t_extra_zeta_star,
+                      typename t_struct_phantom_surf,
+                      typename t_struct_nl_body>
             void convect_unsteady_wake_lifting_and_nonlifting
             (
                 const UVLM::Types::UVMopts& options,
@@ -90,8 +90,41 @@ namespace UVLM
                 const t_rbm_velocity& rbm_velocity,
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star,
-                t_struct_nonlifting& nl_nody,
-                t_struct_phantom_surf& phantom_surfaces
+                t_struct_phantom_surf& phantom_surfaces,
+                t_struct_nl_body& nl_body
+            );
+
+            template <typename t_zeta_star,
+                      typename t_struct_nl_body>
+            void induced_velocity_from_sources_on_wake
+            (
+                t_zeta_star& zeta_star,
+                t_struct_nl_body& nl_body,
+                UVLM::Types::VecVecMatrixX& u_induced_out
+            );
+            
+            template <typename t_sigma_flat,
+                        typename t_aic,
+                        typename t_u_ind>
+            void calculate_induced_velocity_col
+            (
+                const t_sigma_flat& sigma_flat,
+                const t_aic& u_induced_x,
+                const t_aic& u_induced_y,
+                const t_aic& u_induced_z,
+                t_u_ind& u_induced_col
+            );
+
+            template <typename t_rbm_velocity,
+                        typename t_uext_star,
+                        typename t_zeta_star,
+                        typename t_uext_star_total>
+            void get_uext_star_total
+            (
+                const t_rbm_velocity& rbm_velocity,
+                const t_uext_star& uext_star,
+                const t_zeta_star& zeta_star,
+                t_uext_star_total& uext_star_total
             );
         }
     }
@@ -115,13 +148,16 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
 {
     UVLM::Types::Vector6 vec_rbm_vel_g;
     vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    // std::cout << "\n\nvec_rbm_vel_g = " << vec_rbm_vel_g << std::endl << std::endl;
     if (vec_rbm_vel_g.isZero(0))
     {
+        // std::cout << "\nIf all rbm_velocities are zero, we just need to subtract zeta_dot from uext!";
         // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
         UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
     }
     else
     {
+
         const uint n_surf = zeta.size();
         UVLM::Types::Vector3 w_cross_zeta;
         UVLM::Types::Vector3 zeta_temp;
@@ -350,10 +386,10 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             centre_rot,
             uext_star_total
         );
+
         // induced velocity by vortex rings
-        UVLM::BiotSavart::total_induced_velocity_on_col
+        UVLM::BiotSavart::total_induced_velocity_on_wake
         (
-            zeta_star,
             zeta,
             zeta_star,
             gamma,
@@ -385,9 +421,38 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
                                          u_convection,
                                          options.dt);
 
-// ToDo: - merge with above function
-//       - functional code for wing + phantom
-//       - add nonlifting body effects
+        // TODO: move this to a function
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        {
+            for (uint i_dim=0; i_dim<3; ++i_dim)
+            {
+                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
+            }
+            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
+        }
+
+        // displace both zeta and gamma
+        UVLM::Wake::General::displace_VecMat(gamma_star);
+        UVLM::Wake::General::displace_VecVecMat(zeta_star);
+
+        // copy last row of zeta into zeta_star
+        UVLM::Wake::Discretised::generate_new_row
+        (
+            zeta_star,
+            zeta
+        );
+    } else
+    {
+        std::cerr << "convection_scheme == "
+                  << options.convection_scheme
+                  << " is not supported by the UVLM solver. \n"
+                  << "Supported options are from [0->3]"
+                  << std::endl;
+    }
+    return;
+}
+
+
 template <typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
@@ -398,8 +463,8 @@ template <typename t_zeta,
           typename t_rbm_velocity,
           typename t_extra_gamma_star,
           typename t_extra_zeta_star,
-          typename t_struct_nonlifting,
-          typename t_struct_phantom_surf>
+          typename t_struct_phantom_surf,
+          typename t_struct_nl_body>
 void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
 (
     const UVLM::Types::UVMopts& options,
@@ -413,8 +478,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
     const t_rbm_velocity& rbm_velocity,
     t_extra_gamma_star& extra_gamma_star,
     t_extra_zeta_star& extra_zeta_star,
-    t_struct_nonlifting& nl_nody,
-    t_struct_phantom_surf& phantom_surfaces
+    t_struct_phantom_surf& phantom_surfaces,
+    t_struct_nl_body& nl_body
 )
 {
     const uint n_surf = options.NumSurfaces;
@@ -443,27 +508,10 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
                   << std::endl;
     } else if (convection_scheme == 2)
     {
-        UVLM::Types::VecVecMatrixX zeros;
-        UVLM::Types::allocate_VecVecMat(zeros, uext_star);
-        // total stream velocity
-        
-        UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
-        UVLM::Types::Vector6 vec_rbm_vel_g;
-        vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2],
-                         rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
-    
-        rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
-        UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
-
-        UVLM::Unsteady::Utils::compute_resultant_grid_velocity
-        (
-            zeta_star,
-            zeros,
-            uext_star,
-            rbm_no_omega,
-            centre_rot,
-            uext_star_total
-        );
+        UVLM::Unsteady::Utils::get_uext_star_total(rbm_velocity,
+                                                   uext_star,
+                                                   zeta_star,
+                                                   uext_star_total);
         // convection with uext + delta u (perturbation)
         // (no u_induced)
         UVLM::Wake::Discretised::convect(zeta_star,
@@ -515,6 +563,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
     
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
         rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
+        // get from options
         UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -527,10 +576,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             uext_star_total
         );
         // induced velocity by vortex rings
-        
-        UVLM::BiotSavart::total_induced_velocity_on_col
+        UVLM::BiotSavart::total_induced_velocity_on_wake
         (
-            zeta_star,
             zeta,
             zeta_star,  
             gamma,
@@ -547,15 +594,14 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             u_convection_phantom,
             uext_star
         );
-        
+        // update gamma phantom star
         // TO-DO: Check if update is needed here
         // phantom_surfaces.update_gamma_wake(zeta_star, gamma_star);
-
-        UVLM::BiotSavart::total_induced_velocity_on_col
+        UVLM::BiotSavart::total_induced_velocity_of_phantom_panels_on_wake
         (
-            zeta_star,
             phantom_surfaces.zeta, //phantom
             phantom_surfaces.zeta_star,
+            zeta_star, //phantom + lifting
             phantom_surfaces.gamma, //phantom
             phantom_surfaces.gamma_star, //phantom
             u_convection_phantom,
@@ -563,8 +609,20 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             options.vortex_radius_wake_ind
         );
 
+
+
         // u_convection += u_convection_phantom;
         UVLM::Triads::VecVecMatrix_addition(u_convection_lifting, u_convection_phantom, u_convection);
+        
+        //Calculate induced velocity by sources on wake
+        UVLM::Types::VecVecMatrixX u_convection_nonlifting;
+        UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
+        (
+            zeta_star,
+            nl_body,
+            u_convection_nonlifting
+        );
+        u_convection += u_convection_nonlifting;
         // remove first row of convection velocities
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
@@ -606,7 +664,10 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
         (
             zeta_star,
             zeta
-        );
+        );        
+
+        phantom_surfaces.update_wake(zeta_star);
+
     } else
     {
         std::cerr << "convection_scheme == "
@@ -616,4 +677,159 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
                   << std::endl;
     }
     return;
+}
+
+template <typename t_zeta_star,
+		  typename t_struct_nl_body>
+void UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
+(
+	t_zeta_star& zeta_star,
+	t_struct_nl_body& nl_body,
+    UVLM::Types::VecVecMatrixX& u_induced_out
+)
+{
+	// Get surface vectors of zeta_star (account for points instead of panels)
+	// determine convection velocity u_ind from non lifting surfaces
+	UVLM::Types::VecVecMatrixX normals_star, longitudinals_star, perpendiculars_star;
+	
+	UVLM::Types::allocate_VecVecMat(normals_star, zeta_star);
+	UVLM::Types::allocate_VecVecMat(longitudinals_star, zeta_star);
+	UVLM::Types::allocate_VecVecMat(perpendiculars_star, zeta_star);
+	UVLM::Geometry::generate_surface_vectors_wake(zeta_star, normals_star, longitudinals_star, perpendiculars_star);
+		
+	// Allocate matrices for source influence
+	uint Ktotal_star = UVLM::Matrix::get_total_VecVecMat_size(normals_star);
+	UVLM::Types::MatrixX u_induced_x = UVLM::Types::MatrixX::Zero(Ktotal_star, nl_body.Ktotal);
+	UVLM::Types::MatrixX u_induced_y = UVLM::Types::MatrixX::Zero(Ktotal_star, nl_body.Ktotal);
+	UVLM::Types::MatrixX u_induced_z = UVLM::Types::MatrixX::Zero(Ktotal_star, nl_body.Ktotal);
+
+	// Get induced velocities by sources
+	UVLM::Matrix::AIC_sources(nl_body.zeta,
+								zeta_star,
+								nl_body.longitudinals,
+								nl_body.perpendiculars,
+								nl_body.normals,
+								longitudinals_star,
+								perpendiculars_star,
+								normals_star,
+								u_induced_x,
+								u_induced_y,
+								u_induced_z,
+                                false);
+	// add induced velocity by sources
+	UVLM::Types::VectorX sigma_flat;
+	UVLM::Matrix::deconstruct_gamma(nl_body.sigma,
+									sigma_flat,
+									nl_body.zeta_col);
+
+	// UVLM::Types::VecVecMatrixX u_induced_star_sources;
+	UVLM::Types::allocate_VecVecMat(u_induced_out, zeta_star);
+	UVLM::Unsteady::Utils::calculate_induced_velocity_col(sigma_flat,
+													u_induced_x,
+													u_induced_y,
+													u_induced_z,
+													u_induced_out);
+    // convert induced velocities to global coordinate frame
+    uint M, N;
+    const uint n_surf = u_induced_out.size();
+    UVLM::Types::Vector3 u_induced_col_global, longitudinal_panel, normal_panel, perpendicular_panel;
+    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    {
+        M = u_induced_out[i_surf][0].rows();
+        N = u_induced_out[i_surf][0].cols();
+        for (uint i_col=0; i_col<M; ++i_col)
+        {
+            for (uint j_col=0; j_col<N; ++j_col)
+            {
+                u_induced_col_global = UVLM::Types::Vector3(u_induced_out[i_surf][0](i_col, j_col),
+                                                            u_induced_out[i_surf][1](i_col, j_col),
+                                                            u_induced_out[i_surf][2](i_col, j_col));
+				longitudinal_panel = UVLM::Types::Vector3(longitudinals_star[i_surf][0](i_col, j_col), longitudinals_star[i_surf][1](i_col, j_col), longitudinals_star[i_surf][2](i_col, j_col));
+				perpendicular_panel = UVLM::Types::Vector3(perpendiculars_star[i_surf][0](i_col, j_col), perpendiculars_star[i_surf][1](i_col, j_col), perpendiculars_star[i_surf][2](i_col, j_col));
+			    normal_panel = UVLM::Types::Vector3(normals_star[i_surf][0](i_col, j_col), normals_star[i_surf][1](i_col, j_col), normals_star[i_surf][2](i_col, j_col));
+                UVLM::Geometry::convert_to_global_coordinate_system(u_induced_col_global,
+                                longitudinal_panel,
+                                perpendicular_panel,
+                                normal_panel);	
+                for (uint dim=0; dim<UVLM::Constants::NDIM; dim++)
+                {
+                    u_induced_out[i_surf][dim](i_col, j_col)= u_induced_col_global[dim];
+                }
+
+            }
+        }
+    }
+
+    // u_induced_out[0][0] *= -1.0;
+    // u_induced_out[0][1] *= -1.0;
+    // u_induced_out[0][2] *= -1.0;
+}
+
+template <typename t_sigma_flat,
+			typename t_aic,
+			typename t_u_ind>
+void UVLM::Unsteady::Utils::calculate_induced_velocity_col
+(
+	const t_sigma_flat& sigma_flat,
+	const t_aic& u_induced_x,
+	const t_aic& u_induced_y,
+	const t_aic& u_induced_z,
+	t_u_ind& u_induced_col
+)
+{
+	uint n_collocation_points = u_induced_x.rows();
+	uint n_panels = u_induced_x.cols();
+	UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_collocation_points);
+	for (uint i_col=0; i_col<n_collocation_points; i_col++)
+	{
+		for (uint j_source=0; j_source<n_panels; j_source++)
+		{
+			u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_source)* sigma_flat(j_source);
+			u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_source)* sigma_flat(j_source);
+			u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_source)* sigma_flat(j_source);
+			
+		}
+
+	}
+
+    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+                                        u_induced_col,
+                                        u_induced_col);
+
+}
+
+
+template <typename t_rbm_velocity,
+          typename t_uext_star,
+          typename t_zeta_star,
+          typename t_uext_star_total>
+void UVLM::Unsteady::Utils::get_uext_star_total
+(
+    const t_rbm_velocity& rbm_velocity,
+    const t_uext_star& uext_star,
+    const t_zeta_star& zeta_star,
+    t_uext_star_total& uext_star_total
+)
+{
+        UVLM::Types::VecVecMatrixX zeros;
+        UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+        // total stream velocity
+        
+        UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
+        UVLM::Types::Vector6 vec_rbm_vel_g;
+        vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2],
+                         rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
+    
+        rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
+        UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
+
+        UVLM::Unsteady::Utils::compute_resultant_grid_velocity
+        (
+            zeta_star,
+            zeros,
+            uext_star,
+            rbm_no_omega,
+            centre_rot,
+            uext_star_total
+        );
 }
