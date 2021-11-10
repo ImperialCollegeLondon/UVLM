@@ -203,17 +203,14 @@ namespace UVLM
         {
             bool phantom_cell_required;
             uint Ktotal, n_surf;
-            
-            UVLM::Types::VecDimensions dimensions;
-            UVLM::Types::VecMapXint flag_zeta_phantom; // Introduce VecVecX
-            UVLM::Types::VecVecMatrixX zeta, zeta_col, zeta_star, 
-                                       normals, longitudinals, perpendiculars;            
+            UVLM::Types::VecVecMatrixX zeta, zeta_col, zeta_star,normals, longitudinals, perpendiculars;
             UVLM::Types::VecMatrixX gamma, gamma_star;
             UVLM::Types::VectorX gamma_flat;
+            UVLM::Types::MatrixXint flag_zeta_phantom;
 
             phantom_surface
             (
-                int** p_flag_zeta_phantom,
+                int* p_flag_zeta_phantom,
                 uint n_surfaces,
                 UVLM::Types::VecVecMapX zeta_lifting,
                 UVLM::Types::VecVecMapX zeta_lifting_star,
@@ -221,9 +218,18 @@ namespace UVLM
             )
             {   
                 n_surf = n_surfaces;
-                UVLM::Mapping::map_VecMatInt(dimensions_lifting,
-                                             p_flag_zeta_phantom,
-                                             flag_zeta_phantom);
+                // TODO: Change flag_zeta_phantom to VecMat type
+                UVLM::Types::MapMatrixXint copy_flag_zeta_phantom(p_flag_zeta_phantom, 1, n_surf);
+                uint N_row = copy_flag_zeta_phantom.rows();
+                uint N_col = copy_flag_zeta_phantom.cols();
+                flag_zeta_phantom.resize(N_row, N_col);
+                for (uint i_row=0;i_row<N_row;i_row++)
+                {
+                    for (uint i_col=0;i_col<N_col;i_col++)
+                    {
+                        flag_zeta_phantom(i_row, i_col) = copy_flag_zeta_phantom(i_row, i_col);
+                    }
+                }
                 phantom_cell_required = UVLM::Phantom::check_for_true_in_bool_vec_mat(flag_zeta_phantom);
                 if (phantom_cell_required)
                 {

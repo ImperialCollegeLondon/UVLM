@@ -19,24 +19,27 @@ namespace UVLM
             t_zeta_phantom& zeta_phantom,
             t_flag_zeta_phantom& flag_zeta_phantom
         );        
-        template<typename t_zeta_phantom,
+        template<typename t_flag_phantom,
+                 typename t_zeta_phantom,
                  typename t_zeta_star,
                  typename t_zeta_phantom_star>
         void create_phantom_zeta_star
         (
-            const UVLM::Types::VecMapXint& flag_zeta_phantom,
+            const t_flag_phantom& flag_zeta_phantom,
             t_zeta_phantom& zeta_phantom,
             t_zeta_star& zeta_star,
             t_zeta_phantom_star& zeta_phantom_star
         );
-        template<typename t_flag_zeta_phantom>
+        template<typename t_flag_phantom,
+                 typename t_flag_zeta_phantom>
         bool check_for_true_in_bool_vec_mat
         (
             t_flag_zeta_phantom& flag_zeta_phantom
         );
+        template<typename t_flag_phantom>
         void get_parameter_phantom_setup
         (
-            const UVLM::Types::VecMapXint& flag_zeta_phantom,
+            const t_flag_phantom& flag_zeta_phantom,
             const uint& i_surf,
             uint& i_surf_partner_junction,
             uint& idx_junction,
@@ -50,20 +53,6 @@ namespace UVLM
             t_zeta_in& zeta_in,
             const uint& N_row,
             const uint& N_col,
-            const uint& idx_junction,
-            const uint& i_surf,
-            const uint& i_surf_partner_junction
-        );
-        template<typename t_gamma_out,
-         typename t_gamma_in,
-         typename t_zeta_col_out,
-         typename t_zeta_col_in>
-        void interpolate_circulation_strength
-        (
-            t_gamma_out& gamma_out,
-            const t_gamma_in& gamma_in,
-            const t_zeta_col_out& zeta_col_out,
-            const t_zeta_col_in& zeta_col_in,
             const uint& idx_junction,
             const uint& i_surf,
             const uint& i_surf_partner_junction
@@ -105,7 +94,6 @@ void UVLM::Phantom::create_phantom_zeta
     for(uint i_surf=0; i_surf<n_surf; i_surf++)
     {
         UVLM::Phantom::get_parameter_phantom_setup(flag_zeta_phantom, i_surf,i_surf_partner_junction,idx_junction,phantom_surface);
-        
         if (phantom_surface)
         {
             N_row_phantom = zeta[i_surf][0].rows();
@@ -118,12 +106,13 @@ void UVLM::Phantom::create_phantom_zeta
     }
 }
 
-template<typename t_zeta_phantom,
+template<typename t_flag_phantom,
+        typename t_zeta_phantom,
             typename t_zeta_star,
             typename t_zeta_phantom_star>
 void UVLM::Phantom::create_phantom_zeta_star
 (
-    const UVLM::Types::VecMapXint& flag_zeta_phantom,
+    const t_flag_phantom& flag_zeta_phantom,
     t_zeta_phantom& zeta_phantom,
     t_zeta_star& zeta_star,
     t_zeta_phantom_star& zeta_phantom_star
@@ -146,12 +135,8 @@ void UVLM::Phantom::create_phantom_zeta_star
         N_cols = zeta_phantom[i_surf][0].cols();
         N_rows_zeta_phantom = zeta_phantom[i_surf][0].rows();
         N_rows = zeta_star[i_surf][0].rows();
-        for(uint i_dim=0; i_dim<UVLM::Constants::NDIM;++i_dim)
-        {
-            zeta_phantom_star[i_surf][i_dim].resize(N_rows, N_cols);
-        }
-        if (zeta_phantom_star[i_surf][0].size() > 0)
-        {
+        if (zeta_phantom[i_surf][0].size() > 0)
+        {   
             UVLM::Phantom::get_parameter_phantom_setup(flag_zeta_phantom, i_surf,i_surf_partner_junction,idx_junction, uninitiliased_phantom_surface);
             // Note: phantom surface can be false, if phantom surface is already initiliased
             if (uninitiliased_phantom_surface)
@@ -166,32 +151,41 @@ void UVLM::Phantom::create_phantom_zeta_star
                 }
             }
         }
+        else
+        {
+            for (uint i_dim=0; i_dim<3; i_dim++)
+            {
+                zeta_phantom_star[i_surf][i_dim].resize(0,0);
     }
 }
+    }
 
+}
 
+template<typename t_flag_phantom>
 void UVLM::Phantom::get_parameter_phantom_setup
 (
-    const UVLM::Types::VecMapXint& flag_zeta_phantom,
+    const t_flag_phantom& flag_zeta_phantom,
     const uint& i_surf,
     uint& i_surf_partner_junction,
     uint& idx_junction,
     bool& phantom_surface
 )
 {
+
+    // if partner junnction surface in flag lower than current surface
+    // then the surface has already been created
     phantom_surface = false;
-    for(uint index_phantom=0;index_phantom<flag_zeta_phantom[i_surf].cols();++index_phantom)
-    {    
-        // if partner junnction surface in flag lower than current surface
-        // then the surface has already been created
-        if (flag_zeta_phantom[i_surf](index_phantom, 0) > i_surf)
+    if (flag_zeta_phantom(0, i_surf) >= 0)
+    {
+        if (flag_zeta_phantom(0, i_surf) > i_surf)
         {
-            i_surf_partner_junction = flag_zeta_phantom[i_surf](index_phantom, 0);
-            idx_junction = index_phantom;
+            i_surf_partner_junction = flag_zeta_phantom(0, i_surf);
+            idx_junction = 0;
             phantom_surface = true;
-            break;
         }
     }
+
 }
 
 
@@ -235,6 +229,7 @@ void UVLM::Phantom::interpolate_geometry_coordinates
             for(uint i_dim=0; i_dim<3; ++i_dim)
             {
                 zeta_out[i_surf][i_dim](i_row, i_col) = interpolated_point_0(i_dim);                    
+                // ToDo: Check if at symmetry plane coordinates of both surfaces are the same!                                 
                 zeta_out[i_surf_partner_junction][i_dim](i_row, i_col) = interpolated_point_1(i_dim);
             }
         }
@@ -313,11 +308,11 @@ bool UVLM::Phantom::check_for_true_in_bool_vec_mat
     t_flag_zeta_phantom& flag_zeta_phantom
 )
 {
-    for(uint i_surf=0; i_surf<flag_zeta_phantom.size(); ++i_surf)
+    for(uint i_surf=0; i_surf<flag_zeta_phantom.cols(); ++i_surf)
     {
-        for(uint i_row=0; i_row < flag_zeta_phantom[i_surf].rows();++i_row)
+        for(uint i_row=0; i_row < flag_zeta_phantom.rows();++i_row)
         {
-            if (flag_zeta_phantom[i_surf](i_row, 0))
+            if (flag_zeta_phantom(i_row, i_surf))
             {
                 return true;
             }
