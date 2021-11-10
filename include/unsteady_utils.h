@@ -538,7 +538,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             zeta_star,
             zeta
         );
-    } else if (convection_scheme == 3)
+    } else if ((convection_scheme == 3) || (convection_scheme == 4))
     {
         // convection with uext + delta u (perturbation) + u_ind
         UVLM::Types::VecVecMatrixX u_convection;
@@ -623,6 +623,29 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             u_convection_nonlifting
         );
         u_convection += u_convection_nonlifting;
+
+        if (convection_scheme == 4)
+        {
+            //  For ignoring induced velocities on wake near junctions to prevent local instabilities
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                {
+                    for (uint i_row = 0; i_row <  u_convection[i_surf][0].rows(); i_row++)
+                    {
+                        u_convection[i_surf][i_dim](i_row, 0) = u_convection[i_surf][i_dim](i_row, 1) + (zeta_star[i_surf][1](i_row, 0)-zeta_star[i_surf][1](i_row, 1)) / (zeta_star[i_surf][1](i_row, 2)-zeta_star[i_surf][1](i_row, 1)) * (u_convection[i_surf][i_dim](i_row, 2)-u_convection[i_surf][i_dim](i_row, 1));
+                        // for (uint i_col = 0; i_col <  u_convection[i_surf][0].cols(); i_col++)
+                        // for (uint i_col = 0; i_col <  options.num_spanwise_panels_wo_induced_velocity; i_col++)
+                        // {
+                            // if (i_col == 0)
+                            // {
+                        // u_convection[i_surf][i_dim](i_row, 0) -= u_convection_nonlifting[i_surf][i_dim](i_row, 0);
+                        // }
+                    }
+                }
+            }
+        }
+        
         // remove first row of convection velocities
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
