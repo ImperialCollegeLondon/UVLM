@@ -57,6 +57,20 @@ namespace UVLM
             const uint& i_surf,
             const uint& i_surf_partner_junction
         );
+        template<typename t_gamma_out,
+                typename t_gamma_in,
+                typename t_zeta_col_out,
+                typename t_zeta_col_in>
+        void interpolate_circulation_strength
+        (
+            t_gamma_out& gamma_out,
+            const t_gamma_in& gamma_in,
+            const t_zeta_col_out& zeta_col_out,
+            const t_zeta_col_in& zeta_col_in,
+            const uint& idx_junction,
+            const uint& i_surf,
+            const uint& i_surf_partner_junction
+        );
     }
 }
 
