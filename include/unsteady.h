@@ -318,11 +318,11 @@ void UVLM::Unsteady::solver
             nl_body,
             phantom_surfaces
         );
-        UVLM::PostProc::calculate_static_forces_nonlifting_body
-        (
-            nl_body,
-            flightconditions
-        );
+        // UVLM::PostProc::calculate_static_forces_nonlifting_body
+        // (
+        //     nl_body,
+        //     flightconditions
+        // );
     }
     else
     {
