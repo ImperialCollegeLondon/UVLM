@@ -21,7 +21,6 @@ namespace UVLM
                   typename t_aic>
         void AIC
         (
-            const uint& Ktotal,
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
