@@ -30,8 +30,7 @@ namespace UVLM
             t_zeta_star& zeta_star,
             t_zeta_phantom_star& zeta_phantom_star
         );
-        template<typename t_flag_phantom,
-                 typename t_flag_zeta_phantom>
+        template<typename t_flag_zeta_phantom>
         bool check_for_true_in_bool_vec_mat
         (
             t_flag_zeta_phantom& flag_zeta_phantom
