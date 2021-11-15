@@ -483,10 +483,9 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
 )
 {
     const uint n_surf = options.NumSurfaces;
-    const uint  convection_scheme = 3; // options.convection_scheme;
    
 
-    if (convection_scheme == 0)
+    if (options.convection_scheme == 0)
     {
         // TODO: move this to a function
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -500,13 +499,13 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
 
         UVLM::Wake::General::displace_VecMat(gamma_star);
         UVLM::Types::copy_VecVecMat(uext_star, uext_star_total);
-    } else if (convection_scheme == 1)
+    } else if (options.convection_scheme == 1)
     {
         std::cerr << "convection_scheme == "
                   << options.convection_scheme
                   << " is not yet implemented in the UVLM solver"
                   << std::endl;
-    } else if (convection_scheme == 2)
+    } else if (options.convection_scheme == 2)
     {
         UVLM::Unsteady::Utils::get_uext_star_total(rbm_velocity,
                                                    uext_star,
@@ -538,7 +537,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
             zeta_star,
             zeta
         );
-    } else if ((convection_scheme == 3) || (convection_scheme == 4))
+    } else if ((options.convection_scheme == 3) || (options.convection_scheme == 4))
     {
         // convection with uext + delta u (perturbation) + u_ind
         UVLM::Types::VecVecMatrixX u_convection;
@@ -624,7 +623,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
         );
         u_convection += u_convection_nonlifting;
 
-        if (convection_scheme == 4)
+        if (options.convection_scheme == 4)
         {
             //  For ignoring induced velocities on wake near junctions to prevent local instabilities
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
