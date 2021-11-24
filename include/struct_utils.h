@@ -115,7 +115,7 @@ namespace UVLM
                                 uext_col,
                                 normals,
                                 options,
-                                false,
+                                options.horseshoe,
                                 aic);      
             }
             void get_induced_col_from_sources(UVLM::Types::VectorX& sigma_flat,
