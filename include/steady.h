@@ -74,6 +74,7 @@ namespace UVLM
         void solve_discretised_lifting_and_nonlifting
         (
             const UVLM::Types::VMopts& options,
+            const UVLM::Types::FlightConditions& flightconditions,  
             t_struct_lifting_surfaces& lifting_surfaces,
             t_struct_nl_body& nl_body,
             t_struct_phantom_surf& phantom_surfaces
@@ -261,16 +262,19 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);
 
+    nl_body.get_surface_parameters();
 
     // -------- Phantom Panels -------   
     phantom_surfaces.get_surface_parameters();
     phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
-    
+
+  
     nl_body.get_surface_parameters();
     // ########################################
     UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
         options,
+        flightconditions,
         lifting_surfaces,
         nl_body,
         phantom_surfaces
@@ -417,11 +421,20 @@ template <typename t_struct_lifting_surfaces,
 void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 (
     const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
     t_struct_lifting_surfaces& lifting_surfaces,
     t_struct_nl_body& nl_body,
     t_struct_phantom_surf& phantom_surfaces
 )
 {
+    if (options.horseshoe)
+    {
+        // wake generation for horseshoe initialisation
+        UVLM::Wake::Horseshoe::init(lifting_surfaces.zeta,
+                                    lifting_surfaces.zeta_star,
+                                    flightconditions);        
+        phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
+    }
     // Setup Lifting and Lifting Surfaces
     lifting_surfaces.get_aerodynamic_solver_inputs(options);
     if (!options.Steady)

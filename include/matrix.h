@@ -753,7 +753,7 @@ void UVLM::Matrix::aic_combined
                       nl_body.uext_col,
                       nl_body.normals,
                       options,
-                      false,
+                      options.horseshoe,
                       aic_lifting_on_nonlifting);
     // Nonlifting on lifting surfaces
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
@@ -779,7 +779,7 @@ void UVLM::Matrix::aic_combined
                       nl_body.uext_col,
                       nl_body.normals,
                       options,
-                      false,
+                      options.horseshoe,
                       aic_phantom_on_nonlifting);
                       
     UVLM::Types::copy_Mat_to_block(nl_body.aic_sources_z, aic, lifting_surfaces.Ktotal, lifting_surfaces.Ktotal);
@@ -799,7 +799,7 @@ void UVLM::Matrix::aic_combined
                       lifting_surfaces.uext_col,
                       lifting_surfaces.normals,
                       options,
-                      false,
+                      options.horseshoe,
                       aic_phantom_on_lifting);
     // Get matrix to enforce linear interpolated circulation on phantom panels   
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(phantom_surfaces.Ktotal, aic.cols());

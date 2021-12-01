@@ -314,6 +314,7 @@ void UVLM::Unsteady::solver
         UVLM::Steady::solve_discretised_lifting_and_nonlifting
         (
             steady_options,
+            flightconditions,
             lifting_surfaces_unsteady,
             nl_body,
             phantom_surfaces
