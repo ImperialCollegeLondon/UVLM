@@ -451,16 +451,16 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
             phantom_surfaces.zeta_star
         );
     }
-    nl_body.get_aerodynamic_solver_inputs();
+    nl_body.get_aerodynamic_solver_inputs(options.phantom_wing_test);
 
     // RHS generation
     // Create RHS phantom and merge all RHS vectors
     UVLM::Types::VectorX rhs_phantom, rhs;
     rhs_phantom.setZero(phantom_surfaces.Ktotal);
-    if (nl_body.Ktotal > 0)
+    if (!options.phantom_wing_test)
     {
-    UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(lifting_surfaces.rhs, nl_body.rhs);
-    rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
+        UVLM::Types::VectorX rhs_lifting_and_nonlifting = UVLM::Types::join_vectors(lifting_surfaces.rhs, nl_body.rhs);
+        rhs = UVLM::Types::join_vectors(rhs_lifting_and_nonlifting, rhs_phantom);
     }
     else
     {

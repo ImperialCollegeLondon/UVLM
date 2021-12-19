@@ -743,7 +743,7 @@ void UVLM::Matrix::aic_combined
     )
     {
     const uint Ktotal_lifting_and_nonlifting = lifting_surfaces.Ktotal + nl_body.Ktotal;
-    if (nl_body.Ktotal > 0)
+    if (!options.phantom_wing_test)
     {
     // Lifting on nonlifting surfaces
 	UVLM::Types::MatrixX aic_lifting_on_nonlifting = UVLM::Types::MatrixX::Zero(nl_body.Ktotal, lifting_surfaces.Ktotal);

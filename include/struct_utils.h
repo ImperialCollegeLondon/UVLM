@@ -351,21 +351,30 @@ namespace UVLM
             {   
                 UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);
             }
-            void get_surface_parameters()
+            void get_surface_parameters(bool phantom_wing_test = false)
             {
                 surface::get_surface_parameters();
-                Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
+                
+                if (phantom_wing_test)
+                {
+                    Ktotal = 0;
+                }
+                else
+                {
+                    Ktotal = UVLM::Matrix::get_total_VecVecMat_size(uext_col);
+                }
+
                 UVLM::Types::allocate_VecVecMat(u_induced_col, uext_col);
             }
-            void get_aerodynamic_solver_inputs()
+            void get_aerodynamic_solver_inputs(bool phantom_wing_test = false)
             {
                 aic_sources_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
                 aic_sources_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
                 aic_sources_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-                if (Ktotal > 0)
+                if (!phantom_wing_test)
                 {
-                rhs.resize(Ktotal);
-                UVLM::Matrix::RHS_nonlifting_body(uext_col,
+                    rhs.resize(Ktotal);
+                    UVLM::Matrix::RHS_nonlifting_body(uext_col,
                             normals,
                             rhs,
                             Ktotal,
