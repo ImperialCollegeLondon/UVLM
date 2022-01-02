@@ -371,12 +371,12 @@ namespace UVLM
                 aic_sources_x = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
                 aic_sources_y = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
                 aic_sources_z = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+                rhs.resize(Ktotal);
                 if (!phantom_wing_test)
                 {
-                    rhs.resize(Ktotal);
                     UVLM::Matrix::RHS_nonlifting_body(uext_col,
-                            normals,
-                            rhs,
+                                normals,
+                                rhs,
                             Ktotal,
                             n_surf);
                 UVLM::Matrix::AIC_sources(zeta,
