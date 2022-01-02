@@ -41,6 +41,18 @@ namespace UVLM
                 t_uext_out& uext_out,
                 t_solid_vel& solid_vel
             );
+            template <typename t_zeta_star,
+                      typename t_gamma_star,
+                      typename t_extra_gamma_star,
+                      typename t_extra_zeta_star>
+            void store_last_wake_panel_information
+            (
+                t_zeta_star& zeta_star,
+                t_gamma_star& gamma_star,
+                t_extra_gamma_star& extra_gamma_star,
+                t_extra_zeta_star& extra_zeta_star,
+                const uint n_surf
+            );
             template <typename t_zeta,
                       typename t_zeta_star,
                       typename t_gamma,
@@ -290,15 +302,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
 
     if (options.convection_scheme == 0)
     {
-        // TODO: move this to a function
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<3; ++i_dim)
-            {
-                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
-            }
-            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
-        }
+
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
         UVLM::Wake::General::displace_VecMat(gamma_star);
         UVLM::Types::copy_VecVecMat(uext_star, uext_star_total);
@@ -336,15 +341,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
                                          uext_star_total,
                                          options.dt);
 
-        // TODO: move this to a function
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<3; ++i_dim)
-            {
-                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
-            }
-            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
-        }
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
         // displace both zeta and gamma
         UVLM::Wake::General::displace_VecMat(gamma_star);
@@ -420,16 +417,9 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Wake::Discretised::convect(zeta_star,
                                          u_convection,
                                          options.dt);
+                                         
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
-        // TODO: move this to a function
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<3; ++i_dim)
-            {
-                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
-            }
-            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
-        }
 
         // displace both zeta and gamma
         UVLM::Wake::General::displace_VecMat(gamma_star);
@@ -453,6 +443,28 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
 }
 
 
+template <typename t_zeta_star,
+          typename t_gamma_star,
+          typename t_extra_gamma_star,
+          typename t_extra_zeta_star>
+void UVLM::Unsteady::Utils::store_last_wake_panel_information
+(
+    t_zeta_star& zeta_star,
+    t_gamma_star& gamma_star,
+    t_extra_gamma_star& extra_gamma_star,
+    t_extra_zeta_star& extra_zeta_star,
+    const uint n_surf
+)
+{
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        {
+            for (uint i_dim=0; i_dim<3; ++i_dim)
+            {
+                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
+            }
+            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
+        }
+}
 template <typename t_zeta,
           typename t_zeta_star,
           typename t_gamma,
@@ -487,15 +499,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
 
     if (options.convection_scheme == 0)
     {
-        // TODO: move this to a function
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<3; ++i_dim)
-            {
-                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
-            }
-            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
-        }
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
         UVLM::Wake::General::displace_VecMat(gamma_star);
         UVLM::Types::copy_VecVecMat(uext_star, uext_star_total);
@@ -517,15 +521,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
                                          uext_star_total,
                                          options.dt);
 
-        // TODO: move this to a function
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-        {
-            for (uint i_dim=0; i_dim<3; ++i_dim)
-            {
-                extra_zeta_star[i_surf][i_dim].template topRows<1>() = zeta_star[i_surf][i_dim].template bottomRows<1>();
-            }
-            extra_gamma_star[i_surf].template topRows<1>() = gamma_star[i_surf].template bottomRows<1>();
-        }
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
         // displace both zeta and gamma
         UVLM::Wake::General::displace_VecMat(gamma_star);
@@ -632,14 +628,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
                 {
                     for (uint i_row = 0; i_row <  u_convection[i_surf][0].rows(); i_row++)
                     {
-                        u_convection[i_surf][i_dim](i_row, 0) = u_convection[i_surf][i_dim](i_row, 1) + (zeta_star[i_surf][1](i_row, 0)-zeta_star[i_surf][1](i_row, 1)) / (zeta_star[i_surf][1](i_row, 2)-zeta_star[i_surf][1](i_row, 1)) * (u_convection[i_surf][i_dim](i_row, 2)-u_convection[i_surf][i_dim](i_row, 1));
-                        // for (uint i_col = 0; i_col <  u_convection[i_surf][0].cols(); i_col++)
-                        // for (uint i_col = 0; i_col <  options.num_spanwise_panels_wo_induced_velocity; i_col++)
-                        // {
-                            // if (i_col == 0)
-                            // {
-                        // u_convection[i_surf][i_dim](i_row, 0) -= u_convection_nonlifting[i_surf][i_dim](i_row, 0);
-                        // }
+                        // TODO: Check if also induced phantom velocity has to be subtracted?
+                        u_convection[i_surf][i_dim](i_row, 0) -= u_convection_nonlifting[i_surf][i_dim](i_row, 0);
                     }
                 }
             }
