@@ -262,14 +262,12 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
     
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces.uext_total, lifting_surfaces.uext_total_col);
 
-    nl_body.get_surface_parameters();
+    nl_body.get_surface_parameters(options.phantom_wing_test);
 
     // -------- Phantom Panels -------   
     phantom_surfaces.get_surface_parameters();
     phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
 
-  
-    nl_body.get_surface_parameters();
     // ########################################
     UVLM::Steady::solve_discretised_lifting_and_nonlifting
     (
