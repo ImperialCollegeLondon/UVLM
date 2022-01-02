@@ -771,10 +771,6 @@ void UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
             }
         }
     }
-
-    // u_induced_out[0][0] *= -1.0;
-    // u_induced_out[0][1] *= -1.0;
-    // u_induced_out[0][2] *= -1.0;
 }
 
 template <typename t_sigma_flat,

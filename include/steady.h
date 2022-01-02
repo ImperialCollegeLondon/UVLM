@@ -222,8 +222,6 @@ void UVLM::Steady::solver_nonlifting_body
         nl_body,
         options
     );
-    // export_data_to_csv_file("zeta_x.csv", nl_body.zeta[0][0]);
-    // export_data_to_csv_file("zeta_x_col.csv", nl_body.zeta_col[0][0]);
 
     UVLM::PostProc::calculate_static_forces_nonlifting_body
     (
@@ -486,9 +484,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
     UVLM::Types::VectorX gamma_flat = gamma_and_sigma_flat.head(lifting_surfaces.Ktotal);
     UVLM::Types::VectorX gamma_phantom_flat = gamma_and_sigma_flat.tail(phantom_surfaces.Ktotal);    
     UVLM::Types::VectorX sigma_flat = gamma_and_sigma_flat.block(lifting_surfaces.Ktotal, 0, nl_body.Ktotal, 1);  
-    
-    // gamma flat to gamma
-    // probably could be done better with a Map
+
     UVLM::Matrix::reconstruct_gamma(gamma_flat,
                                     lifting_surfaces.gamma,
                                     lifting_surfaces.zeta_col);    

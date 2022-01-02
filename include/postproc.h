@@ -229,7 +229,7 @@ namespace UVLM
 				}
 			}
 
-            export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
+            // export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
             // Transform forces from collocation points to nodes
             UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces);
             
