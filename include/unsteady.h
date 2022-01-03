@@ -75,20 +75,17 @@ void UVLM::Unsteady::solver
                                             lifting_surfaces_unsteady.uext_total_col);
 
     // Unsteady specific
-    UVLM::Types::VecVecMatrixX uext_star_total;
-    UVLM::Types::allocate_VecVecMat(uext_star_total, lifting_surfaces_unsteady.uext_star);
+    UVLM::Types::allocate_VecVecMat(lifting_surfaces_unsteady.uext_star_total, lifting_surfaces_unsteady.uext_star);
     
     // for what is extra gamma star?
-    UVLM::Types::VecMatrixX extra_gamma_star;
-    UVLM::Types::VecVecMatrixX extra_zeta_star;
-    extra_zeta_star.resize(n_surf);
+    lifting_surfaces_unsteady.extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        extra_gamma_star.push_back(UVLM::Types::MatrixX());
-        extra_gamma_star[i_surf].setZero(1, lifting_surfaces_unsteady.gamma_star[i_surf].cols());
+        lifting_surfaces_unsteady.extra_gamma_star.push_back(UVLM::Types::MatrixX());
+        lifting_surfaces_unsteady.extra_gamma_star[i_surf].setZero(1, lifting_surfaces_unsteady.gamma_star[i_surf].cols());
         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
         {
-            extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
+            lifting_surfaces_unsteady.extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
                                                                    lifting_surfaces_unsteady.gamma_star[i_surf].cols() + 1));
         }
     }
@@ -101,10 +98,7 @@ void UVLM::Unsteady::solver
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
-            lifting_surfaces_unsteady,
-            uext_star_total,
-            extra_gamma_star,
-            extra_zeta_star
+            lifting_surfaces_unsteady
         );
     }
 
@@ -120,10 +114,10 @@ void UVLM::Unsteady::solver
         UVLM::Wake::Discretised::cfl_n1(options,
                                         lifting_surfaces_unsteady.zeta_star,
                                         lifting_surfaces_unsteady.gamma_star,
-                                        extra_gamma_star,
-                                        extra_zeta_star,
+                                        lifting_surfaces_unsteady.extra_gamma_star,
+                                        lifting_surfaces_unsteady.extra_zeta_star,
                                         lifting_surfaces_unsteady.dist_to_orig,
-                                        uext_star_total,
+                                        lifting_surfaces_unsteady.uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }
@@ -148,6 +142,7 @@ void UVLM::Unsteady::solver
     // set forces to 0 just in case
     UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.forces);
     // static:
+    // TODO: rbm handling
     UVLM::PostProc::calculate_static_forces_unsteady
     (
         lifting_surfaces_unsteady.zeta,
@@ -198,19 +193,18 @@ void UVLM::Unsteady::solver
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
                                             lifting_surfaces_unsteady.uext_total_col);
 
-    UVLM::Types::VecVecMatrixX uext_star_total;
-    UVLM::Types::allocate_VecVecMat(uext_star_total, lifting_surfaces_unsteady.uext_star);
-
-    UVLM::Types::VecMatrixX extra_gamma_star;
-    UVLM::Types::VecVecMatrixX extra_zeta_star;
-    extra_zeta_star.resize(n_surf);
+     // Unsteady specific
+    UVLM::Types::allocate_VecVecMat(lifting_surfaces_unsteady.uext_star_total, lifting_surfaces_unsteady.uext_star);
+    
+    // for what is extra gamma star?
+    lifting_surfaces_unsteady.extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        extra_gamma_star.push_back(UVLM::Types::MatrixX());
-        extra_gamma_star[i_surf].setZero(1, lifting_surfaces_unsteady.gamma_star[i_surf].cols());
+        lifting_surfaces_unsteady.extra_gamma_star.push_back(UVLM::Types::MatrixX());
+        lifting_surfaces_unsteady.extra_gamma_star[i_surf].setZero(1, lifting_surfaces_unsteady.gamma_star[i_surf].cols());
         for (unsigned int i_dim=0; i_dim<3; ++i_dim)
         {
-            extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
+            lifting_surfaces_unsteady.extra_zeta_star[i_surf].push_back(UVLM::Types::MatrixX(1,
                                                                    lifting_surfaces_unsteady.gamma_star[i_surf].cols() + 1));
         }
     }
@@ -240,9 +234,6 @@ void UVLM::Unsteady::solver
             (
                 options,
                 lifting_surfaces_unsteady,
-                uext_star_total,
-                extra_gamma_star,
-                extra_zeta_star,
                 phantom_surfaces,
                 nl_body
             );
@@ -252,10 +243,7 @@ void UVLM::Unsteady::solver
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
-                lifting_surfaces_unsteady,
-                uext_star_total,
-                extra_gamma_star,
-                extra_zeta_star
+                lifting_surfaces_unsteady
             );
         }
         
@@ -274,10 +262,10 @@ void UVLM::Unsteady::solver
         UVLM::Wake::Discretised::cfl_n1(options,
                                         lifting_surfaces_unsteady.zeta_star,
                                         lifting_surfaces_unsteady.gamma_star,
-                                        extra_gamma_star,
-                                        extra_zeta_star,
+                                        lifting_surfaces_unsteady.extra_gamma_star,
+                                        lifting_surfaces_unsteady.extra_zeta_star,
                                         lifting_surfaces_unsteady.dist_to_orig,
-                                        uext_star_total,
+                                        lifting_surfaces_unsteady.uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }
