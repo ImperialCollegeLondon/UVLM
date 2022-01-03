@@ -108,7 +108,6 @@ void UVLM::Unsteady::solver
             lifting_surfaces_unsteady.u_ext,
             lifting_surfaces_unsteady.uext_star,
             uext_star_total,
-            options.rbm_vel_g,
             extra_gamma_star,
             extra_zeta_star
         );
@@ -242,7 +241,7 @@ void UVLM::Unsteady::solver
         if (!options.only_lifting)
         {
             // To-Do: update gamma phantom            
-            UVLM::Unsteady::Utils::convect_unsteady_wake_lifting_and_nonlifting
+            UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
                 lifting_surfaces_unsteady.zeta,
@@ -252,7 +251,6 @@ void UVLM::Unsteady::solver
                 lifting_surfaces_unsteady.u_ext,
                 lifting_surfaces_unsteady.uext_star,
                 uext_star_total,
-                options.rbm_vel_g,
                 extra_gamma_star,
                 extra_zeta_star,
                 phantom_surfaces,
@@ -271,7 +269,6 @@ void UVLM::Unsteady::solver
                 lifting_surfaces_unsteady.u_ext,
                 lifting_surfaces_unsteady.uext_star,
                 uext_star_total,
-                options.rbm_vel_g,
                 extra_gamma_star,
                 extra_zeta_star
             );
