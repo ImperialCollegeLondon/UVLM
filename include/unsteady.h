@@ -101,12 +101,7 @@ void UVLM::Unsteady::solver
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
-            lifting_surfaces_unsteady.zeta,
-            lifting_surfaces_unsteady.zeta_star,
-            lifting_surfaces_unsteady.gamma,
-            lifting_surfaces_unsteady.gamma_star,
-            lifting_surfaces_unsteady.u_ext,
-            lifting_surfaces_unsteady.uext_star,
+            lifting_surfaces_unsteady,
             uext_star_total,
             extra_gamma_star,
             extra_zeta_star
@@ -244,12 +239,7 @@ void UVLM::Unsteady::solver
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
-                lifting_surfaces_unsteady.zeta,
-                lifting_surfaces_unsteady.zeta_star,
-                lifting_surfaces_unsteady.gamma,
-                lifting_surfaces_unsteady.gamma_star,
-                lifting_surfaces_unsteady.u_ext,
-                lifting_surfaces_unsteady.uext_star,
+                lifting_surfaces_unsteady,
                 uext_star_total,
                 extra_gamma_star,
                 extra_zeta_star,
@@ -262,12 +252,7 @@ void UVLM::Unsteady::solver
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
-                lifting_surfaces_unsteady.zeta,
-                lifting_surfaces_unsteady.zeta_star,
-                lifting_surfaces_unsteady.gamma,
-                lifting_surfaces_unsteady.gamma_star,
-                lifting_surfaces_unsteady.u_ext,
-                lifting_surfaces_unsteady.uext_star,
+                lifting_surfaces_unsteady,
                 uext_star_total,
                 extra_gamma_star,
                 extra_zeta_star

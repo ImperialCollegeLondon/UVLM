@@ -53,74 +53,45 @@ namespace UVLM
                 t_extra_zeta_star& extra_zeta_star,
                 const uint n_surf
             );
+
+            template <typename t_struct_lifting_surfaces>
             void free_wake_convection_lifting
             (
                 UVLM::Types::VecVecMatrixX& u_convection,
-                const UVLM::Types::VecVecMapX& uext_star,
-                const UVLM::Types::VecVecMapX& zeta_star,
-                const UVLM::Types::VecVecMapX& zeta,
-                const UVLM::Types::VecMapX& gamma,   
-                const UVLM::Types::VecMapX& gamma_star,             
+                t_struct_lifting_surfaces& lifting_surfaces,
                 const UVLM::Types::UVMopts& options
             );
-
+            template <typename t_struct_lifting_surfaces>
             void free_wake_final_convection
-            (
-                const uint n_surf,    
-                UVLM::Types::VecVecMatrixX& u_convection,
-                const UVLM::Types::VecVecMapX& zeta,
-                UVLM::Types::VecVecMapX& zeta_star,
-                const UVLM::Types::VecVecMatrixX& uext_star_total,
-                UVLM::Types::VecMapX& gamma_star,
+            (  
                 const UVLM::Types::UVMopts& options,
+                UVLM::Types::VecVecMatrixX& u_convection,
+                const UVLM::Types::VecVecMatrixX& uext_star_total,
+                UVLM::Types::VecMatrixX& extra_gamma_star,
+                UVLM::Types::VecVecMatrixX& extra_zeta_star,
+                t_struct_lifting_surfaces& lifting_surfaces
+            );
+
+
+            template <typename t_struct_lifting_surfaces>
+            void convect_unsteady_wake
+            (
+                const UVLM::Types::UVMopts& options,
+                t_struct_lifting_surfaces& lifting_surfaces,
+                UVLM::Types::VecVecMatrixX& uext_star_total,
                 UVLM::Types::VecMatrixX& extra_gamma_star,
                 UVLM::Types::VecVecMatrixX& extra_zeta_star
             );
-            template <typename t_zeta,
-                      typename t_zeta_star,
-                      typename t_gamma,
-                      typename t_gamma_star,
-                      typename t_uext,
-                      typename t_uext_star,
-                      typename t_uext_star_total,
-                      typename t_extra_gamma_star,
-                      typename t_extra_zeta_star>
+            template <typename t_struct_lifting_surfaces,
+                    typename t_struct_phantom_surf,
+                    typename t_struct_nl_body>
             void convect_unsteady_wake
             (
                 const UVLM::Types::UVMopts& options,
-                const t_zeta& zeta,
-                t_zeta_star& zeta_star,
-                const t_gamma& gamma,
-                t_gamma_star& gamma_star,
-                const t_uext& uext,
-                const t_uext_star& uext_star,
-                t_uext_star_total& uext_star_total,
-                t_extra_gamma_star& extra_gamma_star,
-                t_extra_zeta_star& extra_zeta_star
-            );
-            template <typename t_zeta,
-                      typename t_zeta_star,
-                      typename t_gamma,
-                    typename t_gamma_star,
-                    typename t_uext,
-                    typename t_uext_star,
-                    typename t_uext_star_total,
-                      typename t_extra_gamma_star,
-                      typename t_extra_zeta_star,
-                      typename t_struct_phantom_surf,
-                      typename t_struct_nl_body>
-            void convect_unsteady_wake
-            (
-                const UVLM::Types::UVMopts& options,
-                const t_zeta& zeta,
-                t_zeta_star& zeta_star,
-                const t_gamma& gamma,
-                t_gamma_star& gamma_star,
-                const t_uext& uext,
-                const t_uext_star& uext_star,
-                t_uext_star_total& uext_star_total,
-                t_extra_gamma_star& extra_gamma_star,
-                t_extra_zeta_star& extra_zeta_star,
+                t_struct_lifting_surfaces& lifting_surfaces,
+                UVLM::Types::VecVecMatrixX& uext_star_total,
+                UVLM::Types::VecMatrixX& extra_gamma_star,
+                UVLM::Types::VecVecMatrixX& extra_zeta_star,
                 t_struct_phantom_surf& phantom_surfaces,
                 t_struct_nl_body& nl_body
             );
@@ -292,27 +263,14 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
 // convection_scheme == 1 => prescribed following deformations of the wing
 // convection_scheme == 2 => free, convection based on u_ext
 // convection_scheme == 3 => free, convection based on u_ext and induced velocities.
-template <typename t_zeta,
-          typename t_zeta_star,
-          typename t_gamma,
-          typename t_gamma_star,
-          typename t_uext,
-          typename t_uext_star,
-          typename t_uext_star_total,
-          typename t_extra_gamma_star,
-          typename t_extra_zeta_star>
+template <typename t_struct_lifting_surfaces>
 void UVLM::Unsteady::Utils::convect_unsteady_wake
 (
     const UVLM::Types::UVMopts& options,
-    const t_zeta& zeta,
-    t_zeta_star& zeta_star,
-    const t_gamma& gamma,
-    t_gamma_star& gamma_star,
-    const t_uext& uext,
-    const t_uext_star& uext_star,
-    t_uext_star_total& uext_star_total,
-    t_extra_gamma_star& extra_gamma_star,
-    t_extra_zeta_star& extra_zeta_star
+    t_struct_lifting_surfaces& lifting_surfaces,
+    UVLM::Types::VecVecMatrixX& uext_star_total,
+    UVLM::Types::VecMatrixX& extra_gamma_star,
+    UVLM::Types::VecVecMatrixX& extra_zeta_star
 )
 {
     const uint n_surf = options.NumSurfaces;
@@ -320,10 +278,10 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
     if (options.convection_scheme == 0)
     {
 
-        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(lifting_surfaces.zeta_star, lifting_surfaces.gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
-        UVLM::Wake::General::displace_VecMat(gamma_star);
-        UVLM::Types::copy_VecVecMat(uext_star, uext_star_total);
+        UVLM::Wake::General::displace_VecMat(lifting_surfaces.gamma_star);
+        UVLM::Types::copy_VecVecMat(lifting_surfaces.uext_star, uext_star_total);
     } else if (options.convection_scheme == 1)
     {
         std::cerr << "convection_scheme == "
@@ -333,7 +291,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
     } else if (options.convection_scheme == 2)
     {
         UVLM::Types::VecVecMatrixX zeros;
-        UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+        UVLM::Types::allocate_VecVecMat(zeros, lifting_surfaces.uext_star);
         // total stream velocity
         
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
@@ -345,30 +303,30 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
         (
-            zeta_star,
+            lifting_surfaces.zeta_star,
             zeros,
-            uext_star,
+            lifting_surfaces.uext_star,
             rbm_no_omega,
             centre_rot,
             uext_star_total
         );
         // convection with uext + delta u (perturbation)
         // (no u_induced)
-        UVLM::Wake::Discretised::convect(zeta_star,
+        UVLM::Wake::Discretised::convect(lifting_surfaces.zeta_star,
                                          uext_star_total,
                                          options.dt);
 
-        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(lifting_surfaces.zeta_star, lifting_surfaces.gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
 
         // displace both zeta and gamma
-        UVLM::Wake::General::displace_VecMat(gamma_star);
-        UVLM::Wake::General::displace_VecVecMat(zeta_star);
+        UVLM::Wake::General::displace_VecMat(lifting_surfaces.gamma_star);
+        UVLM::Wake::General::displace_VecVecMat(lifting_surfaces.zeta_star);
 
         // copy last row of zeta into zeta_star
         UVLM::Wake::Discretised::generate_new_row
         (
-            zeta_star,
-            zeta
+            lifting_surfaces.zeta_star,
+            lifting_surfaces.zeta
         );
     } else if (options.convection_scheme == 3)
     {
@@ -377,29 +335,22 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::allocate_VecVecMat
         (
             u_convection,
-            uext_star
+            lifting_surfaces.uext_star
         );
         UVLM::Unsteady::Utils::free_wake_convection_lifting
         (
             u_convection,
-            uext_star,
-            zeta_star,
-            zeta,
-            gamma,
-            gamma_star,
+            lifting_surfaces,
             options
         );
         UVLM::Unsteady::Utils::free_wake_final_convection
         (
-            n_surf,    
+            options,    
             u_convection,
-            zeta,
-            zeta_star,
             uext_star_total,
-            gamma_star,
-            options,
             extra_gamma_star,
-            extra_zeta_star
+            extra_zeta_star,
+            lifting_surfaces
         );
     } else
     {
@@ -412,22 +363,20 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
     return;
 }
 
-// TODO: Add free wake namespace?
-void UVLM::Unsteady::Utils::free_wake_final_convection
-(
-    const uint n_surf,    
-    UVLM::Types::VecVecMatrixX& u_convection,
-    const UVLM::Types::VecVecMapX& zeta,
-    UVLM::Types::VecVecMapX& zeta_star,
-    const UVLM::Types::VecVecMatrixX& uext_star_total,
-    UVLM::Types::VecMapX& gamma_star,
+
+template <typename t_struct_lifting_surfaces>
+void  UVLM::Unsteady::Utils::free_wake_final_convection
+(  
     const UVLM::Types::UVMopts& options,
+    UVLM::Types::VecVecMatrixX& u_convection,
+    const UVLM::Types::VecVecMatrixX& uext_star_total,
     UVLM::Types::VecMatrixX& extra_gamma_star,
-    UVLM::Types::VecVecMatrixX& extra_zeta_star
+    UVLM::Types::VecVecMatrixX& extra_zeta_star,
+    t_struct_lifting_surfaces& lifting_surfaces
 )
 {
         // remove first row of convection velocities
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        for (uint i_surf=0; i_surf<lifting_surfaces.n_surf; ++i_surf)
         {
             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
             {
@@ -436,7 +385,7 @@ void UVLM::Unsteady::Utils::free_wake_final_convection
         }
 
         // u_convection = u_convection + uext_star;
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        for (uint i_surf=0; i_surf<lifting_surfaces.n_surf; ++i_surf)
         {
             for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
             {
@@ -445,40 +394,38 @@ void UVLM::Unsteady::Utils::free_wake_final_convection
             }
         }
 
-        UVLM::Wake::Discretised::convect(zeta_star,
+        UVLM::Wake::Discretised::convect(lifting_surfaces.zeta_star,
                                          u_convection,
                                          options.dt);
                                          
-        UVLM::Unsteady::Utils::store_last_wake_panel_information(zeta_star, gamma_star, extra_gamma_star, extra_zeta_star, n_surf);
+        UVLM::Unsteady::Utils::store_last_wake_panel_information(lifting_surfaces.zeta_star, lifting_surfaces.gamma_star, extra_gamma_star, extra_zeta_star, lifting_surfaces.n_surf);
 
 
         // displace both zeta and gamma
-        UVLM::Wake::General::displace_VecMat(gamma_star);
-        UVLM::Wake::General::displace_VecVecMat(zeta_star);
+        UVLM::Wake::General::displace_VecMat(lifting_surfaces.gamma_star);
+        UVLM::Wake::General::displace_VecVecMat(lifting_surfaces.zeta_star);
 
         // copy last row of zeta into zeta_star
         UVLM::Wake::Discretised::generate_new_row
         (
-            zeta_star,
-            zeta
+            lifting_surfaces.zeta_star,
+            lifting_surfaces.zeta
         );
 }
 
+
+template <typename t_struct_lifting_surfaces>
 void UVLM::Unsteady::Utils::free_wake_convection_lifting
 (
     UVLM::Types::VecVecMatrixX& u_convection,
-    const UVLM::Types::VecVecMapX& uext_star,
-    const UVLM::Types::VecVecMapX& zeta_star,
-    const UVLM::Types::VecVecMapX& zeta,
-    const UVLM::Types::VecMapX& gamma,
-    const UVLM::Types::VecMapX& gamma_star,
+    t_struct_lifting_surfaces& lifting_surfaces,
     const UVLM::Types::UVMopts& options
 )
 {
     UVLM::Types::VecVecMatrixX uext_star_total;
-    UVLM::Types::allocate_VecVecMat(uext_star_total, uext_star);
+    UVLM::Types::allocate_VecVecMat(uext_star_total, lifting_surfaces.uext_star);
     UVLM::Types::VecVecMatrixX zeros;
-    UVLM::Types::allocate_VecVecMat(zeros, uext_star);
+    UVLM::Types::allocate_VecVecMat(zeros, lifting_surfaces.uext_star);
     // total stream velocity
     UVLM::Types::Vector6 vec_rbm_vel_g;
     vec_rbm_vel_g << options.rbm_vel_g[0], options.rbm_vel_g[1], options.rbm_vel_g[2], options.rbm_vel_g[3], options.rbm_vel_g[4], options.rbm_vel_g[5];
@@ -489,9 +436,9 @@ void UVLM::Unsteady::Utils::free_wake_convection_lifting
 
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     (
-        zeta_star,
+        lifting_surfaces.zeta_star,
         zeros,
-        uext_star,
+        lifting_surfaces.uext_star,
         rbm_no_omega,
         centre_rot,
         uext_star_total
@@ -500,10 +447,10 @@ void UVLM::Unsteady::Utils::free_wake_convection_lifting
     // induced velocity by vortex rings
     UVLM::BiotSavart::total_induced_velocity_on_wake
     (
-        zeta,
-        zeta_star,
-        gamma,
-        gamma_star,
+        lifting_surfaces.zeta,
+        lifting_surfaces.zeta_star,
+        lifting_surfaces.gamma,
+        lifting_surfaces.gamma_star,
         u_convection,
         options.ImageMethod,
         options.vortex_radius_wake_ind
@@ -535,29 +482,16 @@ void UVLM::Unsteady::Utils::store_last_wake_panel_information
 }
 
 
-template <typename t_zeta,
-          typename t_zeta_star,
-          typename t_gamma,
-          typename t_gamma_star,
-          typename t_uext,
-          typename t_uext_star,
-          typename t_uext_star_total,
-          typename t_extra_gamma_star,
-          typename t_extra_zeta_star,
+template <typename t_struct_lifting_surfaces,
           typename t_struct_phantom_surf,
           typename t_struct_nl_body>
 void UVLM::Unsteady::Utils::convect_unsteady_wake
 (
     const UVLM::Types::UVMopts& options,
-    const t_zeta& zeta,
-    t_zeta_star& zeta_star,
-    const t_gamma& gamma,
-    t_gamma_star& gamma_star,
-    const t_uext& uext,
-    const t_uext_star& uext_star,
-    t_uext_star_total& uext_star_total,
-    t_extra_gamma_star& extra_gamma_star,
-    t_extra_zeta_star& extra_zeta_star,
+    t_struct_lifting_surfaces& lifting_surfaces,
+    UVLM::Types::VecVecMatrixX& uext_star_total,
+    UVLM::Types::VecMatrixX& extra_gamma_star,
+    UVLM::Types::VecVecMatrixX& extra_zeta_star,
     t_struct_phantom_surf& phantom_surfaces,
     t_struct_nl_body& nl_body
 )
@@ -569,12 +503,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
-            zeta,
-            zeta_star,
-            gamma,
-            gamma_star,
-            uext,
-            uext_star,
+            lifting_surfaces,
             uext_star_total,
             extra_gamma_star,
             extra_zeta_star
@@ -587,22 +516,18 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::allocate_VecVecMat
         (
             u_convection,
-            uext_star
+            lifting_surfaces.uext_star
         );
         UVLM::Types::VecVecMatrixX u_convection_lifting;
-        UVLM::Types::allocate_VecVecMat 
+        UVLM::Types::allocate_VecVecMat
         (
             u_convection_lifting,
-            uext_star
+            lifting_surfaces.uext_star
         );
         UVLM::Unsteady::Utils::free_wake_convection_lifting
         (
             u_convection,
-            uext_star,
-            zeta_star,
-            zeta,
-            gamma,
-            gamma_star,
+            lifting_surfaces,
             options
         );
 
@@ -611,7 +536,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::allocate_VecVecMat
         (
             u_convection_phantom,
-            uext_star
+            lifting_surfaces.uext_star
         );
         // update gamma phantom star
         // TO-DO: Check if update is needed here
@@ -620,7 +545,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             phantom_surfaces.zeta, //phantom
             phantom_surfaces.zeta_star,
-            zeta_star, //phantom + lifting
+            lifting_surfaces.zeta_star, //phantom + lifting
             phantom_surfaces.gamma, //phantom
             phantom_surfaces.gamma_star, //phantom
             u_convection_phantom,
@@ -633,7 +558,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         UVLM::Types::VecVecMatrixX u_convection_nonlifting;
         UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
         (
-            zeta_star,
+            lifting_surfaces.zeta_star,
             nl_body,
             u_convection_nonlifting
         );
@@ -657,18 +582,15 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         
         UVLM::Unsteady::Utils::free_wake_final_convection
         (
-            n_surf,    
+            options,   
             u_convection,
-            zeta,
-            zeta_star,
             uext_star_total,
-            gamma_star,
-            options,
             extra_gamma_star,
-            extra_zeta_star
+            extra_zeta_star,
+            lifting_surfaces
         );  
 
-        phantom_surfaces.update_wake(zeta_star);
+        phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
     }
     return;
 }
