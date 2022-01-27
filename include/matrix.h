@@ -16,7 +16,7 @@ namespace UVLM
                   typename t_zeta_col,
                   typename t_zeta_star,
                 //   typename t_zeta_star_col,
-                  typename t_uext_col,
+                  typename t_uext_total_col,
                   typename t_normals,
                   typename t_aic>
         void AIC
@@ -25,7 +25,7 @@ namespace UVLM
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
             // const t_zeta_star_col& zeta_star_col,
-            const t_uext_col& uext_col,
+            const t_uext_total_col& uext_total_col,
             const t_normals& normals,
             const UVLM::Types::VMopts& options,
             const bool horseshoe,
@@ -91,7 +91,7 @@ namespace UVLM
         );
         template <typename t_zeta_col,
                   typename t_zeta_star,
-                  typename t_uext_col,
+                  typename t_uext_total_col,
                 //   typename t_zeta_dot_col,
                   typename t_gamma_star,
                   typename t_normal>
@@ -99,7 +99,7 @@ namespace UVLM
         (
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
-            const t_uext_col& uext_col,
+            const t_uext_total_col& uext_total_col,
             // const t_zeta_dot_col& zeta_dot_col,
             const t_gamma_star& gamma_star,
             const t_normal& normal,
@@ -198,7 +198,7 @@ template <typename t_zeta,
           typename t_zeta_col,
           typename t_zeta_star,
         //   typename t_zeta_star_col,
-          typename t_uext_col,
+          typename t_uext_total_col,
           typename t_normals,
           typename t_aic>
 void UVLM::Matrix::AIC
@@ -207,13 +207,14 @@ void UVLM::Matrix::AIC
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
     // const t_zeta_star_col& zeta_star_col,
-    const t_uext_col& uext_col,
+    const t_uext_total_col& uext_total_col,
     const t_normals& normals,
     const UVLM::Types::VMopts& options,
     const bool horseshoe,
     t_aic& aic
 )
 {
+    // TODO: delete unused input uext_total_col
     const uint n_surf_panel = zeta.size();
     const uint n_surf_col = zeta_col.size();
     UVLM::Types::VecDimensions dimensions_panel, dimensions_col, dimensions_star;
@@ -392,14 +393,14 @@ void UVLM::Matrix::AIC_sources
 -----------------------------------------------------------------------------*/
 template <typename t_zeta_col,
           typename t_zeta_star,
-          typename t_uext_col,
+          typename t_uext_total_col,
           typename t_gamma_star,
           typename t_normal>
 void UVLM::Matrix::RHS
 (
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
-    const t_uext_col& uinc_col,
+    const t_uext_total_col& uext_total_col,
     const t_gamma_star& gamma_star,
     const t_normal& normal,
     const UVLM::Types::VMopts& options,
@@ -415,8 +416,8 @@ void UVLM::Matrix::RHS
     int istart = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
-        uint M = uinc_col[i_surf][0].rows();
-        uint N = uinc_col[i_surf][0].cols();
+        uint M = uext_total_col[i_surf][0].rows();
+        uint N = uext_total_col[i_surf][0].cols();
         if (!options.Steady)
         {
             // #pragma omp parallel for collapse(2)
@@ -428,9 +429,9 @@ void UVLM::Matrix::RHS
                     UVLM::Types::Vector3 collocation_coords;
                     UVLM::Types::Vector3 u_col;
 
-                    u_col << uinc_col[i_surf][0](i,j),
-                             uinc_col[i_surf][1](i,j),
-                             uinc_col[i_surf][2](i,j);
+                    u_col << uext_total_col[i_surf][0](i,j),
+                             uext_total_col[i_surf][1](i,j),
+                             uext_total_col[i_surf][2](i,j);
                     // we have to add the wake effect on the induced velocity.
                     collocation_coords << zeta_col[i_surf][0](i,j),
                                           zeta_col[i_surf][1](i,j),
@@ -465,9 +466,9 @@ void UVLM::Matrix::RHS
                 {
                     rhs(++ii) =
                     -(
-                        uinc_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
-                        uinc_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
-                        uinc_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
+                        uext_total_col[i_surf][0](i,j)*normal[i_surf][0](i,j) +
+                        uext_total_col[i_surf][1](i,j)*normal[i_surf][1](i,j) +
+                        uext_total_col[i_surf][2](i,j)*normal[i_surf][2](i,j)
                     );
                 }
             }

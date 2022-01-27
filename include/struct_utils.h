@@ -102,7 +102,7 @@ namespace UVLM
                 rhs.resize(Ktotal); 
                 UVLM::Matrix::RHS(zeta_col,
                                 zeta_star,
-                                uext_col,
+                                uext_total_col,
                                 gamma_star,
                                 normals,
                                 options,
@@ -112,7 +112,7 @@ namespace UVLM
                 UVLM::Matrix::AIC(zeta,
                                 zeta_col,
                                 zeta_star,
-                                uext_col,
+                                uext_total_col,
                                 normals,
                                 options,
                                 options.horseshoe,
