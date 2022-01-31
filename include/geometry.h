@@ -240,7 +240,8 @@ namespace UVLM
                                                         zeta[i_surf][1].template block<2,2>(iM,jN),
                                                         zeta[i_surf][2].template block<2,2>(iM,jN),
                                                         temp_long_vec);
-                            UVLM::Types::pass_3D_Vector_to_VecMatrix(long_vec[i_surf],temp_long_vec,iM,jN);
+                            temp_long_vec *= -1.; // flip to get correct normal direction
+                            UVLM::Types::pass_3D_Vector_to_VecMatrix(long_vec[i_surf], temp_long_vec,iM,jN);
 
                             
                             panel_tangential_vector(zeta[i_surf][0].template block<2,2>(iM,jN),
