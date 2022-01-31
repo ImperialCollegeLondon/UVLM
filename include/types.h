@@ -72,8 +72,6 @@ namespace UVLM
             bool cfl1;
             double vortex_radius;
             double vortex_radius_wake_ind;
-            double centre_rot_g[3];
-            double rbm_vel_g[6];
             bool phantom_wing_test;
         };
 
@@ -103,8 +101,6 @@ namespace UVLM
             uint interp_method;
             double yaw_slerp;
             bool quasi_steady;
-            double centre_rot_g[3];
-            double rbm_vel_g[6];
             uint num_spanwise_panels_wo_induced_velocity;
             bool phantom_wing_test;
         };
@@ -128,16 +124,6 @@ namespace UVLM
             vm.only_nonlifting = uvm.only_nonlifting;
             vm.Steady = uvm.quasi_steady;
             vm.phantom_wing_test = uvm.phantom_wing_test;
-            for (uint i=0; i<6; ++i)
-            {
-                if (i < 3)
-                {
-                    vm.centre_rot_g[i] = uvm.centre_rot_g[i];
-                }
-                
-                vm.rbm_vel_g[i] = uvm.rbm_vel_g[i];
-            }
-           
             return vm;
         };
 

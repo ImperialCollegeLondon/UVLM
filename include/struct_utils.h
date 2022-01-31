@@ -66,6 +66,7 @@ namespace UVLM
             UVLM::Types::VecVecMapX zeta_dot, zeta_star;
             UVLM::Types::MatrixX aic;
             UVLM::Types::VecVecMatrixX u_induced_col_sources;
+            UVLM::Types::VectorX rbm_vel_g, centre_rot;
             // UVLM::Types::MapVectorX rbm_vel_g_1();// use vector x?
             
             // Constructor
@@ -80,7 +81,9 @@ namespace UVLM
                 double** p_zeta_dot,
                 double** p_gamma,
                 double** p_gamma_star,
-                unsigned int** p_dimensions_star
+                unsigned int** p_dimensions_star,
+                double*  p_rbm_vel,
+                double*  p_centre_rot
             ):surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces}
             {    
                 UVLM::Mapping::transform_dimensions(n_surf,p_dimensions_star,dimensions_star);                
@@ -89,7 +92,10 @@ namespace UVLM
                 UVLM::Mapping::map_VecMat(dimensions, p_gamma, gamma, 0);
                 UVLM::Mapping::map_VecMat(dimensions_star, p_gamma_star, gamma_star, 0);
             
-                UVLM::Types::allocate_VecVecMat(u_induced_col_sources, u_ext, -1);        
+                UVLM::Types::allocate_VecVecMat(u_induced_col_sources, u_ext, -1);  
+                
+                UVLM::Mapping::map_VecX(2*UVLM::Constants::NDIM, p_rbm_vel, rbm_vel_g);   
+                UVLM::Mapping::map_VecX(2*UVLM::Constants::NDIM, p_centre_rot, centre_rot);   
             }
 
             //Functions
@@ -168,11 +174,13 @@ namespace UVLM
                 double** p_gamma,
                 double** p_gamma_star,
                 unsigned int** p_dimensions_star,
+                double*  p_rbm_vel,
+                double*  p_centre_rot,
                 double**p_dist_to_orig,
                 double**p_dynamic_forces,
                 double** p_uext_star,
                 double** p_normals_unsteady
-            ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_dimensions_star}
+            ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_dimensions_star, p_rbm_vel, p_centre_rot}
             {    
                 // std::cout << "\n INITIALISING LIFTING SURFACE UNSTEADY STRUCT!";
                 

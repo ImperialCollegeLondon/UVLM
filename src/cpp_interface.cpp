@@ -14,7 +14,9 @@ DLLEXPORT void run_VLM
     double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_forces
+    double** p_forces,
+    double*  p_rbm_vel,
+    double*  p_centre_rot
 )
 {
 #if defined(_OPENMP)
@@ -30,7 +32,9 @@ DLLEXPORT void run_VLM
             p_zeta_dot,
             p_gamma,
             p_gamma_star,
-            p_dimensions_star);
+            p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot);
 
     UVLM::Steady::solver(Lifting_surfaces,
                          options,
@@ -81,7 +85,9 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     double** p_zeta_nonlifting,
     double** p_u_ext_nonlifting,
     double** p_sigma_nonlifting,
-    double** p_forces_nonlifting
+    double** p_forces_nonlifting,
+    double*  p_rbm_vel,
+    double*  p_centre_rot
 )
 {
 #if defined(_OPENMP)
@@ -98,7 +104,9 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
             p_zeta_dot,
             p_gamma,
             p_gamma_star,
-            p_dimensions_star);
+            p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot);
     
     // Setup Nonlifting Body  
     struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfacesNonlifting,
@@ -143,10 +151,12 @@ DLLEXPORT void run_UVLM
     // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
-    double** p_dynamic_forces
+    double** p_dynamic_forces,
+    double*  p_rbm_vel,
+    double*  p_centre_rot
 )
 {
-#if defined(_OPENMP)
+    #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
     // Setup Lifting Surfaces
@@ -161,9 +171,12 @@ DLLEXPORT void run_UVLM
             p_gamma,
             p_gamma_star,
             p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot,
             p_dist_to_orig,
             p_dynamic_forces,
-            p_uext_star);
+            p_uext_star,
+            p_normals);
 
     UVLM::Unsteady::solver
     (
@@ -198,7 +211,9 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
     double** p_zeta_nonlifting,
     double** p_u_ext_nonlifting,
     double** p_sigma,
-    double** p_forces_nonlifting
+    double** p_forces_nonlifting,
+    double* p_rbm_vel,
+    double* p_centre_rot
 )
 {
 #if defined(_OPENMP)
@@ -215,9 +230,12 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
         p_gamma,
         p_gamma_star,
         p_dimensions_star,
+        p_rbm_vel,
+        p_centre_rot,
         p_dist_to_orig,
         p_dynamic_forces,
-        p_uext_star);
+        p_uext_star,
+        p_normals);
 
     struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body
     (
@@ -395,6 +413,7 @@ DLLEXPORT void UVLM_check_incidence_angle
         zeta,
         zeta_dot,
         normals,
+        rbm_velocity,
         options,
         incidence_angle
     );
