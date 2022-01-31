@@ -54,7 +54,8 @@ namespace UVLM
                 UVLM::Types::allocate_VecVecMat(normals, zeta_col);
                 UVLM::Types::allocate_VecVecMat(longitudinals, zeta_col);
                 UVLM::Types::allocate_VecVecMat(perpendiculars, zeta_col);
-                UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);
+                UVLM::Geometry::generate_surface_vectors(zeta, normals, longitudinals, perpendiculars);                
+                UVLM::Geometry::generate_surfaceNormal(zeta, normals);
             }
         };
 
@@ -153,6 +154,7 @@ namespace UVLM
             UVLM::Types::VecVecMapX dynamic_forces, uext_star;
             UVLM::Types::VecMapX dist_to_orig;  
             UVLM::Types::VecVecMatrixX solid_vel; //
+                UVLM::Types::VecVecMapX normals_unsteady;
             // Constructor
             lifting_surface_unsteady
             (
@@ -168,7 +170,8 @@ namespace UVLM
                 unsigned int** p_dimensions_star,
                 double**p_dist_to_orig,
                 double**p_dynamic_forces,
-                double** p_uext_star
+                double** p_uext_star,
+                double** p_normals_unsteady
             ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_dimensions_star}
             {    
                 // std::cout << "\n INITIALISING LIFTING SURFACE UNSTEADY STRUCT!";
@@ -185,12 +188,23 @@ namespace UVLM
                 UVLM::Mapping::map_VecVecMat(dimensions_star,
                                             p_uext_star,
                                             uext_star,
-                                            1);              
+                                            1);   
+                                            
+                UVLM::Mapping::map_VecVecMat(dimensions,
+                                                p_normals_unsteady,
+                                                normals_unsteady,
+                                                0);
+
+                                            
+                // UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
+                // UVLM::Types::MapVectorX centre_rot (p_centre_rot, UVLM::Constants::NDIM);           
             }
             void get_surface_parameters()
             {
                 lifting_surface::get_surface_parameters();
                 UVLM::Types::allocate_VecVecMat(solid_vel, u_ext); //
+                              
+                UVLM::Geometry::generate_surfaceNormal(zeta, normals_unsteady);
             }
         };
         struct phantom_surface
