@@ -64,10 +64,15 @@ void UVLM::Unsteady::solver
         lifting_surfaces_unsteady.zeta,
         lifting_surfaces_unsteady.zeta_dot,
         lifting_surfaces_unsteady.u_ext,
-        options.rbm_vel_g,
+        lifting_surfaces_unsteady.rbm_vel_g,
         lifting_surfaces_unsteady.uext_total,
         lifting_surfaces_unsteady.solid_vel
     );
+
+    //  Allocation and mapping
+    // Same in steady    
+    UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
+                                            lifting_surfaces_unsteady.uext_total_col);
 
     //  Allocation and mapping
     // Same in steady    
@@ -98,7 +103,16 @@ void UVLM::Unsteady::solver
         UVLM::Unsteady::Utils::convect_unsteady_wake
         (
             options,
-            lifting_surfaces_unsteady
+            lifting_surfaces_unsteady.zeta,
+            lifting_surfaces_unsteady.zeta_star,
+            lifting_surfaces_unsteady.gamma,
+            lifting_surfaces_unsteady.gamma_star,
+            lifting_surfaces_unsteady.u_ext,
+            lifting_surfaces_unsteady.uext_star,
+            uext_star_total,
+            lifting_surfaces_unsteady.rbm_vel_g,
+            extra_gamma_star,
+            extra_zeta_star
         );
     }
 
@@ -117,7 +131,9 @@ void UVLM::Unsteady::solver
                                         lifting_surfaces_unsteady.extra_gamma_star,
                                         lifting_surfaces_unsteady.extra_zeta_star,
                                         lifting_surfaces_unsteady.dist_to_orig,
-                                        lifting_surfaces_unsteady.uext_star_total,
+                                        lifting_surfaces_unsteady.rbm_vel_g,
+                                        lifting_surfaces_unsteady.centre_rot,
+                                        uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }
@@ -151,7 +167,8 @@ void UVLM::Unsteady::solver
         lifting_surfaces_unsteady.gamma,
         lifting_surfaces_unsteady.gamma_star,
         lifting_surfaces_unsteady.u_ext,
-        options.rbm_vel_g,
+        lifting_surfaces_unsteady.rbm_vel_g,
+        lifting_surfaces_unsteady.centre_rot,
         lifting_surfaces_unsteady.forces,
         steady_options,
         flightconditions
@@ -185,7 +202,7 @@ void UVLM::Unsteady::solver
         lifting_surfaces_unsteady.zeta,
         lifting_surfaces_unsteady.zeta_dot,
         lifting_surfaces_unsteady.u_ext,
-        options.rbm_vel_g,
+        lifting_surfaces_unsteady.rbm_vel_g,
         lifting_surfaces_unsteady.uext_total,
         lifting_surfaces_unsteady.solid_vel
     );
@@ -233,7 +250,16 @@ void UVLM::Unsteady::solver
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
-                lifting_surfaces_unsteady,
+                lifting_surfaces_unsteady.zeta,
+                lifting_surfaces_unsteady.zeta_star,
+                lifting_surfaces_unsteady.gamma,
+                lifting_surfaces_unsteady.gamma_star,
+                lifting_surfaces_unsteady.u_ext,
+                lifting_surfaces_unsteady.uext_star,
+                uext_star_total,
+                lifting_surfaces_unsteady.rbm_vel_g,
+                extra_gamma_star,
+                extra_zeta_star,
                 phantom_surfaces,
                 nl_body
             );
@@ -243,7 +269,16 @@ void UVLM::Unsteady::solver
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
-                lifting_surfaces_unsteady
+                lifting_surfaces_unsteady.zeta,
+                lifting_surfaces_unsteady.zeta_star,
+                lifting_surfaces_unsteady.gamma,
+                lifting_surfaces_unsteady.gamma_star,
+                lifting_surfaces_unsteady.u_ext,
+                lifting_surfaces_unsteady.uext_star,
+                uext_star_total,
+                lifting_surfaces_unsteady.rbm_vel_g,
+                extra_gamma_star,
+                extra_zeta_star
             );
         }
         
@@ -265,7 +300,9 @@ void UVLM::Unsteady::solver
                                         lifting_surfaces_unsteady.extra_gamma_star,
                                         lifting_surfaces_unsteady.extra_zeta_star,
                                         lifting_surfaces_unsteady.dist_to_orig,
-                                        lifting_surfaces_unsteady.uext_star_total,
+                                        lifting_surfaces_unsteady.rbm_vel_g,
+                                        lifting_surfaces_unsteady.centre_rot,
+                                        uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }

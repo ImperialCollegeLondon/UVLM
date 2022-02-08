@@ -130,8 +130,8 @@ void UVLM::Steady::solver
         lifting_surfaces.zeta,
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
-        options.rbm_vel_g,
-        options.centre_rot_g,
+        lifting_surfaces.rbm_vel_g,
+        lifting_surfaces.centre_rot,
         lifting_surfaces.uext_total
     );
 
@@ -197,7 +197,8 @@ void UVLM::Steady::solver
         lifting_surfaces.gamma,
         lifting_surfaces.gamma_star,
         lifting_surfaces.u_ext,
-        options.rbm_vel_g,
+        lifting_surfaces.rbm_vel_g,
+        lifting_surfaces.centre_rot,
         lifting_surfaces.forces,
         options,
         flightconditions
@@ -253,8 +254,8 @@ void UVLM::Steady::solver_lifting_and_nonlifting_bodies
         lifting_surfaces.zeta,
         lifting_surfaces.zeta_dot,
         lifting_surfaces.u_ext,
-        options.rbm_vel_g,
-        options.centre_rot_g,
+        lifting_surfaces.rbm_vel_g,
+        lifting_surfaces.centre_rot,
         lifting_surfaces.uext_total
     );
     

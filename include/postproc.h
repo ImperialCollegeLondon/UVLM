@@ -242,6 +242,7 @@ namespace UVLM
                   typename t_gamma_star,
                   typename t_uext,
                   typename t_rbm_velocity,
+                  typename t_centre_rot,
                   typename t_forces>
         void calculate_static_forces_unsteady
         (
@@ -252,6 +253,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             const t_uext& uext,
             const t_rbm_velocity& rbm_velocity,
+            const t_centre_rot& centre_rot,
             t_forces&  forces,
             const UVLM::Types::VMopts options,
             const UVLM::Types::FlightConditions& flightconditions
@@ -273,8 +275,8 @@ namespace UVLM
                 zeta,
                 zeta_dot,
                 uext,
-                options.rbm_vel_g,
-                options.centre_rot_g,
+                rbm_velocity,
+                centre_rot,
                 velocities
             );
             // not bothered with effciency.
@@ -535,8 +537,8 @@ namespace UVLM
                 lifting_surfaces.zeta,
                 lifting_surfaces.zeta_dot,
                 lifting_surfaces.u_ext,
-                options.rbm_vel_g,
-                options.centre_rot_g,
+                lifting_surfaces.rbm_vel_g,
+                lifting_surfaces.centre_rot,
                 velocities
             );
 
@@ -937,6 +939,7 @@ namespace UVLM
                   typename t_zeta,
                   typename t_zeta_dot,
                   typename t_normals,
+                  typename t_rbm_vel,
                   typename t_incidence_angle>
         void calculate_incidence_angle
         (
@@ -944,6 +947,7 @@ namespace UVLM
             const t_zeta& zeta,
             const t_zeta_dot& zeta_dot,
             const t_normals& normals,
+            const t_rbm_vel& rbm_vel_g,
             const UVLM::Types::UVMopts& options,
             t_incidence_angle& incidence_angle
         )
@@ -954,14 +958,15 @@ namespace UVLM
             // free stream contribution
             UVLM::Types::copy_VecVecMat(u_ext, velocities);
 
+            UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
             // u_ext taking into account unsteady contributions
             UVLM::Unsteady::Utils::compute_resultant_grid_velocity
             (
                 zeta,
                 zeta_dot,
                 u_ext,
-                options.rbm_vel_g,
-                options.centre_rot_g,
+                rbm_vel_g,
+                centre_rot,
                 velocities
             );
 
