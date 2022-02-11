@@ -187,6 +187,10 @@ void UVLM::Unsteady::solver
     // Generate collocation points info
     //  Declaration
     lifting_surfaces_unsteady.get_surface_parameters();
+    
+    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.forces);
+
+    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.dynamic_forces);
 
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
     (
@@ -299,11 +303,18 @@ void UVLM::Unsteady::solver
             nl_body,
             phantom_surfaces
         );
-        // UVLM::PostProc::calculate_static_forces_nonlifting_body
-        // (
-        //     nl_body,
-        //     flightconditions
-        // );
+        UVLM::PostProc::calculate_static_forces_nonlifting_body
+        (
+            nl_body,
+            flightconditions
+        );
+        UVLM::PostProc::calculate_static_forces_unsteady
+        (
+            lifting_surfaces_unsteady,
+            phantom_surfaces,
+            steady_options,
+            flightconditions
+        );
     }
     else
     {
@@ -312,6 +323,12 @@ void UVLM::Unsteady::solver
             lifting_surfaces_unsteady,
             steady_options
         );
+        UVLM::PostProc::calculate_static_forces_unsteady
+        (
+            lifting_surfaces_unsteady,
+            steady_options,
+            flightconditions
+        );
     }
     if (options.quasi_steady)
     {
@@ -319,21 +336,5 @@ void UVLM::Unsteady::solver
         UVLM::Wake::Horseshoe::circulation_transfer(lifting_surfaces_unsteady.gamma,
                                                     lifting_surfaces_unsteady.gamma_star,
                                                     -1);
-    }
-
-    // forces calculation
-    // set forces to 0 just in case
-    // TODO: Check if necessary
-    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.forces);
-    // static:
-    UVLM::Types::Vector3 centre_rot_g = UVLM::Types::Vector3::Zero();
-    UVLM::PostProc::calculate_static_forces_unsteady
-    (
-        lifting_surfaces_unsteady,
-        phantom_surfaces,
-        steady_options,
-        flightconditions
-    );
-    UVLM::Types::initialise_VecVecMat(lifting_surfaces_unsteady.dynamic_forces);
-    
+    }   
 }
