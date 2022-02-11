@@ -133,7 +133,7 @@ void UVLM::Unsteady::solver
                                         lifting_surfaces_unsteady.dist_to_orig,
                                         lifting_surfaces_unsteady.rbm_vel_g,
                                         lifting_surfaces_unsteady.centre_rot,
-                                        uext_star_total,
+                                        lifting_surfaces_unsteady.uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }
@@ -302,7 +302,7 @@ void UVLM::Unsteady::solver
                                         lifting_surfaces_unsteady.dist_to_orig,
                                         lifting_surfaces_unsteady.rbm_vel_g,
                                         lifting_surfaces_unsteady.centre_rot,
-                                        uext_star_total,
+                                        lifting_surfaces_unsteady.uext_star_total,
                                         lifting_surfaces_unsteady.solid_vel,
                                         dt);
     }

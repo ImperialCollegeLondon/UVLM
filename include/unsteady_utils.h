@@ -139,18 +139,9 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     t_uext_out& uext_out
 )
 {
+    // New vector needed here
     UVLM::Types::Vector6 vec_rbm_vel_g;
     vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
-    // std::cout << "\n\nvec_rbm_vel_g = " << vec_rbm_vel_g << std::endl << std::endl;
-    // if (vec_rbm_vel_g.isZero(0))
-    // {
-    //     // std::cout << "\nIf all rbm_velocities are zero, we just need to subtract zeta_dot from uext!";
-    //     // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
-    //     UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
-    // }
-    // else
-    // {
-
     const uint n_surf = zeta.size();
     UVLM::Types::Vector3 w_cross_zeta;
         UVLM::Types::Vector3 zeta_temp;
@@ -285,10 +276,8 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
         // total stream velocity
         
         UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
-        UVLM::Types::Vector6 vec_rbm_vel_g;
-        vec_rbm_vel_g << options.rbm_vel_g[0], options.rbm_vel_g[1], options.rbm_vel_g[2], options.rbm_vel_g[3], options.rbm_vel_g[4], options.rbm_vel_g[5];
-    
-        rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();
+
+        rbm_no_omega.template head<3>() = lifting_surfaces.rbm_vel_g.template head<3>();
         UVLM::Types::Vector3 centre_rot = UVLM::Types::Vector3::Zero();
 
         UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -411,7 +400,7 @@ void UVLM::Unsteady::Utils::free_wake_convection_lifting
     UVLM::Types::allocate_VecVecMat(zeros, lifting_surfaces.uext_star);
     // total stream velocity
     UVLM::Types::Vector6 vec_rbm_vel_g;
-    vec_rbm_vel_g << options.rbm_vel_g[0], options.rbm_vel_g[1], options.rbm_vel_g[2], options.rbm_vel_g[3], options.rbm_vel_g[4], options.rbm_vel_g[5];
+    vec_rbm_vel_g << lifting_surfaces.rbm_vel_g[0], lifting_surfaces.rbm_vel_g[1], lifting_surfaces.rbm_vel_g[2], lifting_surfaces.rbm_vel_g[3], lifting_surfaces.rbm_vel_g[4], lifting_surfaces.rbm_vel_g[5];
 
     UVLM::Types::Vector6 rbm_no_omega = UVLM::Types::Vector6::Zero();
     rbm_no_omega.template head<3>() = vec_rbm_vel_g.template head<3>();

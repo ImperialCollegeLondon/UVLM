@@ -158,8 +158,11 @@ namespace UVLM
         {
             UVLM::Types::VecVecMapX dynamic_forces, uext_star;
             UVLM::Types::VecMapX dist_to_orig;  
-            UVLM::Types::VecVecMatrixX solid_vel; //
+            UVLM::Types::VecVecMatrixX solid_vel, uext_star_total; //
                 UVLM::Types::VecVecMapX normals_unsteady;
+                
+            UVLM::Types::VecMatrixX extra_gamma_star;
+            UVLM::Types::VecVecMatrixX extra_zeta_star;
             // Constructor
             lifting_surface_unsteady
             (
