@@ -325,7 +325,15 @@ void UVLM::Unsteady::solver
         );
         UVLM::PostProc::calculate_static_forces_unsteady
         (
-            lifting_surfaces_unsteady,
+            lifting_surfaces_unsteady.zeta,
+            lifting_surfaces_unsteady.zeta_dot,
+            lifting_surfaces_unsteady.zeta_star,
+            lifting_surfaces_unsteady.gamma,
+            lifting_surfaces_unsteady.gamma_star,
+            lifting_surfaces_unsteady.u_ext,
+            lifting_surfaces_unsteady.rbm_vel_g,
+            lifting_surfaces_unsteady.centre_rot,
+            lifting_surfaces_unsteady.forces,
             steady_options,
             flightconditions
         );
