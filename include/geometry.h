@@ -349,7 +349,7 @@ namespace UVLM
 			transformation_matrix << chordwise_vec[0], chordwise_vec[1], chordwise_vec[2],
 									 tangential_vec[0], tangential_vec[1], tangential_vec[2],
 									 normal_vec[0], normal_vec[1], normal_vec[2];
-            UVLM::Types::Vector3 global_coordinates = transformation_matrix.inverse()*panel_coordinates;
+            UVLM::Types::Vector3 global_coordinates = transformation_matrix.transpose()*panel_coordinates;
 			x_panel = global_coordinates[0];
 			y_panel = global_coordinates[1];
 			z_panel = global_coordinates[2];
