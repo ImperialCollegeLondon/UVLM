@@ -64,6 +64,7 @@ namespace UVLM
             bool cfl1;
             double vortex_radius;
             double vortex_radius_wake_ind;
+            bool symmetry_condition;
         };
 
         struct UVMopts
@@ -89,6 +90,7 @@ namespace UVLM
             uint interp_method;
             double yaw_slerp;
             bool quasi_steady;
+            bool symmetry_condition;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -105,12 +107,8 @@ namespace UVLM
             vm.horseshoe = false;
             vm.vortex_radius = uvm.vortex_radius;
             vm.vortex_radius_wake_ind = uvm.vortex_radius_wake_ind;
-            if (uvm.quasi_steady)
-            {
-                vm.Steady = true;
-            } else {
-                vm.Steady = false;
-            }
+            vm.symmetry_condition = uvm.symmetry_condition;
+            vm.Steady = uvm.quasi_steady;
             return vm;
         };
 
