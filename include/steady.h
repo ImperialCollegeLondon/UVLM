@@ -363,7 +363,8 @@ void UVLM::Steady::solve_horseshoe
     UVLM::Types::VectorX gamma_flat;
     UVLM::Matrix::deconstruct_gamma(gamma,
                                     gamma_flat,
-                                    zeta_col);
+                                    zeta_col,
+                                    Ktotal);
 
     UVLM::LinearSolver::solve_system
     (
@@ -448,7 +449,8 @@ void UVLM::Steady::solve_discretised
     UVLM::Types::VectorX gamma_flat;
     UVLM::Matrix::deconstruct_gamma(gamma,
                                     gamma_flat,
-                                    zeta_col);
+                                    zeta_col,
+                                    Ktotal);
 
 
     UVLM::LinearSolver::solve_system

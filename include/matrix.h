@@ -78,7 +78,8 @@ namespace UVLM
         (
             const t_gamma& gamma,
             UVLM::Types::VectorX& gamma_flat,
-            const t_zeta_col& zeta_col
+            const t_zeta_col& zeta_col,
+            const uint& Ktotal
         );
     }
 }
@@ -334,19 +335,15 @@ void UVLM::Matrix::deconstruct_gamma
 (
     const t_gamma& gamma,
     UVLM::Types::VectorX& gamma_flat,
-    const t_zeta_col& zeta_col
+    const t_zeta_col& zeta_col,
+    const uint& Ktotal
 )
 {
     const uint n_surf = gamma.size();
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta_col, dimensions);
 
-    uint n_total = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        n_total += dimensions[i_surf].first*dimensions[i_surf].second;
-    }
-    gamma_flat.resize(n_total);
+    gamma_flat.resize(Ktotal);
 
     uint i_flat = 0;
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
