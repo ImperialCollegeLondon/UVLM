@@ -3,6 +3,7 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include "biotsavart.h"
+#include "symmetry.h"
 
 #include <fstream>
 
@@ -111,9 +112,13 @@ void UVLM::Matrix::AIC
     const uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::Types::generate_dimensions(zeta, dimensions, - 1);
-
     UVLM::Types::VecDimensions dimensions_star;
     UVLM::Types::generate_dimensions(zeta_star, dimensions_star, -1);
+
+    // Init matrices in case of symmetry enforcements
+    UVLM::Types::MatrixX aic_symmetry;
+     UVLM::Types::VecVecMatrixX  zeta_symmetry;
+     UVLM::Types::VecVecMatrixX  zeta_star_symmetry;
 
     // build the offsets beforehand
     // (parallel variation)
@@ -126,6 +131,19 @@ void UVLM::Matrix::AIC
                       dimensions[icol_surf].second;
         i_offset += k_surf;
     }
+
+    if (options.symmetry_condition)
+    {
+        aic_symmetry = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
+        UVLM::Symmetry::generate_symmetric_surface_grids
+        (
+            zeta,
+            zeta_star,
+            zeta_symmetry,
+            zeta_star_symmetry
+        );
+    }
+    
 
     // fill up AIC
     for (uint icol_surf=0; icol_surf<n_surf; ++icol_surf)
@@ -162,10 +180,30 @@ void UVLM::Matrix::AIC
                     normals[icol_surf],
                     options.vortex_radius
                 );
-            } else // unsteady case
+                
+                if (options.symmetry_condition)
+                {
+                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset[icol_surf],  offset[ii_surf], k_surf, kk_surf);
+                    UVLM::BiotSavart::multisurface_steady_wake
+                    (
+                        zeta_symmetry[ii_surf],
+                        zeta_star_symmetry[ii_surf],
+                        dummy_gamma,
+                        dummy_gamma_star,
+                        zeta_col[icol_surf],
+                        horseshoe,
+                        block_symmetry,
+                        options.ImageMethod,
+                        normals[icol_surf],
+                        options.vortex_radius
+                    );
+                    // block += block_symmetry; // TODO: Check if -=
+                }
+         }
+            else // unsteady case
             {
                 dummy_gamma_star.setOnes(1,
-                                         dimensions_star[ii_surf].second);
+                                        dimensions_star[ii_surf].second);
                 UVLM::BiotSavart::multisurface_unsteady_wake
                 (
                     zeta[ii_surf],
@@ -181,6 +219,11 @@ void UVLM::Matrix::AIC
                 );
             }
         }
+    }
+
+    if (options.symmetry_condition)
+    {
+        aic -= aic_symmetry;
     }
 }
 
