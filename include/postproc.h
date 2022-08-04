@@ -35,7 +35,13 @@ namespace UVLM
             UVLM::Types::allocate_VecVecMat(velocities, zeta);
             // free stream contribution
             UVLM::Types::copy_VecVecMat(uext, velocities);
-
+            // initialise matrices in case of symmetry enforcement
+             UVLM::Types::VecVecMatrixX zeta_symmetry, zeta_star_symmetry;
+            if (options.symmetry_condition)
+            {                
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+            }
             // not bothered with effciency.
             // if it is so critical, it could be improved
             const uint n_surf = zeta.size();
@@ -166,6 +172,13 @@ namespace UVLM
             UVLM::Types::allocate_VecVecMat(velocities, zeta);
             // free stream contribution
             UVLM::Types::copy_VecVecMat(uext, velocities);
+            // initialise matrices in case of symmetry enforcement
+             UVLM::Types::VecVecMatrixX zeta_symmetry, zeta_star_symmetry;
+            if (options.symmetry_condition)
+            {                
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+            }
 
             // u_ext taking into account unsteady contributions
             UVLM::Unsteady::Utils::compute_resultant_grid_velocity
@@ -243,7 +256,24 @@ namespace UVLM
                                                                               rp,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
-                        }
+
+
+                            if (options.symmetry_condition)
+                            {
+
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_symmetry[ii_surf],
+                                                                                gamma[ii_surf],
+                                                                                rp,
+                                                                                options.ImageMethod,
+                                                                                options.vortex_radius);
+
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_star_symmetry[ii_surf],
+                                                                                gamma_star[ii_surf],
+                                                                                rp,
+                                                                                options.ImageMethod,
+                                                                                options.vortex_radius);
+                            }
+                            }
 
                         dl = r2-r1;
 
@@ -293,6 +323,20 @@ namespace UVLM
                                                                               rp,
                                                                               options.ImageMethod,
                                                                               options.vortex_radius);
+                            if (options.symmetry_condition)
+                            {
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_symmetry[ii_surf],
+                                                                                gamma[ii_surf],
+                                                                                rp,
+                                                                                options.ImageMethod,
+                                                                                options.vortex_radius);
+
+                                v_ind += UVLM::BiotSavart::whole_surface(zeta_star_symmetry[ii_surf],
+                                                                                gamma_star[ii_surf],
+                                                                                rp,
+                                                                                options.ImageMethod,
+                                                                                options.vortex_radius);
+                            }
                         }
 
                         dl = r2-r1;
@@ -358,6 +402,22 @@ namespace UVLM
                                                                 rp,
                                                                 options.ImageMethod,
                                                                 options.vortex_radius);
+
+                        if (options.symmetry_condition)
+                        {
+
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta_symmetry[ii_surf],
+                                                                    gamma[ii_surf],
+                                                                    rp,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
+
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta_star_symmetry[ii_surf],
+                                                                    gamma_star[ii_surf],
+                                                                    rp,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
+                        }
                     }
 
                     dl = r2-r1;
