@@ -135,13 +135,8 @@ void UVLM::Matrix::AIC
     if (options.symmetry_condition)
     {
         aic_symmetry = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-        UVLM::Symmetry::generate_symmetric_surface_grids
-        (
-            zeta,
-            zeta_star,
-            zeta_symmetry,
-            zeta_star_symmetry
-        );
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
     }
     
 

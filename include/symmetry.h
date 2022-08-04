@@ -32,22 +32,16 @@ namespace UVLM
             }    
         }
 
-        template <typename t_zeta, 
-                  typename t_zeta_star>
+        template <typename t_zeta>
         void generate_symmetric_surface_grids
         (
             const t_zeta& zeta,
-            const t_zeta_star& zeta_star,
-            UVLM::Types::VecVecMatrixX&  zeta_symmetry,
-            UVLM::Types::VecVecMatrixX&  zeta_star_symmetry
+            UVLM::Types::VecVecMatrixX&  zeta_symmetry
         )
         {
             UVLM::Types::allocate_VecVecMat(zeta_symmetry, zeta);
             UVLM::Types::copy_VecVecMat(zeta, zeta_symmetry);
             flip_sign_component_VecVecMat(zeta_symmetry, 1);
-            UVLM::Types::allocate_VecVecMat(zeta_star_symmetry, zeta_star);
-            UVLM::Types::copy_VecVecMat(zeta_star, zeta_star_symmetry);
-            flip_sign_component_VecVecMat(zeta_star_symmetry, 1);
         }
     }
 }
