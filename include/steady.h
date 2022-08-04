@@ -230,6 +230,7 @@ void UVLM::Steady::solver
             gamma,
             gamma_star,
             u_ind,
+            options.symmetry_condition,
             options.ImageMethod,
             options.vortex_radius_wake_ind);
         // Do not move the vertices in the TE

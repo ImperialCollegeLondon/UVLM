@@ -192,9 +192,8 @@ void UVLM::Matrix::AIC
                         normals[icol_surf],
                         options.vortex_radius
                     );
-                    // block += block_symmetry; // TODO: Check if -=
                 }
-         }
+            }
             else // unsteady case
             {
                 dummy_gamma_star.setOnes(1,
@@ -211,7 +210,25 @@ void UVLM::Matrix::AIC
                     normals[icol_surf],
                     0,
                     options.vortex_radius
-                );
+                ); 
+                
+                if (options.symmetry_condition)
+                {
+                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset[icol_surf],  offset[ii_surf], k_surf, kk_surf);
+                    UVLM::BiotSavart::multisurface_unsteady_wake
+                    (
+                        zeta_symmetry[ii_surf],
+                        zeta_star_symmetry[ii_surf],
+                        dummy_gamma,
+                        dummy_gamma_star,
+                        zeta_col[icol_surf],
+                        block_symmetry,
+                        options.ImageMethod,
+                        normals[icol_surf],
+                        0,
+                        options.vortex_radius
+                    ); 
+                }
             }
         }
     }
@@ -243,7 +260,7 @@ void UVLM::Matrix::RHS
 )
 {
     const uint n_surf = options.NumSurfaces;
-
+    UVLM::Types::VecVecMatrixX zeta_star_symmetry;
     rhs.setZero(Ktotal);
 
     // filling up RHS
@@ -256,6 +273,10 @@ void UVLM::Matrix::RHS
 
         if (!options.Steady)
         {
+            if (options.symmetry_condition)
+            {                
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+            }
             #pragma omp parallel for collapse(2)
             for (uint i=0; i<M; ++i)
             {
@@ -281,6 +302,16 @@ void UVLM::Matrix::RHS
                                                                     collocation_coords,
                                                                     options.ImageMethod,
                                                                     options.vortex_radius);
+                        if (options.symmetry_condition)
+                        {
+                            // TODO: how to handle v_ind??? same whole_surface() but with zeta_star_symmetry and - gamma_star??
+
+                            v_ind += UVLM::BiotSavart::whole_surface(zeta_star_symmetry[ii_surf],
+                                                                    gamma_star[ii_surf],
+                                                                    collocation_coords,
+                                                                    options.ImageMethod,
+                                                                    options.vortex_radius);
+                        }
                     }
                     u_col += v_ind;
 

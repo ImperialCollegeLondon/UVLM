@@ -3,6 +3,7 @@
 #include "EigenInclude.h"
 #include "types.h"
 #include "mapping.h"
+#include "symmetry.h"
 #include "debugutils.h"
 
 #include <limits>
@@ -190,6 +191,7 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
             t_uout&             uout,
+            const bool&         symmetry_condition = false,
             const bool&         image_method = false,
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
@@ -240,6 +242,7 @@ namespace UVLM
             const t_gamma&      gamma,
             const t_gamma_star& gamma_star,
             const bool&         image_method,
+            const bool&         symmetry_condition = false,
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
     }
@@ -1230,11 +1233,13 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     const t_gamma&      gamma,
     const t_gamma_star& gamma_star,
     t_uout&             uout,
+    const bool&         symmetry_condition,
     const bool&         image_method,
     const UVLM::Types::Real& vortex_radius
 )
 {
     const uint n_surf = zeta.size();
+
     for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
     {
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -1261,6 +1266,39 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
             );
         }
     }
+    if (symmetry_condition)
+    {
+        UVLM::Types::VecVecMatrixX  zeta_symmetry;
+        UVLM::Types::VecVecMatrixX  zeta_star_symmetry;
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
+        {
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {           
+              // wake on wake
+              UVLM::BiotSavart::whole_surface_on_surface
+              (
+                  zeta_star_symmetry[i_surf],
+                  gamma_star[i_surf],
+                  zeta_star[col_i_surf],
+                  uout[col_i_surf],
+                  image_method,
+                  vortex_radius
+              );
+              // surface on wake
+              UVLM::BiotSavart::whole_surface_on_surface
+              (
+                  zeta_symmetry[i_surf],
+                  gamma[i_surf],
+                  zeta_star[col_i_surf],
+                  uout[col_i_surf],
+                  image_method,
+                  vortex_radius
+              );
+            }
+        }
+    }
 }
 
 template <typename t_ttriad,
@@ -1276,12 +1314,14 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     const t_gamma&      gamma,
     const t_gamma_star& gamma_star,
     const bool&         image_method,
+    const bool&         symmetry_condition,
     const UVLM::Types::Real& vortex_radius
 )
 {
     UVLM::Types::Vector3 uout;
     uout.setZero();
     const uint n_surf = zeta.size();
+
     for (uint i_surf=0; i_surf<n_surf; ++i_surf)
     {
         // wake on point
@@ -1304,6 +1344,35 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
             image_method,
             vortex_radius
         );
+    }
+    if (symmetry_condition)
+    {
+        UVLM::Types::VecVecMatrixX  zeta_symmetry, zeta_star_symmetry;
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        {
+            // wake on point
+            uout += UVLM::BiotSavart::whole_surface
+            (
+                zeta_star_symmetry[i_surf],
+                gamma_star[i_surf],
+                target_triad,
+                // sum_uout,
+                image_method,
+                vortex_radius
+            );
+            // surface on point
+            uout += UVLM::BiotSavart::whole_surface
+            (
+                zeta_symmetry[i_surf],
+                gamma[i_surf],
+                target_triad,
+                // sum_uout,
+                image_method,
+                vortex_radius
+            );
+        }
     }
     return uout;
 }
