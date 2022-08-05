@@ -337,7 +337,32 @@ namespace UVLM
                 }
             }
         }
-
+        template <typename t_in,
+                  typename t_out>
+        inline void copy_VecMat
+        (
+            const t_in& in,
+            t_out& out
+        )
+        {
+            uint M, N;
+            uint n_surf = in.size();
+            for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+            {
+                uint n_dim = in[i_surf].size();
+                M = in[i_surf].rows();
+                N = in[i_surf].cols();
+                for (uint i_m=0; i_m<M; ++i_m)
+                {
+                    for (uint i_n=0; i_n<N; ++i_n)
+                    {
+                        out[i_surf](i_m, i_n) = in[i_surf](i_m, i_n);
+                    }
+                }
+                
+            }
+        }
+        
         template <typename t_mat>
         inline double norm_VecVec_mat
         (

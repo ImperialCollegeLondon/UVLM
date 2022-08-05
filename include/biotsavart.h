@@ -1268,10 +1268,12 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     }
     if (symmetry_condition)
     {
-        UVLM::Types::VecVecMatrixX  zeta_symmetry;
-        UVLM::Types::VecVecMatrixX  zeta_star_symmetry;
+        UVLM::Types::VecVecMatrixX  zeta_symmetry, zeta_star_symmetry;
         UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
         UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        UVLM::Types::VecMatrixX gamma_symmetry, gamma_star_symmetry;
+        UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
+        UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
         for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
         {
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -1280,7 +1282,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
               UVLM::BiotSavart::whole_surface_on_surface
               (
                   zeta_star_symmetry[i_surf],
-                  gamma_star[i_surf],
+                  gamma_star_symmetry[i_surf],
                   zeta_star[col_i_surf],
                   uout[col_i_surf],
                   image_method,
@@ -1290,7 +1292,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
               UVLM::BiotSavart::whole_surface_on_surface
               (
                   zeta_symmetry[i_surf],
-                  gamma[i_surf],
+                  gamma_symmetry[i_surf],
                   zeta_star[col_i_surf],
                   uout[col_i_surf],
                   image_method,
@@ -1348,15 +1350,18 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     if (symmetry_condition)
     {
         UVLM::Types::VecVecMatrixX  zeta_symmetry, zeta_star_symmetry;
+        UVLM::Types::VecMatrixX gamma_symmetry, gamma_star_symmetry;
         UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
         UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
+        UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
         {
             // wake on point
             uout += UVLM::BiotSavart::whole_surface
             (
                 zeta_star_symmetry[i_surf],
-                gamma_star[i_surf],
+                gamma_star_symmetry[i_surf],
                 target_triad,
                 // sum_uout,
                 image_method,
@@ -1366,7 +1371,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
             uout += UVLM::BiotSavart::whole_surface
             (
                 zeta_symmetry[i_surf],
-                gamma[i_surf],
+                gamma_symmetry[i_surf],
                 target_triad,
                 // sum_uout,
                 image_method,

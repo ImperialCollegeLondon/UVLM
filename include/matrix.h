@@ -117,8 +117,7 @@ void UVLM::Matrix::AIC
 
     // Init matrices in case of symmetry enforcements
     UVLM::Types::MatrixX aic_symmetry;
-     UVLM::Types::VecVecMatrixX  zeta_symmetry;
-     UVLM::Types::VecVecMatrixX  zeta_star_symmetry;
+     UVLM::Types::VecVecMatrixX zeta_symmetry, zeta_star_symmetry;
 
     // build the offsets beforehand
     // (parallel variation)
@@ -261,6 +260,7 @@ void UVLM::Matrix::RHS
 {
     const uint n_surf = options.NumSurfaces;
     UVLM::Types::VecVecMatrixX zeta_star_symmetry;
+    UVLM::Types::VecMatrixX gamma_star_symmetry;
     rhs.setZero(Ktotal);
 
     // filling up RHS
@@ -276,6 +276,7 @@ void UVLM::Matrix::RHS
             if (options.symmetry_condition)
             {                
                 UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+                UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
             }
             #pragma omp parallel for collapse(2)
             for (uint i=0; i<M; ++i)
@@ -304,10 +305,10 @@ void UVLM::Matrix::RHS
                                                                     options.vortex_radius);
                         if (options.symmetry_condition)
                         {
-                            // TODO: how to handle v_ind??? same whole_surface() but with zeta_star_symmetry and - gamma_star??
+                            // TODO: check if -= is possible?? then gamma symmetry is not needed (same in postproc)
 
                             v_ind += UVLM::BiotSavart::whole_surface(zeta_star_symmetry[ii_surf],
-                                                                    gamma_star[ii_surf],
+                                                                    gamma_star_symmetry[ii_surf],
                                                                     collocation_coords,
                                                                     options.ImageMethod,
                                                                     options.vortex_radius);
