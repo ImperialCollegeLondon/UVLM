@@ -303,10 +303,6 @@ void UVLM::Steady::solve_horseshoe
     const UVLM::Types::FlightConditions& flightconditions
 )
 {
-    // wake generation for horseshoe initialisation
-    UVLM::Wake::Horseshoe::init(lifting_surfaces.zeta,
-                                lifting_surfaces.zeta_star,
-                                flightconditions);
     lifting_surfaces.get_aerodynamic_solver_inputs(options);
 
     UVLM::Types::VectorX gamma_flat;
@@ -425,11 +421,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 )
 {
     if (options.horseshoe)
-    {
-        // wake generation for horseshoe initialisation
-        UVLM::Wake::Horseshoe::init(lifting_surfaces.zeta,
-                                    lifting_surfaces.zeta_star,
-                                    flightconditions);        
+    {    
         phantom_surfaces.update_wake(lifting_surfaces.zeta_star);
     }
     // Setup Lifting and Lifting Surfaces
