@@ -134,8 +134,8 @@ void UVLM::Matrix::AIC
     if (options.symmetry_condition)
     {
         aic_symmetry = UVLM::Types::MatrixX::Zero(Ktotal, Ktotal);
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, options.symmetry_plane, zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star,  options.symmetry_plane, zeta_star_symmetry);
     }
     
 
@@ -275,7 +275,7 @@ void UVLM::Matrix::RHS
         {
             if (options.symmetry_condition)
             {                
-                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, options.symmetry_plane, zeta_star_symmetry);
                 UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
             }
             #pragma omp parallel for collapse(2)
