@@ -180,8 +180,8 @@ namespace UVLM
             UVLM::Types::VecMatrixX gamma_symmetry, gamma_star_symmetry;
             if (options.symmetry_condition)
             {                
-                UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
-                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta, options.symmetry_plane, zeta_symmetry);
+                UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, options.symmetry_plane, zeta_star_symmetry);
                 UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
                 UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
             }

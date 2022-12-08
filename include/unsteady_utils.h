@@ -299,6 +299,7 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             gamma_star,
             u_convection,
             options.symmetry_condition,
+            options.symmetry_plane,
             options.ImageMethod,
             options.vortex_radius_wake_ind
         );

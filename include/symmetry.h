@@ -85,17 +85,6 @@ namespace UVLM
             UVLM::Types::copy_VecVecMat(zeta, zeta_symmetry);
             flip_sign_component_VecVecMat(zeta_symmetry, mirrored_component);
         }
-        template <typename t_zeta>
-        void generate_symmetric_surface_grids
-        (
-            const t_zeta& zeta,
-            UVLM::Types::VecVecMatrixX&  zeta_symmetry
-        )
-        {
-            UVLM::Types::allocate_VecVecMat(zeta_symmetry, zeta);
-            UVLM::Types::copy_VecVecMat(zeta, zeta_symmetry);
-            flip_sign_component_VecVecMat(zeta_symmetry, 2);
-        }
         template <typename t_gamma>
         void generate_symmetric_gamma_grid
         (

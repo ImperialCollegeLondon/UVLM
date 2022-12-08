@@ -192,6 +192,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             t_uout&             uout,
             const bool&         symmetry_condition = false,
+            const int&           symmetry_plane = 1,
             const bool&         image_method = false,
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
@@ -243,6 +244,7 @@ namespace UVLM
             const t_gamma_star& gamma_star,
             const bool&         image_method,
             const bool&         symmetry_condition = false,
+            const int&          symmetry_plane= 1,
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
     }
@@ -1234,6 +1236,7 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     const t_gamma_star& gamma_star,
     t_uout&             uout,
     const bool&         symmetry_condition,
+    const int&          symmetry_plane,
     const bool&         image_method,
     const UVLM::Types::Real& vortex_radius
 )
@@ -1269,8 +1272,8 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
     if (symmetry_condition)
     {
         UVLM::Types::VecVecMatrixX  zeta_symmetry, zeta_star_symmetry;
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, symmetry_plane, zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, symmetry_plane,zeta_star_symmetry);
         UVLM::Types::VecMatrixX gamma_symmetry, gamma_star_symmetry;
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
@@ -1317,6 +1320,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     const t_gamma_star& gamma_star,
     const bool&         image_method,
     const bool&         symmetry_condition,
+    const int&          symmetry_plane,
     const UVLM::Types::Real& vortex_radius
 )
 {
@@ -1351,8 +1355,8 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     {
         UVLM::Types::VecVecMatrixX  zeta_symmetry, zeta_star_symmetry;
         UVLM::Types::VecMatrixX gamma_symmetry, gamma_star_symmetry;
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, zeta_symmetry);
-        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, zeta_star_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta, symmetry_plane,zeta_symmetry);
+        UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, symmetry_plane,zeta_star_symmetry);
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
