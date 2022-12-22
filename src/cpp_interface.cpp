@@ -49,7 +49,8 @@ DLLEXPORT void run_VLM_nonlifting_body
     double** p_zeta,
     double** p_u_ext,
     double** p_sigma,
-    double** p_forces
+    double** p_forces,
+    double** p_pressure_coefficient
 )
 {
 #if defined(_OPENMP)
@@ -61,6 +62,7 @@ DLLEXPORT void run_VLM_nonlifting_body
                                                     p_zeta,
                                                     p_u_ext,
                                                     p_forces,
+                                                    p_pressure_coefficient,
                                                     p_sigma);
     UVLM::Steady::solver_nonlifting_body(nl_body,
                                          options,
@@ -86,6 +88,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     double** p_u_ext_nonlifting,
     double** p_sigma_nonlifting,
     double** p_forces_nonlifting,
+    double** p_pressure_coefficient_nonlifting,
     double*  p_rbm_vel,
     double*  p_centre_rot
 )
@@ -114,6 +117,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
                                                     p_zeta_nonlifting,
                                                     p_u_ext_nonlifting,
                                                     p_forces_nonlifting,
+                                                    p_pressure_coefficient_nonlifting,
                                                     p_sigma_nonlifting);
     // Setup Phantom Surfaces
     struct UVLM::StructUtils::phantom_surface phantom_surfaces = UVLM::StructUtils::phantom_surface(p_flag_zeta_phantom,
@@ -212,6 +216,7 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
     double** p_u_ext_nonlifting,
     double** p_sigma,
     double** p_forces_nonlifting,
+    double** p_pressure_coefficient_nonlifting,
     double* p_rbm_vel,
     double* p_centre_rot
 )
@@ -244,6 +249,7 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
         p_zeta_nonlifting,
         p_u_ext_nonlifting,
         p_forces_nonlifting,
+        p_pressure_coefficient_nonlifting,
         p_sigma
     );
                                                     

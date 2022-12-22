@@ -209,7 +209,7 @@ namespace UVLM
                                                                                  velocities[i_surf][1](i_M, i_N), 
                                                                                  velocities[i_surf][2](i_M, i_N));                        
 						
-						pressure_coefficients[i_surf](i_M, i_N) = 1.0 - induced_velocity_squared/freestream_velocity_squared;
+						nl_body.pressure_coefficients[i_surf](i_M, i_N) = 1.0 - induced_velocity_squared/freestream_velocity_squared;
 						
 						UVLM::Types::Real area = 0;
                         area = UVLM::Geometry::panel_area
@@ -222,7 +222,7 @@ namespace UVLM
 						for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
 						{
 							forces_collocation[i_surf][i_dim](i_M, i_N) = -0.5*flightconditions.rho*freestream_velocity_squared
-							                                  *pressure_coefficients[i_surf](i_M, i_N)
+							                                  *nl_body.pressure_coefficients[i_surf](i_M, i_N)
 															  *area*nl_body.normals[i_surf][i_dim](i_M, i_N);
 						}
 					}

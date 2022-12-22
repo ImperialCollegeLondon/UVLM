@@ -357,7 +357,7 @@ namespace UVLM
         struct nonlifting_body : surface
         {
             // Nonlifting body specifix
-            UVLM::Types::VecMapX sigma;
+            UVLM::Types::VecMapX sigma, pressure_coefficients;
             UVLM::Types::VecVecMatrixX u_induced_col;
 
             // Aerodynamic Solver Inputs
@@ -370,10 +370,12 @@ namespace UVLM
                 double** p_zeta,
                 double** p_u_ext,
                 double** p_forces,
+                double** p_pressure_coefficient_nonlifting,
                 double** p_sigma
             ):surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces}
             {   
                 UVLM::Mapping::map_VecMat(dimensions, p_sigma, sigma, 0);
+                UVLM::Mapping::map_VecMat(dimensions, p_pressure_coefficient_nonlifting, pressure_coefficients, 0); 
             }
             void get_surface_parameters(bool phantom_wing_test = false)
             {
