@@ -29,7 +29,8 @@ namespace UVLM
 		void transform_forces_from_col_to_nodes
 		(
             const t_forces_collocation& forces_collocation,
-            t_forces_node& forces_node
+            t_forces_node& forces_node,            
+            const bool rotational_body
 		);
         template <typename t_forces_node,
 				  typename t_forces_norm>
@@ -231,7 +232,7 @@ namespace UVLM
 
             // export_data_to_csv_file("pressure_coefficient.csv", pressure_coefficients[0]);
             // Transform forces from collocation points to nodes
-            UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces);
+            UVLM::PostProc::transform_forces_from_col_to_nodes(forces_collocation, nl_body.forces, true);
             
         }
 
@@ -1193,22 +1194,39 @@ namespace UVLM
 		void transform_forces_from_col_to_nodes
 		(
             const t_forces_collocation& forces_collocation,
-            t_forces_node& forces_node
+            t_forces_node& forces_node,
+            const bool rotational_body
 		)
 		{
 			const uint n_surf = forces_node.size();
             uint considered_columns, column_shift;
             for (uint i_surf=0; i_surf<n_surf; ++i_surf)
 			{
-				const uint M = forces_node[i_surf][0].rows();
-                const uint N = forces_node[i_surf][0].cols();
+				uint M = forces_node[i_surf][0].rows();
+                uint N = forces_node[i_surf][0].cols();
+
+
                 for (uint i_row=0; i_row<M; ++i_row)
                 {
-	                for (uint j_col=0; j_col<N; ++j_col)
-					{		
-                        if (j_col == 0) 
-                        {
-                            considered_columns = 1;
+                    if (rotational_body && i_row == N-1)
+                    {
+                        // skips last row for rotational bodies where zeta's last row contains the position 
+                        // of the nodes already contained in the first row
+                        break;
+                    }
+                    else
+                    {
+                        for (uint j_col=0; j_col<N; ++j_col)
+                        {	
+                            
+                            if ((j_col ==0 || j_col ==N-1) && (rotational_body)) 
+                            {
+                                // skips first and last column as for rotanional body the force at the sharp edge should be zero
+                                continue;
+                            }
+                            if (j_col == 0) 
+                            {
+                                considered_columns = 1;
                             column_shift = 0;
                         }
                         else if (j_col ==N-1)
@@ -1229,18 +1247,18 @@ namespace UVLM
                                 forces_node[i_surf][dim](i_row, j_col) = forces_collocation[i_surf][dim].block(i_row, j_col-column_shift, 1, considered_columns).sum();
                                 forces_node[i_surf][dim](i_row, j_col) += forces_collocation[i_surf][dim].block(0, j_col-column_shift, 1, considered_columns).sum();
                                 forces_node[i_surf][dim](i_row, j_col) *= 0.25;
-                            }
-                            else if (i_row == M-1)
-                            {
-                                // TODO: Change size of forces node (nodes in first and last row are the same)
-                                forces_node[i_surf][dim](i_row, j_col) = forces_node[i_surf][dim](0, j_col);
-                            }
-                            else
-                            {
-                                forces_node[i_surf][dim](i_row, j_col) = forces_collocation[i_surf][dim].block(i_row, j_col-column_shift, 2, considered_columns).mean();
+                                }
+                                else if (i_row == M-1)
+                                {
+                                    forces_node[i_surf][dim](i_row, j_col) = forces_node[i_surf][dim](0, j_col);
+                                }
+                                else
+                                {
+                                    forces_node[i_surf][dim](i_row, j_col) = forces_collocation[i_surf][dim].block(i_row, j_col-column_shift, 2, considered_columns).mean();
+                                }	
                             }						
-                        }						
-					}
+                        }
+                    }
 				}
 			}
 		}       
