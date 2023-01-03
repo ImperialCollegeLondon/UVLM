@@ -1208,7 +1208,7 @@ namespace UVLM
 
                 for (uint i_row=0; i_row<M; ++i_row)
                 {
-                    if (rotational_body && i_row == N-1)
+                    if (rotational_body && i_row == M-1)
                     {
                         // skips last row for rotational bodies where zeta's last row contains the position 
                         // of the nodes already contained in the first row
