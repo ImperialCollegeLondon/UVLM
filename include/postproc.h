@@ -222,7 +222,7 @@ namespace UVLM
 						// no moments considered 
 						for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
 						{
-							forces_collocation[i_surf][i_dim](i_M, i_N) = -0.5*flightconditions.rho*freestream_velocity_squared
+							forces_collocation[i_surf][i_dim](i_M, i_N) = 0.5*flightconditions.rho*freestream_velocity_squared
 							                                  *nl_body.pressure_coefficients[i_surf](i_M, i_N)
 															  *area*nl_body.normals[i_surf][i_dim](i_M, i_N);
 						}
