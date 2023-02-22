@@ -224,7 +224,7 @@ void UVLM::Unsteady::solver
     if (!options.only_lifting)
     {
         // nonlifting parameters/geometry attributes        
-        nl_body.get_surface_parameters();
+        nl_body.get_surface_parameters(options.phantom_wing_test);
         
         // phantom TO-DO: case if no phantom panels required? what is the input to the function below?
         phantom_surfaces.get_surface_parameters();

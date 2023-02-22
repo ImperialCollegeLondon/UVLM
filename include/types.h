@@ -59,6 +59,7 @@ namespace UVLM
         	bool Rollup;
             bool only_lifting;
             bool only_nonlifting;
+            bool phantom_wing_test;
         	unsigned int NumCores;
         	unsigned int NumSurfaces;
         	unsigned int NumSurfacesNonlifting;
@@ -72,7 +73,6 @@ namespace UVLM
             bool cfl1;
             double vortex_radius;
             double vortex_radius_wake_ind;
-            bool phantom_wing_test;
         };
 
         struct UVMopts
@@ -83,6 +83,7 @@ namespace UVLM
             uint NumSurfacesNonlifting;
             bool only_lifting;
             bool only_nonlifting;
+            bool phantom_wing_test;
             // uint steady_n_rollup;
             // uint steady_rollup_tolerance;
             // uint steady_rollup_aic_refresh;
@@ -102,7 +103,6 @@ namespace UVLM
             double yaw_slerp;
             bool quasi_steady;
             uint num_spanwise_panels_wo_induced_velocity;
-            bool phantom_wing_test;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
