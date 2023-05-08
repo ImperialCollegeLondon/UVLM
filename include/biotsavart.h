@@ -245,7 +245,10 @@ namespace UVLM
             const bool&         image_method,
             const bool&         symmetry_condition = false,
             const int&          symmetry_plane= 1,
-            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
+            const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF,
+            const bool& consider_only_gust_vane_singularities = false,
+            const bool& consider_only_wing_singularities = false,
+            const uint& num_gust_vane_surfaces = 0
         );
     }
 }
@@ -1242,7 +1245,6 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
 )
 {
     const uint n_surf = zeta.size();
-
     for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
     {
         for (uint i_surf=0; i_surf<n_surf; ++i_surf)
@@ -1321,14 +1323,28 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
     const bool&         image_method,
     const bool&         symmetry_condition,
     const int&          symmetry_plane,
-    const UVLM::Types::Real& vortex_radius
+    const UVLM::Types::Real& vortex_radius,
+    const bool& consider_only_gust_vane_singularities,
+    const bool& consider_only_wing_singularities,
+    const uint& num_gust_vane_surfaces
 )
 {
     UVLM::Types::Vector3 uout;
     uout.setZero();
     const uint n_surf = zeta.size();
-
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+    uint starting_surf_panel = 0;
+    uint ending_surf_panel = n_surf;
+    // todo: Starting surface panel as input
+    //todo warning if both are true
+    if (consider_only_gust_vane_singularities == true)
+    {
+      starting_surf_panel = n_surf - num_gust_vane_surfaces;
+    }
+    else if (consider_only_wing_singularities == true)
+    {
+      ending_surf_panel = n_surf - num_gust_vane_surfaces;
+    }
+    for (uint i_surf=starting_surf_panel; i_surf<n_surf; ++i_surf)
     {
         // wake on point
         uout += UVLM::BiotSavart::whole_surface
@@ -1359,7 +1375,7 @@ UVLM::Types::Vector3 UVLM::BiotSavart::total_induced_velocity_on_point
         UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, symmetry_plane,zeta_star_symmetry);
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma, gamma_symmetry);
         UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
-        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        for (uint i_surf=starting_surf_panel; i_surf<n_surf; ++i_surf)
         {
             // wake on point
             uout += UVLM::BiotSavart::whole_surface

@@ -496,12 +496,19 @@ DLLEXPORT void total_induced_velocity_at_points
     double** p_gamma_star,
     double* p_target_triads,
     double* p_uout,
-    unsigned int npoints
+    unsigned int npoints,
+    bool p_consider_only_gust_vane_singularities,
+    bool p_consider_only_wing_singularities,
+    int p_num_gust_vanes
 )
 {
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
+    // TODO: Check if needed
+    bool consider_only_gust_vane_singularities = p_consider_only_gust_vane_singularities;
+    bool consider_only_wing_singularities = p_consider_only_wing_singularities;
+    int num_gust_vanes = p_num_gust_vanes;
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
     UVLM::CppInterface::transform_dimensions(n_surf,
@@ -558,7 +565,13 @@ DLLEXPORT void total_induced_velocity_at_points
                         gamma,
                         gamma_star,
                         options.ImageMethod,
-                        options.vortex_radius);
+                        options.symmetry_condition,
+                        options.symmetry_plane,
+                        options.vortex_radius,
+                        consider_only_gust_vane_singularities,
+                        consider_only_wing_singularities,
+                        num_gust_vanes
+                        );
         uout(ipoint, 0) = aux_uout(0);
         uout(ipoint, 1) = aux_uout(1);
         uout(ipoint, 2) = aux_uout(2);
