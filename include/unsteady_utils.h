@@ -519,10 +519,11 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             options.vortex_radius_wake_ind
         );
         UVLM::Triads::VecVecMatrix_addition(u_convection_lifting, u_convection_phantom, u_convection);
-        
-        //Calculate induced velocity by sources on wake
-        UVLM::Types::VecVecMatrixX u_convection_nonlifting;
-        UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
+        if (!options.phantom_wing_test)
+        {
+                //Calculate induced velocity by sources on wake
+                UVLM::Types::VecVecMatrixX u_convection_nonlifting;
+                UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
         (
             lifting_surfaces.zeta_star,
             nl_body,
@@ -538,9 +539,10 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
                 for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                 {
                     for (uint i_row = 0; i_row <  u_convection[i_surf][0].rows(); i_row++)
-                    {
-                        // TODO: Check if also induced phantom velocity has to be subtracted?
-                        u_convection[i_surf][i_dim](i_row, 0) -= u_convection_nonlifting[i_surf][i_dim](i_row, 0);
+                        {
+                            // TODO: Check if also induced phantom velocity has to be subtracted?
+                            u_convection[i_surf][i_dim](i_row, 0) -= u_convection_nonlifting[i_surf][i_dim](i_row, 0);
+                        }
                     }
                 }
             }
