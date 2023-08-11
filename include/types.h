@@ -70,7 +70,6 @@ namespace UVLM
             bool iterative_solver;
             double iterative_tol;
             bool iterative_precond;
-            bool cfl1;
             double vortex_radius;
             double vortex_radius_wake_ind;
         };
@@ -84,11 +83,7 @@ namespace UVLM
             bool only_lifting;
             bool only_nonlifting;
             bool phantom_wing_test;
-            // uint steady_n_rollup;
-            // uint steady_rollup_tolerance;
-            // uint steady_rollup_aic_refresh;
             uint convection_scheme;
-            // uint Mstar;
             bool ImageMethod;
             bool iterative_solver;
             double iterative_tol;
@@ -112,7 +107,6 @@ namespace UVLM
             vm.NumCores = uvm.NumCores;
             vm.NumSurfaces = uvm.NumSurfaces;
             vm.NumSurfacesNonlifting = uvm.NumSurfacesNonlifting;
-            // vm.Mstar = uvm.Mstar;
             vm.ImageMethod = uvm.ImageMethod;
             vm.iterative_solver = uvm.iterative_solver;
             vm.iterative_tol = uvm.iterative_tol;
