@@ -420,7 +420,7 @@ void UVLM::Matrix::RHS
         uint N = uext_total_col[i_surf][0].cols();
         if (!options.Steady)
         {
-            // #pragma omp parallel for collapse(2)
+            #pragma omp parallel for collapse(2)
             for (uint i=0; i<M; ++i)
             {
                 for (uint j=0; j<N; ++j)
