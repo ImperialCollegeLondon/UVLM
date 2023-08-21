@@ -213,7 +213,6 @@ namespace UVLM
                 double** p_normals_unsteady
             ):lifting_surface{n_surfaces, p_dimensions, p_zeta, p_u_ext, p_forces, p_zeta_star, p_zeta_dot, p_gamma, p_gamma_star, p_dimensions_star, p_rbm_vel, p_centre_rot}
             {    
-                // std::cout << "\n INITIALISING LIFTING SURFACE UNSTEADY STRUCT!";
                 
                 UVLM::Mapping::map_VecVecMat(dimensions,
                                             p_dynamic_forces,
@@ -232,11 +231,7 @@ namespace UVLM
                 UVLM::Mapping::map_VecVecMat(dimensions,
                                                 p_normals_unsteady,
                                                 normals_unsteady,
-                                                0);
-
-                                            
-                // UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
-                // UVLM::Types::MapVectorX centre_rot (p_centre_rot, UVLM::Constants::NDIM);           
+                                                0);         
             }
             void get_surface_parameters()
             {
@@ -294,7 +289,6 @@ namespace UVLM
                 }
                 else
                 {
-                    // TODO: Check if code adaptions needed for this case
                     Ktotal = 0;
                 }                
             }

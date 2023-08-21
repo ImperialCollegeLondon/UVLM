@@ -839,7 +839,6 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
         // #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
         for (uint i_star=0; i_star<mstar; ++i_star)
         {
-            // std::cout << "WARNING: this should not be computed" << std::endl;
             temp_uout += UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta_star[0].template block<2,2>(i_star, j),
                                           zeta_star[1].template block<2,2>(i_star, j),

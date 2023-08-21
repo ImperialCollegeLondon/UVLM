@@ -226,9 +226,9 @@ void UVLM::Sources::get_influence_coefficient
 																						  normal_col_vec
 																						  );
 					}
-					aic_x(collocation_id,panel_id) = induced_velocity_vec[0];//(4.0*UVLM::Constants::PI);
-					aic_y(collocation_id,panel_id) = induced_velocity_vec[1];//(4.0*UVLM::Constants::PI);
-					aic_z(collocation_id,panel_id) = induced_velocity_vec[2];//(4.0*UVLM::Constants::PI);
+					aic_x(collocation_id,panel_id) = induced_velocity_vec[0];
+					aic_y(collocation_id,panel_id) = induced_velocity_vec[1];
+					aic_z(collocation_id,panel_id) = induced_velocity_vec[2];
 					collocation_id += 1;
 				}
 			}

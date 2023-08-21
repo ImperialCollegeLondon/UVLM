@@ -578,14 +578,6 @@ namespace UVLM
                                         aic_x,
                                         aic_y,
                                         aic_z);
-            // add induced velocity by sources
-            // UVLM::Types::VectorX sigma_flat;
-            // UVLM::Matrix::deconstruct_gamma(nl_body.sigma,
-            //                                 sigma_flat,
-            //                                 nl_body.zeta_col);
-            std::cout << "\nsigma flat = " << sigma_flat;
-            // UVLM::Types::VecVecMatrixX u_induced_by_sources;
-            // UVLM::Types::allocate_VecVecMat(u_induced_by_sources, corner_points);
 	        calculate_induced_velocity_col(sigma_flat,
                                             aic_x,
                                             aic_y,
@@ -707,14 +699,11 @@ namespace UVLM
                         }
                         if ((!options.phantom_wing_test) && (options.consider_u_ind_by_sources_for_lifting_forces))
                         {
-                            std::cout << "\n\nvind z before = " << v_ind(2);
-                            std::cout << "\n\nsource induced vel = " << lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices[i_surf][2](i_M,i_N);
                             for (uint idim=0; idim < UVLM::Constants::NDIM; idim++)
                             {         
                                                 
                                 v_ind(idim) += lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices[i_surf][idim](i_M,i_N);
                             }
-                            std::cout << "\n\nvind z after = " << v_ind(2);
 
                         }
 

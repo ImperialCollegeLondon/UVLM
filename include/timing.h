@@ -22,9 +22,7 @@ namespace UVLM
 
             void output()
             {
-                // std::cout << "Finished in " << this->cpu_time << "seconds [CPU time]" << std::endl;
-                printf("Finished in %6.3f seconds [CPU time]\n", this->cpu_time);
-                // std::cout << "            " << this->wall_duration.count() << "seconds [wall time]" << std::endl;
+                printf("Finished in %6.3f seconds [CPU time]\n", this->cpu_time);=
                 printf("            %6.3f seconds [wall clock time]\n", this->wall_duration.count());
             };
         public:
