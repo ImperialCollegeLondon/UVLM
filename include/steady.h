@@ -496,28 +496,24 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 												   nl_body.aic_sources_z,
 												   nl_body.u_induced_col);
 
-    // ToDo: Integrate in function below!
-	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-    UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-    UVLM::Types::MatrixX aic_nonlifting_on_lifting_y = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
-    UVLM::Matrix::AIC_sources(nl_body.zeta,
-                              lifting_surfaces.zeta_col,
-                              nl_body.longitudinals,
-                              nl_body.perpendiculars,
-                              nl_body.normals,
-                              lifting_surfaces.longitudinals, //collocation
-                              lifting_surfaces.perpendiculars, //collocation
-                              lifting_surfaces.normals, //collocation
-							  aic_nonlifting_on_lifting_x,
-							  aic_nonlifting_on_lifting_y,
-                              aic_nonlifting_on_lifting_z,
-                              false);  
-    lifting_surfaces.get_induced_col_from_sources(sigma_flat, 
-                                                    aic_nonlifting_on_lifting_x,
-                                                    aic_nonlifting_on_lifting_y,
-                                                    aic_nonlifting_on_lifting_z, 
-                                                    nl_body.Ktotal);
-                                    
+    if (options.consider_u_ind_by_sources_for_lifting_forces)
+    {
+        // nonlifting influence on lifting surface forces (or almost no influence but messing up the junction force)
+        lifting_surfaces.get_coordinates_center_vertices();
+        UVLM::PostProc::calculate_source_induced_velocities_on_points(
+            lifting_surfaces.coordinates_center_chordwise_vertices,
+            nl_body,
+            sigma_flat,
+            lifting_surfaces.u_induced_by_sources_on_center_chordwise_vertices
+        );
+
+        UVLM::PostProc::calculate_source_induced_velocities_on_points(
+            lifting_surfaces.coordinates_center_spanwise_vertices,
+            nl_body,
+            sigma_flat,
+            lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices
+        );
+    }                
     UVLM::Matrix::reconstruct_gamma(sigma_flat,
                                     nl_body.sigma,
                                     nl_body.zeta_col);

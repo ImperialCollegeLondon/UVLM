@@ -509,7 +509,89 @@ namespace UVLM
                 }
             }
         }
+        template <typename t_sigma_flat,
+                  typename t_aic,
+                  typename t_u_ind>
+        void calculate_induced_velocity_col
+        (
+            const t_sigma_flat& sigma_flat,
+            const t_aic& u_induced_x,
+            const t_aic& u_induced_y,
+            const t_aic& u_induced_z,
+			t_u_ind& u_induced_col
+        )
+		{
+			uint n_collocation_points = u_induced_x.rows();
+			uint n_panels = u_induced_x.cols();
+            UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_collocation_points);
+			for (uint i_col=0; i_col<n_collocation_points; i_col++)
+			{
+				for (uint j_source=0; j_source<n_panels; j_source++)
+				{
+					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_source)* sigma_flat(j_source);
+					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_source)* sigma_flat(j_source);
+					u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_source)* sigma_flat(j_source);
+                    
+				}
 
+			}
+
+	    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+						                    u_induced_col,
+						                    u_induced_col);
+    
+		}
+        template <typename t_corner_points,
+                  typename t_nl_body>
+        void calculate_source_induced_velocities_on_points
+        (
+            const t_corner_points& corner_points,
+            const t_nl_body& nl_body,
+            UVLM::Types::VectorX& sigma_flat,
+            UVLM::Types::VecVecMatrixX& u_induced_by_sources
+        )
+        {
+            // Get surface vectors of zeta_star (account for points instead of panels)
+            // determine convection velocity u_ind from non lifting surfaces
+            UVLM::Types::VecVecMatrixX normals, longitudinals, perpendiculars;
+            
+            UVLM::Types::allocate_VecVecMat(normals, corner_points);
+            UVLM::Types::allocate_VecVecMat(longitudinals, corner_points);
+            UVLM::Types::allocate_VecVecMat(perpendiculars, corner_points);
+            UVLM::Geometry::generate_surface_vectors_wake(corner_points, normals, longitudinals, perpendiculars);
+                
+            // Allocate matrices for source influence
+            uint Ktotal = UVLM::Matrix::get_total_VecVecMat_size(normals);
+            UVLM::Types::MatrixX aic_x = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+            UVLM::Types::MatrixX aic_y = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+            UVLM::Types::MatrixX aic_z = UVLM::Types::MatrixX::Zero(Ktotal, nl_body.Ktotal);
+
+            // Get induced velocities by sources
+            UVLM::Matrix::AIC_sources(nl_body.zeta,
+                                        corner_points,
+                                        nl_body.longitudinals,
+                                        nl_body.perpendiculars,
+                                        nl_body.normals,
+                                        longitudinals,
+                                        perpendiculars,
+                                        normals,
+                                        aic_x,
+                                        aic_y,
+                                        aic_z);
+            // add induced velocity by sources
+            // UVLM::Types::VectorX sigma_flat;
+            // UVLM::Matrix::deconstruct_gamma(nl_body.sigma,
+            //                                 sigma_flat,
+            //                                 nl_body.zeta_col);
+            std::cout << "\nsigma flat = " << sigma_flat;
+            // UVLM::Types::VecVecMatrixX u_induced_by_sources;
+            // UVLM::Types::allocate_VecVecMat(u_induced_by_sources, corner_points);
+	        calculate_induced_velocity_col(sigma_flat,
+                                            aic_x,
+                                            aic_y,
+                                            aic_z,
+                                            u_induced_by_sources);
+        }
 
         // TODO: Merge this function with the one above
         template <typename t_struct_lifting_surfaces,
@@ -623,12 +705,21 @@ namespace UVLM
                                                                               
                                                                     
                         }
-                        
-                            // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
-                            // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
-                            // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);
+                        if ((!options.phantom_wing_test) && (options.consider_u_ind_by_sources_for_lifting_forces))
+                        {
+                            std::cout << "\n\nvind z before = " << v_ind(2);
+                            std::cout << "\n\nsource induced vel = " << lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices[i_surf][2](i_M,i_N);
+                            for (uint idim=0; idim < UVLM::Constants::NDIM; idim++)
+                            {         
+                                                
+                                v_ind(idim) += lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices[i_surf][idim](i_M,i_N);
+                            }
+                            std::cout << "\n\nvind z after = " << v_ind(2);
+
+                        }
 
                         dl = r2-r1;
+
                         v << 0.5*(velocities[i_surf][0](i_M, i_N) +
                                   velocities[i_surf][0](i_M, i_N+1)),
                              0.5*(velocities[i_surf][1](i_M, i_N) +
@@ -689,9 +780,15 @@ namespace UVLM
                                                                               options.vortex_radius);
                                                                               
                         }
-                        // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,i_N);
-                        // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,i_N);
-                        // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,i_N);  
+                                                
+                        if ((!options.phantom_wing_test) && (options.consider_u_ind_by_sources_for_lifting_forces))
+                        {
+                            for (uint idim=0; idim < UVLM::Constants::NDIM; idim++)
+                            {
+                            
+                                v_ind(idim) += lifting_surfaces.u_induced_by_sources_on_center_chordwise_vertices[i_surf][idim](i_M,i_N);
+                            }
+                        }
 
                         dl = r2-r1;
 
@@ -771,9 +868,6 @@ namespace UVLM
                                                                           
                     }
 
-                    // v_ind(0) += lifting_surfaces.u_induced_col_sources[i_surf][0](i_M,N);
-                    // v_ind(1) += lifting_surfaces.u_induced_col_sources[i_surf][1](i_M,N);
-                    // v_ind(2) += lifting_surfaces.u_induced_col_sources[i_surf][2](i_M,N);  
                     dl = r2-r1;
 
                     v << 0.5*(velocities[i_surf][0](i_M, N) +
@@ -1067,39 +1161,6 @@ namespace UVLM
             }
         }
 
-        template <typename t_sigma_flat,
-                  typename t_aic,
-                  typename t_u_ind>
-        void calculate_induced_velocity_col
-        (
-            const t_sigma_flat& sigma_flat,
-            const t_aic& u_induced_x,
-            const t_aic& u_induced_y,
-            const t_aic& u_induced_z,
-			t_u_ind& u_induced_col
-        )
-		{
-			uint n_collocation_points = u_induced_x.rows();
-			uint n_panels = u_induced_x.cols();
-            UVLM::Types::MatrixX u_induced_col_flat = UVLM::Types::MatrixX::Zero(3,n_collocation_points);
-			for (uint i_col=0; i_col<n_collocation_points; i_col++)
-			{
-				for (uint j_source=0; j_source<n_panels; j_source++)
-				{
-					u_induced_col_flat(0,i_col) += u_induced_x(i_col, j_source)* sigma_flat(j_source);
-					u_induced_col_flat(1,i_col) += u_induced_y(i_col, j_source)* sigma_flat(j_source);
-					u_induced_col_flat(2,i_col) += u_induced_z(i_col, j_source)* sigma_flat(j_source);
-                    
-				}
-
-			}
-
-	    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
-						                    u_induced_col,
-						                    u_induced_col);
-    
-		}
-		
         template <typename t_normal,
 				  typename t_longitudinal,
 				  typename t_perpendicular,

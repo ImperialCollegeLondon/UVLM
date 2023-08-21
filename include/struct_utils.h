@@ -64,7 +64,8 @@ namespace UVLM
             UVLM::Types::VecMapX gamma, gamma_star;
             UVLM::Types::VecVecMapX zeta_dot, zeta_star;
             UVLM::Types::MatrixX aic;
-            UVLM::Types::VecVecMatrixX u_induced_col_sources;
+            UVLM::Types::VecVecMatrixX coordinates_center_spanwise_vertices,coordinates_center_chordwise_vertices;
+            UVLM::Types::VecVecMatrixX u_induced_col_sources, u_induced_by_sources_on_center_chordwise_vertices, u_induced_by_sources_on_center_spanwise_vertices;
             UVLM::Types::VectorX rbm_vel_g, centre_rot;
             // UVLM::Types::MapVectorX rbm_vel_g_1();// use vector x?
             
@@ -92,6 +93,10 @@ namespace UVLM
                 UVLM::Mapping::map_VecMat(dimensions_star, p_gamma_star, gamma_star, 0);
             
                 UVLM::Types::allocate_VecVecMat(u_induced_col_sources, u_ext, -1);  
+                UVLM::Types::allocate_VecVecMat(coordinates_center_spanwise_vertices, u_ext, -1);
+                UVLM::Types::allocate_VecVecMat(coordinates_center_chordwise_vertices, coordinates_center_spanwise_vertices); 
+                UVLM::Types::allocate_VecVecMat(u_induced_by_sources_on_center_chordwise_vertices, coordinates_center_spanwise_vertices); 
+                UVLM::Types::allocate_VecVecMat(u_induced_by_sources_on_center_spanwise_vertices, coordinates_center_spanwise_vertices);  
                 
                 UVLM::Mapping::map_VecX(2*UVLM::Constants::NDIM, p_rbm_vel, rbm_vel_g);   
                 UVLM::Mapping::map_VecX(2*UVLM::Constants::NDIM, p_centre_rot, centre_rot);   
@@ -152,6 +157,30 @@ namespace UVLM
                     u_induced_col_sources
                     );
             }
+
+            void get_coordinates_center_vertices()
+            {   
+                // TODO: parallelization
+                for (uint isurf=0; isurf < n_surf; isurf++)
+                {
+                    for (uint icol=0; icol < dimensions[isurf].second; icol++)
+                    {
+                        for (uint irow=0; irow < dimensions[isurf].first; irow++)
+                        {                            
+                            for (uint idim=0; idim < UVLM::Constants::NDIM; idim++)
+                            {  
+
+                                coordinates_center_chordwise_vertices[isurf][idim](irow, icol) = 0.5 * (zeta[isurf][idim](irow, icol) +zeta[isurf][idim](irow + 1, icol));
+                                coordinates_center_spanwise_vertices[isurf][idim](irow, icol) = 0.5 * (zeta[isurf][idim](irow, icol) +zeta[isurf][idim](irow, icol + 1));
+                            }
+                        }
+
+                    }
+
+                }
+            }
+
+
         };
 
         struct lifting_surface_unsteady : lifting_surface
