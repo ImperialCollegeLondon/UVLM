@@ -496,7 +496,7 @@ void UVLM::Steady::solve_discretised_lifting_and_nonlifting
 												   nl_body.aic_sources_z,
 												   nl_body.u_induced_col);
 
-    if (options.consider_u_ind_by_sources_for_lifting_forces)
+    if ((!options.phantom_wing_test) && (options.consider_u_ind_by_sources_for_lifting_forces))
     {
         // nonlifting influence on lifting surface forces (or almost no influence but messing up the junction force)
         lifting_surfaces.get_coordinates_center_vertices();
