@@ -276,6 +276,8 @@ namespace UVLM
                 if (phantom_cell_required)
                 {
                     UVLM::Phantom::create_phantom_zeta(zeta_lifting, zeta, flag_zeta_phantom);                     
+                    UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
+                    Ktotal = UVLM::Matrix::get_total_VecVecMat_size(zeta_col);                    
                     // Allocate phantom gamma                    
                     UVLM::Types::allocate_VecMat_from_VecVecMat(gamma, zeta, -1);
                     gamma_flat.resize(Ktotal);
@@ -295,8 +297,6 @@ namespace UVLM
 
             void get_surface_parameters()
             {
-                UVLM::Geometry::generate_colocationMesh(zeta, zeta_col);
-                Ktotal = UVLM::Matrix::get_total_VecVecMat_size(zeta_col);                
                 UVLM::Types::allocate_VecVecMat(normals, zeta, -1);   
                 UVLM::Types::allocate_VecVecMat(longitudinals , zeta,-1 );
                 UVLM::Types::allocate_VecVecMat(perpendiculars, zeta, -1); 
