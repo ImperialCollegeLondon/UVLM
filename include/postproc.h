@@ -357,8 +357,7 @@ namespace UVLM
                                   velocities[i_surf][2](i_M, i_N+1));
 
                         v = (v + v_ind).eval();
-                        // std::cout << "\ndl = " << dl << ", v = " << v << ", gamma = " << gamma[i_surf].template topRows<2>();
-                        if (i_M == 0){
+                         if (i_M == 0){
                             delta_gamma = -gamma[i_surf](i_M, i_N);
                         } else if (i_M == M){
                             // Might be needed if TE forces are computed

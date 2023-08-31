@@ -206,7 +206,6 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
-    // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
     double** p_dynamic_forces,
@@ -224,6 +223,7 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
+    
     struct UVLM::StructUtils::lifting_surface_unsteady Lifting_surfaces_unsteady = UVLM::StructUtils::lifting_surface_unsteady
         (options.NumSurfaces,
         p_dimensions,
