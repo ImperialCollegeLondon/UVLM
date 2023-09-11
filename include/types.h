@@ -73,6 +73,7 @@ namespace UVLM
             double vortex_radius;
             double vortex_radius_wake_ind;
             bool consider_u_ind_by_sources_for_lifting_forces;
+            uint ignore_first_x_nodes_in_force_calculation;
         };
 
         struct UVMopts
@@ -100,6 +101,7 @@ namespace UVLM
             bool quasi_steady;
             uint num_spanwise_panels_wo_induced_velocity;
             bool consider_u_ind_by_sources_for_lifting_forces;
+            uint ignore_first_x_nodes_in_force_calculation;
         };
 
         VMopts UVMopts2VMopts(const UVMopts& uvm)
@@ -121,6 +123,7 @@ namespace UVLM
             vm.Steady = uvm.quasi_steady;
             vm.phantom_wing_test = uvm.phantom_wing_test;
             vm.consider_u_ind_by_sources_for_lifting_forces = uvm.consider_u_ind_by_sources_for_lifting_forces;
+            vm.ignore_first_x_nodes_in_force_calculation = uvm.ignore_first_x_nodes_in_force_calculation;
             return vm;
         };
 

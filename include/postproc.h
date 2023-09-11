@@ -39,6 +39,19 @@ namespace UVLM
             const t_forces_node& forces_node,
             t_forces_norm& forces_norm
 		);
+        template <typename t_forces,
+                  typename t_span_seg_forces,
+                  typename t_chord_seg_forces>
+        void transfer_forces_to_nodes
+        (
+            t_forces& forces,
+            t_span_seg_forces& span_seg_forces,
+            t_chord_seg_forces& chord_seg_forces,
+            const uint N,
+            const uint M,
+            const uint i_surf,
+            const uint ignore_first_x_nodes_in_force_calculation
+        );
         template <typename t_zeta,
                   typename t_zeta_star,
                   typename t_gamma,
@@ -295,15 +308,6 @@ namespace UVLM
                 UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
                 UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
 
-                // UVLM::Types::Vector3 dl;
-                // UVLM::Types::Vector3 v;
-                // UVLM::Types::Vector3 f;
-                // UVLM::Types::Vector3 v_ind;
-                // UVLM::Types::Vector3 rp;
-                // UVLM::Types::Vector3 r1;
-                // UVLM::Types::Vector3 r2;
-                // UVLM::Types::Real delta_gamma;
-
                 // Computation of induced velocity in each segment
                 #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
@@ -482,31 +486,57 @@ namespace UVLM
 
                 // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
                 // Transfer forces to nodes
-                for (uint i_M=0; i_M<M+1; ++i_M)
+                transfer_forces_to_nodes(
+                    forces,
+                    span_seg_forces,
+                    chord_seg_forces,
+                    N,
+                    M,
+                    i_surf,
+                    options.ignore_first_x_nodes_in_force_calculation
+                );
+            }
+        }
+        template <typename t_forces,
+                  typename t_span_seg_forces,
+                  typename t_chord_seg_forces>
+        void transfer_forces_to_nodes
+        (
+            t_forces& forces,
+            t_span_seg_forces& span_seg_forces,
+            t_chord_seg_forces& chord_seg_forces,
+            const uint N,
+            const uint M,
+            const uint i_surf,
+            const uint ignore_first_x_nodes_in_force_calculation
+        )
+        {
+            
+            for (uint i_M=0; i_M<M+1; ++i_M)
+            {
+                for (uint i_N=ignore_first_x_nodes_in_force_calculation; i_N<N+1; ++i_N)
                 {
-                    for (uint i_N=0; i_N<N+1; ++i_N)
+                    for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
                     {
-                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                        {
-                            // Spanwise segments
-                            if (i_N != 0){
-                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
-                            }
-                            if (i_N != N){
-                                forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
-                            }
+                        // Spanwise segments
+                        if (i_N != 0){
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
+                        }
+                        if (i_N != N){
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
+                        }
 
-                            // Chordwise segments
-                            if (i_M != 0){
-                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
-                            }
-                            if (i_M != M){
-                                forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
-                            }
+                        // Chordwise segments
+                        if (i_M != 0){
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
+                        }
+                        if (i_M != M){
+                            forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
                         }
                     }
                 }
             }
+            
         }
         template <typename t_sigma_flat,
                   typename t_aic,
@@ -631,15 +661,6 @@ namespace UVLM
                 UVLM::Types::allocate_VecVecMat(span_seg_forces, 1, 3, M+1, N);
                 UVLM::Types::allocate_VecVecMat(chord_seg_forces, 1, 3, M, N+1);
 
-                // UVLM::Types::Vector3 dl;
-                // UVLM::Types::Vector3 v;
-                // UVLM::Types::Vector3 f;
-                // UVLM::Types::Vector3 v_ind;
-                // UVLM::Types::Vector3 rp;
-                // UVLM::Types::Vector3 r1;
-                // UVLM::Types::Vector3 r2;
-                // UVLM::Types::Real delta_gamma;
-
                 // Computation of induced velocity in each segment
                 #pragma omp parallel for collapse(2)
                 for (uint i_M=0; i_M<M; ++i_M)
@@ -699,8 +720,7 @@ namespace UVLM
                         if ((!options.phantom_wing_test) && (options.consider_u_ind_by_sources_for_lifting_forces))
                         {
                             for (uint idim=0; idim < UVLM::Constants::NDIM; idim++)
-                            {         
-                                                
+                            {                 
                                 v_ind(idim) += lifting_surfaces.u_induced_by_sources_on_center_spanwise_vertices[i_surf][idim](i_M,i_N);
                             }
 
@@ -877,30 +897,15 @@ namespace UVLM
 
                 // #pragma omp parallel for collapse(2) reduction(sum_Vector3: uout)
                 // Transfer forces to nodes
-                for (uint i_M=0; i_M<M+1; ++i_M)
-                {
-                    for (uint i_N=0; i_N<N+1; ++i_N)
-                    {
-                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
-                        {
-                            // Spanwise segments
-                            if (i_N != 0){
-                                lifting_surfaces.forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N-1);
-                            }
-                            if (i_N != N){
-                                lifting_surfaces.forces[i_surf][i_dim](i_M, i_N) += 0.5*span_seg_forces[0][i_dim](i_M, i_N);
-                            }
-
-                            // Chordwise segments
-                            if (i_M != 0){
-                                lifting_surfaces.forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M-1, i_N);
-                            }
-                            if (i_M != M){
-                                lifting_surfaces.forces[i_surf][i_dim](i_M, i_N) += 0.5*chord_seg_forces[0][i_dim](i_M, i_N);
-                            }
-                        }
-                    }
-                }
+                transfer_forces_to_nodes(
+                    lifting_surfaces.forces,
+                    span_seg_forces,
+                    chord_seg_forces,
+                    N,
+                    M,
+                    i_surf,
+                    options.ignore_first_x_nodes_in_force_calculation
+                );
             }
         }
 
