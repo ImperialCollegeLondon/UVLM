@@ -1,3 +1,8 @@
+/**
+ * @file types.h
+ * @brief Header file containing type definitions and utility functions for the UVLM (Unsteady Vortex Lattice Method) framework.
+ */
+
 #pragma once
 
 #include "EigenInclude.h"
@@ -5,18 +10,19 @@
 #include <utility>
 #include <iostream>
 
-// convenience declarations
+// Convenience declarations
 typedef unsigned int uint;
 
 namespace UVLM
 {
     namespace Types
-    {
-        // Working precision
+    {        
+        /**
+         * @brief Working precision type.
+         */
         typedef double Real;
 
-        // Eigen shortcuts
-        // Matrices
+        // Eigen shortcuts for matrices
         typedef Eigen::Matrix<Real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixX;
         typedef Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXint;
         typedef Eigen::Map<MatrixX> MapMatrixX;
@@ -29,11 +35,18 @@ namespace UVLM
         typedef std::vector<MapMatrixXint> VecMapXint;
         typedef std::vector<VecMapX> VecVecMapX;
         typedef std::vector<VecVecMapX> VecVecVecMapX;
-
+        
+        /**
+         * @brief Type for dense Eigen matrices.
+         */
         typedef Eigen::DenseBase<Real> DenseBase;
+
+        /**
+         * @brief Type for Eigen matrix block.
+         */
         typedef Eigen::Block<MatrixX> Block;
 
-        // Vectors
+        // Eigen shortcuts for vectors
         typedef Eigen::Matrix<Real, 3, 1> Vector3;
         typedef Eigen::Matrix<Real, 4, 1> Vector4;
         typedef Eigen::Matrix<Real, 5, 1> Vector5;
@@ -42,11 +55,18 @@ namespace UVLM
         typedef Eigen::Map<VectorX> MapVectorX;
         typedef std::vector<MapVectorX> VecMapVX;
 
-        // std custom containers
+        /**
+         * @brief Type for integer pairs (e.g., dimensions).
+         */
         typedef std::pair<unsigned int, unsigned int> IntPair;
+        /**
+         * @brief Type for a vector of integer pairs (e.g., dimensions for multiple surfaces).
+         */
         typedef std::vector<IntPair> VecDimensions;
 
-
+        /**
+         * @brief Structure representing various options for the VM (Vortex Method) solver.
+         */
         struct VMopts
         {
         	bool ImageMethod;
@@ -76,6 +96,9 @@ namespace UVLM
             uint ignore_first_x_nodes_in_force_calculation;
         };
 
+        /**
+         * @brief Structure representing various options for the UVM (Unsteady Vortex Method) solver.
+         */
         struct UVMopts
         {
             double dt;
@@ -103,7 +126,10 @@ namespace UVLM
             bool consider_u_ind_by_sources_for_lifting_forces;
             uint ignore_first_x_nodes_in_force_calculation;
         };
-
+         
+         /**
+         * @brief This function creates a VMopts object from a UVMopts object.
+         */
         VMopts UVMopts2VMopts(const UVMopts& uvm)
         {
             VMopts vm;
@@ -127,6 +153,11 @@ namespace UVLM
             return vm;
         };
 
+         /**
+         * @brief Structure representing flight conditions.
+         * 
+         * Structure includes flow speed and direction, as well as reference chord and density.
+         */
         struct FlightConditions
         {
             double uinf = 1.0;
@@ -135,7 +166,16 @@ namespace UVLM
             double c_ref = 1.0;
         };
 
-
+        /**
+         * @brief Correct the dimensions by applying a correction value.
+         *
+         * This function corrects dimensions by applying a correction value. It ensures that the dimensions
+         * are not negative after the correction.
+         *
+         * @param correction The correction value to be applied.
+         * @param dimension The original dimension.
+         * @return The corrected dimension.
+         */
         inline int correct_dimensions
         (
             const int correction,
@@ -152,6 +192,16 @@ namespace UVLM
             }
         }
 
+        /**
+         * @brief Generate dimensions from a matrix.
+         *
+         * This function generates dimensions from a matrix and stores them in a vector of integer pairs.
+         * It applies a correction to the dimensions if needed.
+         *
+         * @param mat The input matrix.
+         * @param dimensions The vector of dimensions to be filled.
+         * @param correction The correction value to be applied (default is 0).
+         */
         template <typename t_mat>
         inline void generate_dimensions
         (
@@ -171,7 +221,17 @@ namespace UVLM
             }
         }
         
-
+        /**
+         * @brief Allocate a vector of matrices with specified dimensions.
+         *
+         * This function allocates a vector of matrices with specified dimensions and initializes them with
+         * an initial value.
+         *
+         * @param mat The vector of matrices to be allocated.
+         * @param dimensions The dimensions for each matrix.
+         * @param correction The correction value to be applied to dimensions (default is 0).
+         * @param initial_value The initial value to fill the matrices (default is 0.0).
+         */
         inline void allocate_VecMat
         (
             UVLM::Types::VecMatrixX& mat,
@@ -268,7 +328,14 @@ namespace UVLM
                  surf.setZero(M, N);
              }
         }
-
+        /**
+         * @brief Initialize a vector of matrices with a specific value.
+         *
+         * This function initializes a vector of matrices with a specific value.
+         *
+         * @param mat The vector of matrices to be initialized.
+         * @param value The value to initialize the matrices with (default is 0.0).
+         */
         inline void initialise_VecMat
         (
             UVLM::Types::VecMatrixX& mat,
@@ -302,7 +369,18 @@ namespace UVLM
                 }
             }
         }
-
+        /**
+         * @brief Allocate a vector of vector of matrices with specified dimensions.
+         *
+         * This function allocates a vector of vector of matrices with specified dimensions and initializes
+         * them with an initial value.
+         *
+         * @param mat The vector of vector of matrices to be allocated.
+         * @param n_surf The number of surfaces.
+         * @param n_dim The number of dimensions for each matrix.
+         * @param M The number of rows for each matrix.
+         * @param N The number of columns for each matrix.
+         */
         inline void allocate_VecVecMat
         (
             UVLM::Types::VecVecMatrixX& mat,
@@ -374,7 +452,16 @@ namespace UVLM
                 }
             }
         }
-
+        /**
+         * @brief Copy data from a vector of vector of matrices to another.
+         *
+         * This function copies data from one vector of vector of matrices to another.
+         *
+         * @tparam t_in The input vector of vector of matrices.
+         * @tparam t_out The output vector of vector of matrices.
+         * @param in The input vector of vector of matrices.
+         * @param out The output vector of vector of matrices.
+         */
         template <typename t_in,
                   typename t_out>
         inline void copy_VecVecMat
@@ -402,7 +489,17 @@ namespace UVLM
                 }
             }
         }
-
+        /**
+         * @brief Copy data from a matrix to a block within another matrix.
+         *
+         * This function copies data from a matrix to a specified block within another matrix.
+         *
+         * @tparam mat_in The input matrix.
+         * @param in The input matrix to copy from.
+         * @param out The output matrix (block) to copy to.
+         * @param i_start The row index to start copying.
+         * @param j_start The column index to start copying.
+         */
         template<typename mat_in>
         inline void copy_Mat_to_block
         (
@@ -422,6 +519,15 @@ namespace UVLM
                 }
             }
         }
+        /**
+         * @brief Join two vectors into a single vector.
+         *
+         * This function concatenates two vectors into a single vector.
+         *
+         * @param vec1 The first vector.
+         * @param vec2 The second vector.
+         * @return The concatenated vector.
+         */
         UVLM::Types::VectorX join_vectors
         (
             const UVLM::Types::VectorX& vec1,
@@ -433,7 +539,15 @@ namespace UVLM
             return vec_joined;
         }
 
-        template <typename t_mat>
+        /**
+         * @brief Calculate the norm of a vector of vector of matrices.
+         *
+         * This function calculates the norm of a vector of vector of matrices by summing the norms of individual matrices.
+         *
+         * @tparam t_mat The input vector of vector of matrices.
+         * @param mat The input vector of vector of matrices.
+         * @return The norm of the vector of vector of matrices.
+         */        template <typename t_mat>
         inline double norm_VecVec_mat
         (
             const t_mat& mat
@@ -450,7 +564,17 @@ namespace UVLM
                 }
             }
             return norm;
-        }
+        }        
+        /**
+         * @brief Calculate the norm of a vector.
+         *
+         * This function calculates the norm of a 3D vector.
+         *
+         * @param value_1 The first component of the vector.
+         * @param value_2 The second component of the vector.
+         * @param value_3 The third component of the vector.
+         * @return The norm of the vector.
+         */
 
         inline double norm_Vec
         (
@@ -464,6 +588,17 @@ namespace UVLM
             vector << value_1, value_2, value_3;
             return vector.norm();
         }
+
+        /**
+         * @brief Calculate the squared norm of a vector.
+         *
+         * This function calculates the squared norm of a 3D vector.
+         *
+         * @param value_1 The first component of the vector.
+         * @param value_2 The second component of the vector.
+         * @param value_3 The third component of the vector.
+         * @return The squared norm of the vector.
+         */
         inline double norm_Vec_squared
         (
             const double value_1,
@@ -476,7 +611,16 @@ namespace UVLM
                    value_2 * value_2 + 
                    value_3 * value_3;
         }
-
+        /**
+         * @brief Calculate the maximum value in a vector of vector of matrices.
+         *
+         * This function calculates the maximum value in a vector of vector of matrices by finding the maximum
+         * absolute value in all matrices.
+         *
+         * @tparam t_mat The input vector of vector of matrices.
+         * @param mat The input vector of vector of matrices.
+         * @return The maximum value in the vector of vector of matrices.
+         */
         template <typename t_mat>
         inline double max_VecVecMat
         (
@@ -561,34 +705,6 @@ namespace UVLM
 			}
             return vec_out;
 		}
-        // inline void allocate_VecVecVecMat
-        // (
-        //     UVLM::Types::VecVecVecMatrixX& mat,
-        //     const int& n_tsteps,
-        //     const UVLM::Types::VecDimensions& dimensions,
-        //     const int& correction = 0
-        // )
-        // {
-        //     mat.resize(n_tsteps);
-        //     UVLM::Types::allocate_VecVecMat(mat,
-        //                                     UVLM::Constants::NDIM,
-        //                                     dimensions,
-        //                                     correction);
-        // }
-
-        // template <typename t_in_dimensions>
-        // inline void allocate_VecVecVecMat
-        // (
-        //     UVLM::Types::VecVecVecMatrixX& mat,
-        //     const t_in_dimensions& in_dimensions,
-        //     const int& correction = 0
-        // )
-        // {
-        //     mat.resize(n_tsteps);
-        //     UVLM::Types::allocate_VecVecMat(mat,
-        //                                     in_dimensions,
-        //                                     correction);
-        // }
     }
 }
 

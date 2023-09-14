@@ -1,3 +1,8 @@
+/**
+ * @file phantom.h
+ * @brief This file contains various functions related to Phantom surfaces in the UVLM (Unsteady Vortex Lattice Method) solver.
+ */
+
 #pragma once
 
 #include "EigenInclude.h"
@@ -5,11 +10,32 @@
 #include "debugutils.h"
 
 #include <fstream>
-
+/**
+ * @namespace UVLM
+ * @brief Namespace for the UVLM (Unsteady Vortex Lattice Method) framework.
+ */
 namespace UVLM
 {
+    /**
+     * @namespace Phantom
+     * @brief Namespace for the functions related to phantom surfaces in the UVLM framework.
+     */
     namespace Phantom
     {
+        /**
+         * @brief Create phantom zeta (coordinates) based on flag information.
+         *
+         * This function creates the phantom lattice coordinates (zeta_phantom) for given vortex lattice grid coordinates (zeta)
+         * based on flag information (flag_zeta_phantom). It adjusts the size and allocates memory for the phantom
+         * coordinates to ensure proper interpolation.
+         *
+         * @tparam t_zeta Type of the vortex lattice grid coordinates.
+         * @tparam t_zeta_phantom Type of the phantom coordinates.
+         * @tparam t_flag_zeta_phantom Type of the flag indicating the need for phantom surfaces.
+         * @param zeta Vortex lattice grid coordinates.
+         * @param zeta_phantom Phantom vortex lattice grid coordinates. (output).
+         * @param flag_zeta_phantom Vector of flag indicating the need for phantom surfaces.
+         */
         template<typename t_zeta,
                  typename t_zeta_phantom,
                  typename t_flag_zeta_phantom>
@@ -18,7 +44,23 @@ namespace UVLM
             t_zeta& zeta,
             t_zeta_phantom& zeta_phantom,
             t_flag_zeta_phantom& flag_zeta_phantom
-        );        
+        );       
+        /**
+         * @brief Create phantom zeta_star (vortex ring corner points) based on flag information.
+         *
+         * This function creates phantom panel coordinates of the wake (zeta_phantom_star) for given vo
+         * points (zeta_star) based on flag information (flag_zeta_phantom). It adjusts the size and allocates memory for
+         * the phantom collocation points to ensure proper interpolation.
+         * 
+         * @tparam t_flag_zeta_phantom Type of the flag indicating the need for phantom surfaces.
+         * @tparam t_zeta_phantom Type of the phantom  phantom vortex lattice grid coordinates.
+         * @tparam t_zeta_star Type of the vortex lattice grid coordinates of the wake.
+         * @tparam t_zeta_phantom_star Type of the phantom vortex lattice grid coordinates of the wake.
+         * @param flag_zeta_phantom Vector of flag indicating the need for phantom surfaces.
+         * @param zeta_phantom Phantom vortex lattice grid coordinates.
+         * @param zeta Vortex lattice grid coordinates.
+         * @param zeta_phantom_star Phantom collocation vortex lattice grid coordinates (output).
+         */ 
         template<typename t_flag_phantom,
                  typename t_zeta_phantom,
                  typename t_zeta_star,
@@ -29,12 +71,22 @@ namespace UVLM
             t_zeta_phantom& zeta_phantom,
             t_zeta_star& zeta_star,
             t_zeta_phantom_star& zeta_phantom_star
-        );
+        );       
+         /**
+         * @brief Check for 'true' values in a boolean flag matrix.
+         *
+         * This function checks if there are any 'true' values in a boolean flag matrix (flag_zeta_phantom).
+         *
+         * @tparam t_flag_zeta_phantom Type of the flag matrix.
+         * @param flag_zeta_phantom Boolean flag matrix.
+         * @return True if 'true' values are found; otherwise, false.
+         */
         template<typename t_flag_zeta_phantom>
         bool check_for_true_in_bool_vec_mat
         (
             t_flag_zeta_phantom& flag_zeta_phantom
         );
+
         template<typename t_flag_phantom>
         void get_parameter_phantom_setup
         (
@@ -44,6 +96,23 @@ namespace UVLM
             uint& idx_junction,
             bool& phantom_surface
         );
+        /**
+         * @brief Interpolate vortex ring corner coordinates for phantom surfaces.
+         *
+         * This function interpolates the vortex ring corner coordinates for phantom surfaces (zeta_out) based on the
+         * given vortex ring corner coordinates of the lifting surface (zeta_in) and other parameters. It calculates 
+         * new coordinates to ensure that phantom surfaces match the original surfaces in size and shape.
+         *
+         * @tparam t_zeta_out Type of the phantom grid corner coordinates (output).
+         * @tparam t_zeta_in Type of the lifting surface grid corner coordinates .
+         * @param zeta_out Pphantom grid corner coordinates (output).
+         * @param zeta_in Lifting surface grid corner coordinates.
+         * @param N_row Number of rows for interpolation.
+         * @param N_col Number of columns for interpolation.
+         * @param idx_junction Index of the junction point.
+         * @param i_surf Index of the surface being processed.
+         * @param i_surf_partner_junction Index of the partner surface connected to the junction.
+         */
         template<typename t_zeta_out,
                  typename t_zeta_in>
         void interpolate_geometry_coordinates
@@ -56,6 +125,24 @@ namespace UVLM
             const uint& i_surf,
             const uint& i_surf_partner_junction
         );
+        /**
+         * @brief Interpolate circulation strength for phantom surfaces.
+         *
+         * This function interpolates the circulation strength (gamma_out) for phantom surfaces based on the circulation
+         * values (gamma_in), collocation points (zeta_col_out), and other parameters of the given lifting surfaces. 
+         *
+         * @tparam t_gamma_out Type of the phantom circulation strengths (output).
+         * @tparam t_gamma_in Type of the original circulation values.
+         * @tparam t_zeta_col_out Type of the phantom collocation points.
+         * @tparam t_zeta_col_in Type of the original collocation points.
+         * @param gamma_out Phantom circulation strengths (output).
+         * @param gamma_in Original circulation values.
+         * @param zeta_col_out Phantom surface collocation points.
+         * @param zeta_col_in Lifting surface collocation points.
+         * @param idx_junction Index of the junction point.
+         * @param i_surf Index of the surface being processed.
+         * @param i_surf_partner_junction Index of the partner surface connected to the junction.
+         */
         template<typename t_gamma_out,
                 typename t_gamma_in,
                 typename t_zeta_col_out,
