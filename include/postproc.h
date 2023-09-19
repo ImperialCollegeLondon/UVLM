@@ -565,7 +565,7 @@ namespace UVLM
 
 			}
 
-	    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+	    UVLM::Matrix::reconstruct_VecVecMatrixX_values_from_MatrixX(u_induced_col_flat,
 						                    u_induced_col,
 						                    u_induced_col);
     

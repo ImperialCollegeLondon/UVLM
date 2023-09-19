@@ -2,6 +2,25 @@
 #include <fenv.h>
 
 
+/**
+ * @brief Runs the Vortex-Lattice Method (VLM).
+ *
+ * This function solves an aerodynamic solver with the vortex-lattice method (VLM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.           
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
 DLLEXPORT void run_VLM
 (
     const UVLM::Types::VMopts& options,
@@ -40,8 +59,22 @@ DLLEXPORT void run_VLM
                          options,
                          flightconditions);
 }
-
-DLLEXPORT void run_VLM_nonlifting_body
+/**
+ * @brief Runs the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic solver with the linear source panel method (LSPM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_sigma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_pressure_coefficient Pointer to an array of pressure coefficients for each non-lifting body.
+ */
+DLLEXPORT void run_linear_source_panel_method
 (
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
@@ -69,7 +102,35 @@ DLLEXPORT void run_VLM_nonlifting_body
                                          flightconditions);
 }
 
-DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
+/**
+ * @brief Runs the Vortex-Lattice Method (VLM) coupled with the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic problem with the vortex-lattice method (VLM) for lifting surfaces
+ * coupled with an LSPM for nonlifting body effects. Phantom panels are used to handle fuselage-wing 
+ * junction simulations.
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.           
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.    
+ * @param p_flag_zeta_phantom Pointer to vector containing junction partner ids for phantom panel generation.
+ * @param p_dimensions_nonlifting Pointer to array containing dimensions (longitudinal and radial) for each nonlifting surface.
+ * @param p_zeta_nonlifting Pointer to matrix containing corner point coordinates for each nonlifting surface grid.
+ * @param p_u_ext_nonlifting Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each nonlifting surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_forces_nonlifting Pointer to matrix containing forces at corner points of each nonlifting surface grid.  
+ * @param p_pressure_coefficient_nonlifting Pointer to an array of pressure coefficients for each non-lifting body.   
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
+DLLEXPORT void run_VLM_coupled_with_LSPM
 (
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
@@ -86,7 +147,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
     unsigned int** p_dimensions_nonlifting,
     double** p_zeta_nonlifting,
     double** p_u_ext_nonlifting,
-    double** p_sigma_nonlifting,
+    double** p_sigma,
     double** p_forces_nonlifting,
     double** p_pressure_coefficient_nonlifting,
     double*  p_rbm_vel,
@@ -118,7 +179,7 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
                                                     p_u_ext_nonlifting,
                                                     p_forces_nonlifting,
                                                     p_pressure_coefficient_nonlifting,
-                                                    p_sigma_nonlifting);
+                                                    p_sigma);
     // Setup Phantom Surfaces
     struct UVLM::StructUtils::phantom_surface phantom_surfaces = UVLM::StructUtils::phantom_surface(p_flag_zeta_phantom,
                                                                                                     Lifting_surfaces.n_surf,
@@ -137,6 +198,29 @@ DLLEXPORT void run_VLM_lifting_and_nonlifting_bodies
 	);
 }
 
+/**
+ * @brief Runs the Unsteady Vortex-Lattice Method (UVLM).
+ *
+ * This function solves an aerodynamic solver with the unsteady vortex-lattice method (UVLM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param i_iter Simulation iteration.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_u_ext_star Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each wake surface grid.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface. 
+ * @param p_dist_to_orig Pointer to array of distances from the trailing edge of the wake vertices.* 
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.          
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
 DLLEXPORT void run_UVLM
 (
     const UVLM::Types::UVMopts& options,
@@ -152,7 +236,6 @@ DLLEXPORT void run_UVLM
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
-    // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
     double** p_dynamic_forces,
@@ -190,8 +273,39 @@ DLLEXPORT void run_UVLM
         flightconditions
     );
 }
-
-DLLEXPORT void run_UVLM_lifting_and_nonlifting
+/**
+ * @brief Runs the Unsteady Vortex-Lattice Method (UVLM) coupled with the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic problem with the unsteady vortex-lattice method (UVLM) for lifting surfaces
+ * coupled with an LSPM for nonlifting body effects. Phantom panels are used to handle fuselage-wing 
+ * junction simulations. 
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param i_iter Simulation iteration.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_u_ext_star Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each wake surface grid.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface. 
+ * @param p_dist_to_orig Pointer to array of distances from the trailing edge of the wake vertices.* 
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.  
+ * @param p_flag_zeta_phantom Pointer to vector containing junction partner ids for phantom panel generation.
+ * @param p_dimensions_nonlifting Pointer to array containing dimensions (longitudinal and radial) for each nonlifting surface.
+ * @param p_zeta_nonlifting Pointer to matrix containing corner point coordinates for each nonlifting surface grid.
+ * @param p_u_ext_nonlifting Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each nonlifting surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_forces_nonlifting Pointer to matrix containing forces at corner points of each nonlifting surface grid.  
+ * @param p_pressure_coefficient_nonlifting Pointer to an array of pressure coefficients for each non-lifting body.   
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
+DLLEXPORT void run_UVLM_coupled_with_LSPM
 (
     const UVLM::Types::UVMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
@@ -268,7 +382,25 @@ DLLEXPORT void run_UVLM_lifting_and_nonlifting
         flightconditions
     );
 }
-
+/**
+ * @brief Calculates unsteady forces and moments on lifting surfaces.
+ *
+ * This function computes the unsteady forces and moments acting on lifting surfaces
+ * based on the given inputs and configurations.
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.
+ * @param p_gamma_dot Pointer to matrix with gradient of circulation strengths for each vortex ring panel on each surface. 
+ * @param p_normals Pointer to matrix with the normal vectors of the panels of each surface.
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.          
+ */
 DLLEXPORT void calculate_unsteady_forces
 (
     const UVLM::Types::UVMopts& options,
