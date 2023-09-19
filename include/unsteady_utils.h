@@ -5,12 +5,38 @@
 #include "sources.h"
 
 
+/**
+ * @brief Namespace for the UVLM library.
+ */
 namespace UVLM
 {
+    /**
+     * @brief Namespace including unsteady simulation related functions.
+     */
     namespace Unsteady
-    {
+    {    
+        /**
+         * @brief Namespace including utility functions for the unsteady namespace.
+         */
         namespace Utils
         {
+            /**
+             * @brief Computes the resultant grid velocity considering rigid body motion, structural displacements, and flow velocities.
+             *
+             * @tparam t_zeta Type of the zeta (surface grid points) data structure.
+             * @tparam t_zeta_dot Type of the zeta_dot (collocation point) data structure.
+             * @tparam t_uext Type of the uext (external velocities) data structure.
+             * @tparam t_rbm_velocity Type of the rbm_velocity (rigid body motion velocity) data structure.
+             * @tparam t_centre_rot Type of the centre_rot (center of rotation) data structure.
+             * @tparam t_uext_out Type of the uext_out (output external velocities) data structure.
+             *
+             * @param zeta Corner point coordinates of the vortex ring panels located on the surfaces.
+             * @param zeta_dot Collocation point coordinates of the panels located on the surfaces.
+             * @param uext External velocities.
+             * @param rbm_velocity Rigid body motion velocity.
+             * @param centre_rot Center of rotation of the body.
+             * @param uext_out Output resultant grid velocity considering rigid body motion.
+             */
             template <typename t_zeta,
                       typename t_zeta_dot,
                       typename t_uext,
@@ -26,6 +52,23 @@ namespace UVLM
                 t_centre_rot& centre_rot,
                 t_uext_out& uext_out
             );
+            /**
+             * @brief Computes the resultant grid velocity considering rigid body motion, translation, and solid velocity.
+             *
+             * @tparam t_zeta Type of the zeta (collocation points) data structure.
+             * @tparam t_zeta_dot Type of the zeta_dot (collocation point velocities) data structure.
+             * @tparam t_uext Type of the uext (external velocities) data structure.
+             * @tparam t_rbm_velocity Type of the rbm_velocity (rigid body motion velocity) data structure.
+             * @tparam t_uext_out Type of the uext_out (output external velocities) data structure.
+             * @tparam t_solid_vel Type of the solid_vel (solid velocity) data structure.
+             *
+             * @param zeta Collocation points of the lifting surface.
+             * @param zeta_dot Velocities of collocation points.
+             * @param uext External velocities.
+             * @param rbm_velocity Rigid body motion velocity.
+             * @param uext_out Output resultant grid velocity considering rigid body motion and solid velocity.
+             * @param solid_vel Solid velocity.
+            */
             template <typename t_zeta,
                       typename t_zeta_dot,
                       typename t_uext,
@@ -41,6 +84,7 @@ namespace UVLM
                 t_uext_out& uext_out,
                 t_solid_vel& solid_vel
             );
+
             template <typename t_zeta_star,
                       typename t_gamma_star,
                       typename t_extra_gamma_star,
@@ -194,16 +238,6 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
     UVLM::Types::Vector6 vec_rbm_vel_g;
     vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
     
-    // TODO: Combine with "UVLM::Unsteady::Utils::compute_resultant_grid_velocity"
-    // if (vec_rbm_vel_g.isZero(0))
-    // {
-    //     // If all rbm_velocities are zero, we just need to subtract zeta_dot from uext
-    //     UVLM::Triads::VecVecMatrix_difference(uext,zeta_dot, uext_out);
-    //     solid_vel[i_surf][i_dim](i_row, i_col) = zeta_dot[i_surf][i_dim](i_row, i_col)
-    //                     + vec_rbm_vel_g(i_dim);
-    // }
-    // else
-    // {
     const uint n_surf = zeta.size();
     UVLM::Types::Vector3 w_cross_zeta;
     UVLM::Types::Vector3 zeta_temp;
@@ -597,9 +631,10 @@ void UVLM::Unsteady::Utils::induced_velocity_from_sources_on_wake
 								u_induced_y,
 								u_induced_z,
                                 false);
+                                
 	// add induced velocity by sources
 	UVLM::Types::VectorX sigma_flat;
-	UVLM::Matrix::deconstruct_gamma(nl_body.sigma,
+	UVLM::Matrix::reconstruct_vector_values_from_VecMatrixX(nl_body.sigma,
 									sigma_flat,
 									nl_body.zeta_col);
 
@@ -669,7 +704,7 @@ void UVLM::Unsteady::Utils::calculate_induced_velocity_col
 
 	}
 
-    UVLM::Matrix::reconstruct_MatrixX(u_induced_col_flat,
+    UVLM::Matrix::reconstruct_VecVecMatrixX_values_from_MatrixX(u_induced_col_flat,
                                         u_induced_col,
                                         u_induced_col);
 

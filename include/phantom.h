@@ -1,3 +1,8 @@
+/**
+ * @file phantom.h
+ * @brief This file contains various functions related to Phantom surfaces in the UVLM (Unsteady Vortex Lattice Method) solver.
+ */
+
 #pragma once
 
 #include "EigenInclude.h"
@@ -5,11 +10,31 @@
 #include "debugutils.h"
 
 #include <fstream>
-
+/**
+ * @namespace UVLM
+ * @brief Namespace for the UVLM (Unsteady Vortex Lattice Method) framework.
+ */
 namespace UVLM
 {
+    /**
+     * @namespace Phantom
+     * @brief Namespace for the functions related to phantom surfaces in the UVLM framework.
+     */
     namespace Phantom
     {
+        /**
+         * @brief Create phantom vortex ring panel grid coordinates.
+         * 
+         * This function generates the phantom surface grid by interpolating grid coordinates 
+         * from existing lifting surfaces.
+         *
+         * @tparam t_zeta - Type for zeta matrix..
+         * @tparam t_zeta_phantom - Type for phantom zeta matrix.
+         * @tparam t_flag_zeta_phantom - Type for flagging phantom zeta coordinates.
+         * @param zeta - A matrix containing corner point coordinates for each lifting surface grid.
+         * @param zeta_phantom - A matrix containing corner point coordinates for each phantom surface grid.
+         * @param flag_zeta_phantom - A vector containing the number of the junction partner surface if existing.
+         */
         template<typename t_zeta,
                  typename t_zeta_phantom,
                  typename t_flag_zeta_phantom>
@@ -18,7 +43,19 @@ namespace UVLM
             t_zeta& zeta,
             t_zeta_phantom& zeta_phantom,
             t_flag_zeta_phantom& flag_zeta_phantom
-        );        
+        );   
+        /**
+         * @brief Create vortex ring panel grid coordinates for phantom wake surfaces.
+         *
+         * @tparam t_flag_zeta_phantom - Type for flagging phantom zeta coordinates.
+         * @tparam t_zeta_phantom - Type for phantom zeta matrix.
+         * @tparam t_zeta_star - Type for zeta_star matrix.
+         * @tparam t_zeta_phantom_star - Type for phantom zeta star matrix.
+         * @param flag_zeta_phantom - A vector containing the number of the junction partner surface if existing.
+         * @param zeta_phantom - A matrix containing corner point coordinates for each phantom surface grid.
+         * @param zeta_star - A matrix containing corner point coordinates for each lifting wake surface grid.
+         * @param zeta_phantom_star - A matrix containing corner point coordinates for each lifting wake surface grid.
+         */     
         template<typename t_flag_phantom,
                  typename t_zeta_phantom,
                  typename t_zeta_star,
@@ -30,11 +67,35 @@ namespace UVLM
             t_zeta_star& zeta_star,
             t_zeta_phantom_star& zeta_phantom_star
         );
-        template<typename t_flag_zeta_phantom>
+
+        /**
+         * @brief Check for 'true' values in a boolean matrix.
+         *
+         * This function checks for the presence of 'true' values in a given boolean matrix.
+         *
+         * @tparam t_matrix - Type for matrix.
+         * @param matrix - Matrix to be checked.
+         * @return True if 'true' values are found in the matrix, otherwise false.
+         */
+        template<typename t_vec_matrix>
         bool check_for_true_in_bool_vec_mat
         (
-            t_flag_zeta_phantom& flag_zeta_phantom
+            t_vec_matrix& vec_matrix
         );
+        /**
+         * @brief Get parameters needed for phantom surface generation.
+         *
+         * This function retrieves parameters needed for setting up phantom surfaces
+         * based on the provided flag information. Parameters specified for that are the 
+         * index of the partner surface,
+         *
+         * @tparam t_flag_phantom - Type for flagging phantom zeta coordinates.
+         * @param flag_zeta_phantom - Flags indicating the presence of phantom coordinates.
+         * @param i_surf - Index of the current surface.
+         * @param i_surf_partner_junction - Return Index of the surface partner junction.
+         * @param idx_junction - Return Spanwise index associated with the junction.
+         * @param phantom_surface - Return Flag indicating the presence of a phantom surface.
+         */
         template<typename t_flag_phantom>
         void get_parameter_phantom_setup
         (
@@ -44,6 +105,24 @@ namespace UVLM
             uint& idx_junction,
             bool& phantom_surface
         );
+
+
+        /**
+         * @brief Interpolate geometry coordinates for phantom surfaces.
+         *
+         * This function interpolates geometry coordinates for phantom surfaces based on
+         * the provided parameters.
+         *
+         * @tparam t_zeta_out - Type for output zeta coordinates.
+         * @tparam t_zeta_in - Type for input zeta coordinates.
+         * @param zeta_out - Output zeta coordinates for phantom surfaces.
+         * @param zeta_in - Input zeta coordinates for lifting surfaces.
+         * @param N_row - Number of rows (spanwise nodes) needed for the phantom zeta matrix.
+         * @param N_col - Number of columns (chordwise nodes) needed for the phantom zeta matrix.
+         * @param idx_junction - Index of the junction.
+         * @param i_surf - Index of the current surface.
+         * @param i_surf_partner_junction - Index of the surface partner junction.
+         */
         template<typename t_zeta_out,
                  typename t_zeta_in>
         void interpolate_geometry_coordinates
@@ -56,6 +135,25 @@ namespace UVLM
             const uint& i_surf,
             const uint& i_surf_partner_junction
         );
+        /**
+         * @brief Interpolate circulation strength for phantom surfaces.
+         *
+         * This function interpolates circulation strength for phantom surfaces based on
+         * the provided parameters.
+         *
+         * 
+         * @tparam t_gamma_out - Type for output circulation strength.
+         * @tparam t_gamma_in - Type for input circulation strength.
+         * @tparam t_zeta_col_out - Type for output zeta collocation coordinates.
+         * @tparam t_zeta_col_in - Type for input zeta collocation coordinates.
+         * @param gamma_out - Output circulation strength for phantom surfaces.
+         * @param gamma_in - Input circulation strength for original surfaces.
+         * @param zeta_col_out - Output zeta collocation coordinates for phantom surfaces.
+         * @param zeta_col_in - Input zeta collocation coordinates for original surfaces.
+         * @param idx_junction - Spanwise index of the junction.
+         * @param i_surf - Index of the current surface.
+         * @param i_surf_partner_junction - Index of the surface partner junction.
+         */
         template<typename t_gamma_out,
                 typename t_gamma_in,
                 typename t_zeta_col_out,
@@ -110,7 +208,8 @@ void UVLM::Phantom::create_phantom_zeta
         if (phantom_surface)
         {
             N_row_phantom = zeta[i_surf][0].rows();
-            // ToDo: Fix since following line only works if junction is not in last column        
+            // ToDo: Fix since following line only works if junction is not in last column  
+            // TODO: Just remove idx_junction for good!      
             phantom_dy= zeta[i_surf][1](0, idx_junction+1)-zeta[i_surf][1](0, idx_junction);
             N_col = abs(round((zeta[i_surf][1](0, idx_junction)-zeta[i_surf_partner_junction][1](0, idx_junction))/(2.0*phantom_dy)));
             interpolate_geometry_coordinates(zeta_phantom, zeta, N_row_phantom, N_col+1, idx_junction, i_surf, i_surf_partner_junction);
@@ -315,17 +414,17 @@ void UVLM::Phantom::interpolate_circulation_strength
         }
     }
 }
-template<typename t_flag_zeta_phantom>
+template<typename t_vec_matrix>
 bool UVLM::Phantom::check_for_true_in_bool_vec_mat
 (
-    t_flag_zeta_phantom& flag_zeta_phantom
+    t_vec_matrix& vec_matrix
 )
 {
-    for(uint i_surf=0; i_surf<flag_zeta_phantom.cols(); ++i_surf)
+    for(uint i_surf=0; i_surf<vec_matrix.cols(); ++i_surf)
     {
-        for(uint i_row=0; i_row < flag_zeta_phantom.rows();++i_row)
+        for(uint i_row=0; i_row < vec_matrix.rows();++i_row)
         {
-            if (flag_zeta_phantom(i_row, i_surf))
+            if (vec_matrix(i_row, i_surf))
             {
                 return true;
             }

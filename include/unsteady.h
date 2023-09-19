@@ -56,7 +56,6 @@ void UVLM::Unsteady::solver
     const uint n_surf = options.NumSurfaces;
     const double dt = options.dt;
     // Generate collocation points info
-    //  Declaration
     lifting_surfaces_unsteady.get_surface_parameters();
 
     UVLM::Unsteady::Utils::compute_resultant_grid_velocity_solid_vel
@@ -70,19 +69,11 @@ void UVLM::Unsteady::solver
     );
 
     //  Allocation and mapping
-    // Same in steady    
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
                                             lifting_surfaces_unsteady.uext_total_col);
 
-    //  Allocation and mapping
-    // Same in steady    
-    UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
-                                            lifting_surfaces_unsteady.uext_total_col);
-
-    // Unsteady specific
     UVLM::Types::allocate_VecVecMat(lifting_surfaces_unsteady.uext_star_total, lifting_surfaces_unsteady.uext_star);
     
-    // for what is extra gamma star?
     lifting_surfaces_unsteady.extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
@@ -204,11 +195,9 @@ void UVLM::Unsteady::solver
     //  Allocation and mapping
     UVLM::Geometry::generate_colocationMesh(lifting_surfaces_unsteady.uext_total,
                                             lifting_surfaces_unsteady.uext_total_col);
-
-     // Unsteady specific
     UVLM::Types::allocate_VecVecMat(lifting_surfaces_unsteady.uext_star_total, lifting_surfaces_unsteady.uext_star);
     
-    // for what is extra gamma star?
+    // Storing initial wake shape and circulation
     lifting_surfaces_unsteady.extra_zeta_star.resize(n_surf);
     for (unsigned int i_surf=0; i_surf<n_surf; ++i_surf)
     {
@@ -236,12 +225,11 @@ void UVLM::Unsteady::solver
     }
     UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
 
-    // different than in steady
+    // Wake Convection
     if (options.convect_wake)
     {
         if (!options.only_lifting)
-        {
-            // To-Do: update gamma phantom            
+        {         
             UVLM::Unsteady::Utils::convect_unsteady_wake
             (
                 options,
@@ -288,10 +276,7 @@ void UVLM::Unsteady::solver
     // is the total velocity including non-steady contributions.
     if (!options.only_lifting)
     {
-        // // nonlifting parameters/geometry attributes        
-        // nl_body.get_surface_parameters();
-        // // phantom TO-DO: case if no phantom panels required? what is the input to the function below?
-        // phantom_surfaces.get_surface_parameters();
+        // Update phantom wake shape and circulation after wake convection
         phantom_surfaces.update_wake(lifting_surfaces_unsteady.zeta_star);
         phantom_surfaces.update_gamma_wake(lifting_surfaces_unsteady.zeta_star, lifting_surfaces_unsteady.gamma_star);
         
@@ -340,7 +325,6 @@ void UVLM::Unsteady::solver
     }
     if (options.quasi_steady)
     {
-        // TO-DO: Check if function has to be adjusted for NL Bodies
         UVLM::Wake::Horseshoe::circulation_transfer(lifting_surfaces_unsteady.gamma,
                                                     lifting_surfaces_unsteady.gamma_star,
                                                     -1);

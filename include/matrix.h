@@ -7,15 +7,42 @@
 
 #include <fstream>
 
+/**
+ * @brief Namespace for the UVLM library.
+ */
 namespace UVLM
 {
+    /**
+     * @brief Namespace for functions involved to generate the linear set of equation to be solved-state.
+     */
     namespace Matrix
     {
-        // DECLARATIONS
+    /**
+     * \brief Computes the Aerodynamic Influence Coefficients (AIC) matrix for vortex ring singularities.
+     * 
+     * This function calculates the AIC matrix that represents the influence of vortex filaments
+     * on panel collocation points. The matrix relates the induced velocities at collocation points
+     * to the strength of vortices associated with vortex filaments. The influence is computed using
+     * the Biot-Savart law, considering both steady and unsteady flow conditions.
+     * 
+     * \tparam t_zeta Type representing the panel vortex corner point coordinates.
+     * \tparam t_zeta_col Type representing the collocation points on panels.
+     * \tparam t_zeta_star Type representing the vortex sheet vertices.
+     * \tparam t_uext_total_col Type representing the total external velocities at collocation points.
+     * \tparam t_normals Type representing the panel normals.
+     * \tparam t_aic Type representing the computed AIC matrix.
+     * \param zeta The panel vortex corner point coordinates.
+     * \param zeta_col The collocation points on panels.
+     * \param zeta_star The vortex sheet vertices.
+     * \param uext_total_col The total external velocities at collocation points.
+     * \param normals The panel normals.
+     * \param options Struct containing simulation options.
+     * \param horseshoe Flag indicating whether horseshoe vortices are used.
+     * \param aic Computed AIC matrix (output).
+    **/
         template <typename t_zeta,
                   typename t_zeta_col,
                   typename t_zeta_star,
-                //   typename t_zeta_star_col,
                   typename t_uext_total_col,
                   typename t_normals,
                   typename t_aic>
@@ -24,7 +51,6 @@ namespace UVLM
             const t_zeta& zeta,
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
-            // const t_zeta_star_col& zeta_star_col,
             const t_uext_total_col& uext_total_col,
             const t_normals& normals,
             const UVLM::Types::VMopts& options,
@@ -32,6 +58,30 @@ namespace UVLM
             t_aic& aic
         );
 
+        /**
+         * @brief Calculate the AIC matrices for source panel singularities.
+         *
+         * This function computes the AIC matrices induced by a linear source panel on a set of collocation points
+         * of an arbitary surface (lifting, nonlifting, or panel).
+         *
+         * @tparam t_zeta Type representing the source panel corner point coordinates.
+         * @tparam t_zeta_col Type of the input matrix for zeta_col (collocation points).
+         * @tparam t_surf_vec_panel Type of the input matrix for surface vectors on panels.
+         * @tparam t_surf_vec_col Type of the input matrix for surface vectors at collocation points.
+         * @tparam t_aic Type representing the computed AIC matrix.
+         * @param zeta Matrix of coordinates of the non-lifting body.
+         * @param zeta_col Matrix of collocation points on the non-lifting body.
+         * @param longitudinals_panel Surface vectors in the longitudinal direction on panels.
+         * @param perpendiculars_panel Surface vectors perpendicular to the panels.
+         * @param normals_panel Surface normals on panels.
+         * @param longitudinals_col Surface vectors in the longitudinal direction at collocation points.
+         * @param perpendiculars_col Surface vectors perpendicular to the collocation points.
+         * @param normals_col Surface normals at collocation points.
+         * @param aic_sources_x Output AIC matrix for x-direction.
+         * @param aic_sources_y Output AIC matrix for y-direction.
+         * @param aic_sources_z Output AIC matrix for z-direction.
+         * @param same_body Flag indicating whether the sources are on the same body.
+         */
         template <typename t_zeta,
                   typename t_zeta_col,
                   typename t_surf_vec_panel,
@@ -52,6 +102,22 @@ namespace UVLM
             t_aic& aic_sources_z,
             const bool& same_body = true
         );
+
+        /**
+         * @brief Computes the AIC matrix in case multiple type of singularities (i.e. vortex rings and source panels) exist.
+         * 
+         * The AIC matrices are computed separately for each surface and singularity type, and are merged finally in a combined AIC matrix.
+         *
+         * @tparam t_struct_lifting_surfaces Type of the struct representing lifting surfaces.
+         * @tparam t_struct_nl_body Type of the struct representing non-lifting bodies.
+         * @tparam t_struct_phantom_surf Type of the struct representing phantom surfaces.
+         *
+         * @param lifting_surfaces Struct representing lifting surfaces.
+         * @param nl_body Struct representing non-lifting bodies.
+         * @param phantom_surfaces Struct representing phantom surfaces.
+         * @param aic Output combined AIC matrix.
+         * @param options Options for the UVLM solver.
+         */
         template <typename t_struct_lifting_surfaces,
                 typename t_struct_nl_body,
                 typename t_struct_phantom_surf>
@@ -63,36 +129,57 @@ namespace UVLM
                 UVLM::Types::MatrixX& aic,
                 const UVLM::Types::VMopts& options
             );
-            template<typename t_zeta_col, 
-                    typename t_zeta_phantom_col,
-                    typename t_aic_phantom_out,
-                    typename t_flag_zeta_phantom>
-            void aic_phantom_interp_condition
-            (
-                const uint& Ktotal_lifting,
-                const uint& Ktotal_phantom, 
-                t_zeta_col& zeta_col,
-                t_zeta_phantom_col& zeta_phantom_col,
-                t_aic_phantom_out& aic_phantom_out,
-                t_flag_zeta_phantom& flag_zeta_phantom,
-            const bool only_for_update = false
-        );
-
-        template<typename t_aic_phantom,
-                typename t_aic,
-                typename t_zeta,
+        /**
+         * @brief Computes the values within the AIC matrix to set the boundary conditions for the circulation strength of the phantom vortex panels. 
+         *
+         * @tparam t_zeta_col Type of the zeta_col (collocation points) data structure.
+         * @tparam t_zeta_phantom_col Type of the zeta_phantom_col (collocation points of phantom surfaces) data structure.
+         * @tparam t_aic_phantom_out Type of the output phantom AIC data structure.
+         * @tparam t_flag_zeta_phantom Type of the flag_zeta_phantom data structure.
+         *
+         * @param Ktotal_lifting Total number of collocation points for lifting surfaces.
+         * @param Ktotal_phantom Total number of collocation points for phantom surfaces.
+         * @param zeta_col Collocation points located on the lifting surfaces.
+         * @param zeta_phantom_col Collocation points located on the phantom surfaces.
+         * @param aic_phantom_out Output phantom AIC matrix.
+         * @param flag_zeta_phantom Flag indicating phantom AIC conditions.
+         * @param only_for_update Flag indicating whether to update phantom AIC.
+         */
+        template<typename t_zeta_col, 
+                typename t_zeta_phantom_col,
+                typename t_aic_phantom_out,
                 typename t_flag_zeta_phantom>
-        void add_phantom_AIC_to_AIC
+        void aic_phantom_interp_condition
         (
-            t_aic_phantom& aic_phantom,
-            t_aic& aic,
-            t_zeta& zeta,
-            t_flag_zeta_phantom& flag_zeta_phantom
-        );
+            const uint& Ktotal_lifting,
+            const uint& Ktotal_phantom, 
+            t_zeta_col& zeta_col,
+            t_zeta_phantom_col& zeta_phantom_col,
+            t_aic_phantom_out& aic_phantom_out,
+            t_flag_zeta_phantom& flag_zeta_phantom,
+        const bool only_for_update = false
+    );
+        /**
+         * @brief Calculates the right-hand side (RHS)/ non-penetrating boundary conditions for the given set of collocation points.
+         *
+         * @tparam t_zeta_col Type of the zeta_col (surface panel collocation points) data structure.
+         * @tparam t_zeta_star Type of the zeta_star (wake surface corner points) data structure.
+         * @tparam t_uext_total_col Type of the uext_total_col (total external velocities at collocation points) data structure.
+         * @tparam t_gamma_star Type of the gamma_star (circulation strength on wake panels) data structure.
+         * @tparam t_normal Type of the normal vectors data structure.
+         *
+         * @param zeta_col Collocation points of the lifting surface.
+         * @param zeta_star Vortex ring panel vorner points for wake surfaces.
+         * @param uext_total_col Total external velocities at collocation points.
+         * @param gamma_star Circulation strength on the vortex ring wake panels of the lifting surfaces.
+         * @param normal Normal vectors of the panel associated with the given collocation points.
+         * @param options Options for the UVLM solver.
+         * @param rhs Output boundary condition vector.
+         * @param Ktotal Total number of collocation points.
+         */
         template <typename t_zeta_col,
                   typename t_zeta_star,
                   typename t_uext_total_col,
-                //   typename t_zeta_dot_col,
                   typename t_gamma_star,
                   typename t_normal>
         void RHS
@@ -100,14 +187,32 @@ namespace UVLM
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
             const t_uext_total_col& uext_total_col,
-            // const t_zeta_dot_col& zeta_dot_col,
             const t_gamma_star& gamma_star,
             const t_normal& normal,
             const UVLM::Types::VMopts& options,
             UVLM::Types::VectorX& rhs,
             const uint& Ktotal
         );
-
+        /**
+         * @brief Calculates the non-penetrating boundary conditions for the given set of collocation points for an unsteady case including phantom panels.
+         *
+         * @tparam t_zeta_col Type of the zeta_col (surface panel collocation points) data structure.
+         * @tparam t_zeta_star Type of the zeta_star (wake surface corner points) data structure.
+         * @tparam t_uext_total_col Type of the uext_total_col (total external velocities at collocation points) data structure.
+         * @tparam t_gamma_star Type of the gamma_star (circulation strength on wake panels) data structure.
+         * @tparam t_normal Type of the normal vectors data structure.
+         *
+         * @param zeta_col Collocation points of the lifting surface.
+         * @param zeta_star Vortex ring panel corner points for lifting wake surfaces.
+         * @param uext_total_col Total external velocities (flow, structure, and rigid body motions) at collocation points.
+         * @param gamma_star Circulation strength on the vortex ring wake panels of the lifting surfaces.
+         * @param normal Normal vectors of the panel associated with the given collocation points.
+         * @param options Options for the UVLM solver.
+         * @param rhs Output boundary condition vector.
+         * @param Ktotal Total number of collocation points.
+         * @param phantom_gamma_star Circulation strength on the vortex ring wake panels of the phantom surfaces.
+         * @param phantom_zeta_star Vortex ring panel corner points for phantom wake surfaces.
+         * */
         template <typename t_zeta_col,
           typename t_zeta_star,
           typename t_uext_col,
@@ -115,7 +220,7 @@ namespace UVLM
           typename t_normal,
           typename t_phantom_gamma_star,
           typename t_phantom_zeta_star>
-        void RHS_lifting_unsteady
+        void RHS_unsteady_phantom_unsteady
         (
             const t_zeta_col& zeta_col,
             const t_zeta_star& zeta_star,
@@ -129,7 +234,18 @@ namespace UVLM
             const t_phantom_zeta_star& phantom_zeta_star
         );
 
-
+        /**
+         * @brief Calculates the non-penetrating boundary conditions for the given set of collocation points in the presence of source panels.
+         *
+         * @tparam t_uext_col Type of the uext_col (external velocities at collocation points) data structure.
+         * @tparam t_normal Type of the normal vectors data structure.
+         *
+         * @param uinc_col External velocities at collocation points.
+         * @param normal Normal vectors on the panels associated with the collocation points.
+         * @param rhs Output boundary condition vector.
+         * @param Ktotal Total number of collocation points.
+         * @param n_surf Number of considered surfaces.
+         */
         template <typename t_uext_col,
                   typename t_normal>
         void RHS_nonlifting_body
@@ -141,43 +257,68 @@ namespace UVLM
             const uint n_surf
         );
 
-
-        void generate_assembly_offset
-        (
-            const UVLM::Types::VecDimensions& dimensions,
-            const UVLM::Types::VecDimensions& dimensions_star,
-            UVLM::Types::MatrixX& offset,
-            const bool steady
-        );
-
-
+        /**
+         * @brief Copies values from vector to a VecMatrix with the same size but different shape.
+         *
+         * @tparam t_gamma Type of the gamma (circulation) data structure.
+         * @tparam t_zeta_col Type of the zeta_col (collocation points) data structure.
+         *
+         * @param gamma_flat Gamma vector.
+         * @param gamma Gamma matrix.
+         * @param zeta_col Collocation points of the surfaces.
+         */
         template <typename t_gamma,
                   typename t_zeta_col>
-        void reconstruct_gamma
+        void reconstruct_VecMatrixX_values_from_vector
         (
             const UVLM::Types::VectorX& gamma_flat,
             t_gamma& gamma,
             const t_zeta_col& zeta_col
         );
 
-
+        /**
+         * @brief Copies values from VecMatrixX to a vector with the same size but different shape.
+         *
+         * @tparam t_gamma Type of the gamma (circulation) data structure.
+         * @tparam t_zeta_col Type of the zeta_col (collocation points) data structure.
+         *
+         * @param gamma Gamma matrix.
+         * @param gamma_flat Gamma vector.
+         * @param zeta_col Collocation points of the surfaces.
+         */
         template <typename t_gamma,
                   typename t_zeta_col>
-        void deconstruct_gamma
+        void reconstruct_vector_values_from_VecMatrixX
         (
             const t_gamma& gamma,
             UVLM::Types::VectorX& gamma_flat,
             const t_zeta_col& zeta_col
         );
 		
-		template <typename t_vec_mat,
+        /**
+         * @brief Copies values from a MatriX to a VecVecMatrix with the same size but different shape.
+         *
+         * @tparam t_vec_mat ype for VecVecMatrixX (sometimes mapped matrix).
+         * @tparam t_zeta_col Type of the zeta_col (collocation points) data structure.
+         *
+         * @param vec_mat Output matrix with values to be filled in this function.
+         * @param zeta_col Collocation points on the surfaces (for dimensions).
+         */
+        template <typename t_vec_mat,
 		          typename t_zeta_col>
-		void reconstruct_MatrixX
+		void reconstruct_VecVecMatrixX_values_from_MatrixX
 		(
 			const UVLM::Types::MatrixX& mat_flat,
 			t_vec_mat& vec_mat,
 			const t_zeta_col& zeta_col
 		);
+        /**
+         * @brief Builds assembly offsets for UVLM matrices.
+         *
+         * @param n_surf Number of surfaces.
+         * @param dimensions Dimensions of the surfaces.
+         * @param offset Output assembly offset vector.
+         */
 		void build_offsets
 		(
 			const uint& n_surf,
@@ -185,6 +326,15 @@ namespace UVLM
 			std::vector<uint>& offset
 		);
         
+        /**
+         * @brief Calculates the total size of a VecVecMat data structure.
+         *
+         * @tparam t_mat_in Type of the input matrix data structure.
+         *
+         * @param mat_in Input matrix data structure.
+         *
+         * @return Total size of the VecVecMat data structure.
+         */
         template<typename t_mat_in>
         uint get_total_VecVecMat_size(t_mat_in mat_in);
     }
@@ -197,7 +347,6 @@ namespace UVLM
 template <typename t_zeta,
           typename t_zeta_col,
           typename t_zeta_star,
-        //   typename t_zeta_star_col,
           typename t_uext_total_col,
           typename t_normals,
           typename t_aic>
@@ -206,7 +355,6 @@ void UVLM::Matrix::AIC
     const t_zeta& zeta,
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
-    // const t_zeta_star_col& zeta_star_col,
     const t_uext_total_col& uext_total_col,
     const t_normals& normals,
     const UVLM::Types::VMopts& options,
@@ -214,7 +362,7 @@ void UVLM::Matrix::AIC
     t_aic& aic
 )
 {
-    // TODO: delete unused input uext_total_col
+
     const uint n_surf_panel = zeta.size();
     const uint n_surf_col = zeta_col.size();
     UVLM::Types::VecDimensions dimensions_panel, dimensions_col, dimensions_star;
@@ -482,7 +630,7 @@ template <typename t_zeta_col,
           typename t_normal,
           typename t_phantom_gamma_star,
           typename t_phantom_zeta_star>
-void UVLM::Matrix::RHS_lifting_unsteady
+void UVLM::Matrix::RHS_unsteady_phantom_unsteady
 (
     const t_zeta_col& zeta_col,
     const t_zeta_star& zeta_star,
@@ -613,38 +761,9 @@ void UVLM::Matrix:: RHS_nonlifting_body
 /*-----------------------------------------------------------------------------
 
 -----------------------------------------------------------------------------*/
-
-void UVLM::Matrix::generate_assembly_offset
-(
-    const UVLM::Types::VecDimensions& dimensions,
-    const UVLM::Types::VecDimensions& dimensions_star,
-    UVLM::Types::MatrixX& offset,
-    const bool steady
-)
-{
-    std::cerr << "Not sure this is correct, dont use (or debug)!!!" << std::endl;
-    uint n_surf = dimensions.size();
-    offset.setZero(n_surf, 2);
-
-    uint counter = 0;
-    for (uint i_surf=0; i_surf<n_surf; ++i_surf)
-    {
-        offset(i_surf, 0) = counter;
-        counter += dimensions[i_surf].first*
-                   dimensions[i_surf].second;
-
-        offset(i_surf, 1) = counter;
-        if (!steady)
-        {
-            counter += dimensions_star[i_surf].first*
-                       dimensions_star[i_surf].second;
-        }
-    }
-}
-
 template <typename t_gamma,
           typename t_zeta_col>
-void UVLM::Matrix::reconstruct_gamma
+void UVLM::Matrix::reconstruct_VecMatrixX_values_from_vector
 (
     const UVLM::Types::VectorX& gamma_flat,
     t_gamma& gamma,
@@ -670,7 +789,7 @@ void UVLM::Matrix::reconstruct_gamma
 }
 template <typename t_vec_mat,
 		  typename t_zeta_col>
-void UVLM::Matrix::reconstruct_MatrixX
+void UVLM::Matrix::reconstruct_VecVecMatrixX_values_from_MatrixX
 (
     const UVLM::Types::MatrixX& mat_flat,
     t_vec_mat& vec_mat,
@@ -699,7 +818,7 @@ void UVLM::Matrix::reconstruct_MatrixX
 }
 template <typename t_gamma,
           typename t_zeta_col>
-void UVLM::Matrix::deconstruct_gamma
+void UVLM::Matrix::reconstruct_vector_values_from_VecMatrixX
 (
     const t_gamma& gamma,
     UVLM::Types::VectorX& gamma_flat,
@@ -829,62 +948,6 @@ uint UVLM::Matrix::get_total_VecVecMat_size(t_mat_in mat_in)
         ii += M*N;
     }
     return ii;
-}
-
-
-
-template<typename t_aic_phantom,
-            typename t_aic,
-            typename t_zeta,
-            typename t_flag_zeta_phantom>
-void UVLM::Matrix::add_phantom_AIC_to_AIC
-(
-    t_aic_phantom& aic_phantom,
-    t_aic& aic,
-    t_zeta& zeta,
-    t_flag_zeta_phantom& flag_zeta_phantom
-)
-{
-    /* Function adds the AIC of the phantom panel on the collocation points to the adjacent wing panel
-       --> Keeps the combined AIC matrix squared
-       --> enforces the circulation BC at the junction (Gamma_phantom == Gamma_wing_junction)*/
-    const uint n_surf_panel = zeta.size();
-    const uint N_rows_aic = aic.rows();
-    uint N_phantom_cell, N_row_phantom, index_phantom, offset_aic_phantom = 0;
-    // build the offsets beforehand
-    std::vector<uint> offset_panel;
-    UVLM::Types::VecDimensions dimensions_panel;
-    UVLM::Types::generate_dimensions(zeta, dimensions_panel, - 1);
-	UVLM::Matrix::build_offsets(n_surf_panel,
-								dimensions_panel,
-								offset_panel);
-
-    for (uint jpanel_surf=0; jpanel_surf<n_surf_panel; ++jpanel_surf)
-    {
-        // Get index
-        for(Eigen::Index i=0; i<flag_zeta_phantom.rows(); ++i)
-        {
-            if(flag_zeta_phantom(i, jpanel_surf))
-            {
-                index_phantom = i;
-                break;
-            }
-        }
-        N_row_phantom = dimensions_panel[jpanel_surf].first;
-        
-        for(Eigen::Index j_panel=0; j_panel<flag_zeta_phantom.rows(); ++j_panel)
-        {
-            if(flag_zeta_phantom(j_panel, jpanel_surf))
-            {
-                for(uint i_phantom_row=0; i_phantom_row<N_row_phantom; ++i_phantom_row)
-                {
-                aic.col(offset_panel[jpanel_surf]+j_panel*N_row_phantom+i_phantom_row)
-                        +=aic_phantom.col(offset_aic_phantom+i_phantom_row);
-                }
-                offset_aic_phantom+=N_row_phantom;
-                }
-            }
-    }
 }
 
 template<typename t_zeta_col, 
