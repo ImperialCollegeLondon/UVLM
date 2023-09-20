@@ -183,7 +183,6 @@ void UVLM::Unsteady::Utils::compute_resultant_grid_velocity
     t_uext_out& uext_out
 )
 {
-    // New vector needed here
     UVLM::Types::Vector6 vec_rbm_vel_g;
     vec_rbm_vel_g << rbm_velocity[0], rbm_velocity[1], rbm_velocity[2], rbm_velocity[3], rbm_velocity[4], rbm_velocity[5];
     const uint n_surf = zeta.size();
