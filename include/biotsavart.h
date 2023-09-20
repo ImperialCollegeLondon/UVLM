@@ -193,7 +193,23 @@ namespace UVLM
             const bool&         image_method = false,
             const UVLM::Types::Real& vortex_radius = VORTEX_RADIUS_DEF
         );
-
+        template <typename t_zeta_phantom,
+                  typename t_zeta_star_phantom,
+                  typename t_zeta_star_lifting,
+                  typename t_gamma_phantom,
+                  typename t_gamma_star_phantom,
+                  typename t_uout>
+        void total_induced_velocity_of_phantom_panels_on_wake
+        (
+            const t_zeta_phantom&       zeta_phantom,
+            const t_zeta_star_phantom&  zeta_star_phantom,
+            const t_zeta_star_lifting&  zeta_star_lifting,
+            const t_gamma_phantom&      gamma_phantom,
+            const t_gamma_star_phantom& gamma_star_phantom,
+            t_uout&             uout,
+            const bool&         image_method,
+            const UVLM::Types::Real& vortex_radius
+        );
 
 
         template <typename t_zeta,
@@ -687,9 +703,6 @@ void UVLM::BiotSavart::surface
                 uout[i_dim](i,j) += chord_seg_uout[0][i_dim](i,j)*gamma(i,j);
                 uout[i_dim](i,j) -= chord_seg_uout[0][i_dim](i,j+1)*gamma(i,j);
             }
-            // std::cout << i << " " << j  << " "<< span_seg_uout[0][0](i,j)  << " "<< span_seg_uout[0][1](i,j)  << " "<< span_seg_uout[0][2](i,j) << std::endl;
-            // std::cout << i << " " << j  << " "<< chord_seg_uout[0][0](i,j)  << " "<< chord_seg_uout[0][1](i,j)  << " "<< chord_seg_uout[0][2](i,j) << std::endl;
-            // std::cout << i << " " << j  << " "<< uout[0](i,j)  << " "<< uout[1](i,j)  << " "<< uout[2](i,j) << std::endl;
         }
     }
 }
@@ -826,7 +839,6 @@ void UVLM::BiotSavart::surface_with_unsteady_wake
         // #pragma omp parallel for collapse(1) reduction(sum_Vector3: temp_uout)
         for (uint i_star=0; i_star<mstar; ++i_star)
         {
-            // std::cout << "WARNING: this should not be computed" << std::endl;
             temp_uout += UVLM::BiotSavart::vortex_ring(target_triad,
                                           zeta_star[0].template block<2,2>(i_star, j),
                                           zeta_star[1].template block<2,2>(i_star, j),
@@ -938,7 +950,6 @@ void UVLM::BiotSavart::multisurface_steady_wake
     // int surface_counter;
     const uint surf_rows = gamma.rows();
     const uint surf_cols = gamma.cols();
-
     #pragma omp parallel for collapse(2)
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
     {
@@ -964,12 +975,13 @@ void UVLM::BiotSavart::multisurface_steady_wake
                                                        vortex_radius
                                                       );
 
-            // #pragma omp parallel for collapse(2)
+            #pragma omp parallel for collapse(2)
             for (unsigned int i_surf=0; i_surf<surf_rows; ++i_surf)
             {
                 for (unsigned int j_surf=0; j_surf<surf_cols; ++j_surf)
                 {
-                    int surface_counter = i_surf*surf_cols + j_surf;
+
+                   int surface_counter = i_surf*surf_cols + j_surf;
                     uout(collocation_counter, surface_counter) +=
                         temp_uout[0](i_surf, j_surf)*normal[0](i_col, j_col) +
                         temp_uout[1](i_surf, j_surf)*normal[1](i_col, j_col) +
@@ -1012,7 +1024,7 @@ void UVLM::BiotSavart::multisurface_unsteady_wake
     unsigned int surf_rows = gamma.rows();
     unsigned int surf_cols = gamma.cols();
 
-    #pragma omp parallel for collapse(2)
+    // #pragma omp parallel for collapse(2)
     for (unsigned int i_col=0; i_col<rows_collocation; ++i_col)
     {
         for (unsigned int j_col=0; j_col<cols_collocation; ++j_col)
@@ -1255,6 +1267,55 @@ void UVLM::BiotSavart::total_induced_velocity_on_wake
                 zeta[i_surf],
                 gamma[i_surf],
                 zeta_star[col_i_surf],
+                uout[col_i_surf],
+                image_method,
+                vortex_radius
+            );
+        }
+    }
+}
+
+template <typename t_zeta_phantom,
+          typename t_zeta_star_phantom,
+          typename t_zeta_star_lifting,
+          typename t_gamma_phantom,
+          typename t_gamma_star_phantom,
+          typename t_uout>
+void UVLM::BiotSavart::total_induced_velocity_of_phantom_panels_on_wake
+(
+    const t_zeta_phantom&       zeta_phantom,
+    const t_zeta_star_phantom&  zeta_star_phantom,
+    const t_zeta_star_lifting&  zeta_star_lifting,
+    const t_gamma_phantom&      gamma_phantom,
+    const t_gamma_star_phantom& gamma_star_phantom,
+    t_uout&             uout,
+    const bool&         image_method,
+    const UVLM::Types::Real& vortex_radius
+)
+{
+    const uint n_surf = zeta_star_lifting.size();
+    for (uint col_i_surf=0; col_i_surf<n_surf; ++col_i_surf)
+    {
+          
+        for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+        {
+             // wake on wake
+            UVLM::BiotSavart::whole_surface_on_surface
+            (
+                zeta_star_phantom[i_surf],
+                gamma_star_phantom[i_surf],
+                zeta_star_lifting[col_i_surf],
+                uout[col_i_surf],
+                image_method,
+                vortex_radius
+            );
+            // surface on wake
+          
+            UVLM::BiotSavart::whole_surface_on_surface
+            (
+                zeta_phantom[i_surf],
+                gamma_phantom[i_surf],
+                zeta_star_lifting[col_i_surf],
                 uout[col_i_surf],
                 image_method,
                 vortex_radius

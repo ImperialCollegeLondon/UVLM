@@ -2,6 +2,25 @@
 #include <fenv.h>
 
 
+/**
+ * @brief Runs the Vortex-Lattice Method (VLM).
+ *
+ * This function solves an aerodynamic solver with the vortex-lattice method (VLM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.           
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
 DLLEXPORT void run_VLM
 (
     const UVLM::Types::VMopts& options,
@@ -15,186 +34,278 @@ DLLEXPORT void run_VLM
     double** p_gamma,
     double** p_gamma_star,
     double** p_forces,
-    double* p_rbm_vel_g,
-    double* p_centre_rot_g
+    double*  p_rbm_vel,
+    double*  p_centre_rot
 )
 {
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
-    unsigned int n_surf;
-    n_surf = options.NumSurfaces;
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions,
-                                             dimensions);
-    UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions_star,
-                                             dimensions_star);
+    struct UVLM::StructUtils::lifting_surface Lifting_surfaces = UVLM::StructUtils::lifting_surface
+            (options.NumSurfaces,
+            p_dimensions,
+            p_zeta,
+            p_u_ext,
+            p_forces,
+            p_zeta_star,
+            p_zeta_dot,
+            p_gamma,
+            p_gamma_star,
+            p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot);
 
-    UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta,
-                                      zeta,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star,
-                                      zeta_star,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta_dot,
-                                      zeta_dot,
-                                      1);
-
-    UVLM::Types::VecVecMapX u_ext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_u_ext,
-                                      u_ext,
-                                      1);
-
-    UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_gamma,
-                                   gamma,
-                                   0);
-
-    UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_gamma_star,
-                                   gamma_star,
-                                   0);
-
-    UVLM::Types::VecVecMapX forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_forces,
-                                      forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Types::MapVectorX rbm_vel_g (p_rbm_vel_g, 2*UVLM::Constants::NDIM);
-    UVLM::Types::MapVectorX centre_rot_g (p_centre_rot_g, UVLM::Constants::NDIM);
-
-    UVLM::Steady::solver(zeta,
-                         zeta_dot,
-                         u_ext,
-                         zeta_star,
-                         gamma,
-                         gamma_star,
-                         forces,
-                         rbm_vel_g,
-                         centre_rot_g,
+    UVLM::Steady::solver(Lifting_surfaces,
                          options,
                          flightconditions);
 }
+/**
+ * @brief Runs the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic solver with the linear source panel method (LSPM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_sigma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_pressure_coefficient Pointer to an array of pressure coefficients for each non-lifting body.
+ */
+DLLEXPORT void run_linear_source_panel_method
+(
+    const UVLM::Types::VMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    double** p_zeta,
+    double** p_u_ext,
+    double** p_sigma,
+    double** p_forces,
+    double** p_pressure_coefficient
+)
+{
+#if defined(_OPENMP)
+    omp_set_num_threads(options.NumCores);
+#endif
 
+    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfacesNonlifting,
+                                                    p_dimensions,
+                                                    p_zeta,
+                                                    p_u_ext,
+                                                    p_forces,
+                                                    p_pressure_coefficient,
+                                                    p_sigma);
+    UVLM::Steady::solver_nonlifting_body(nl_body,
+                                         options,
+                                         flightconditions);
+}
 
-DLLEXPORT void init_UVLM
+/**
+ * @brief Runs the Vortex-Lattice Method (VLM) coupled with the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic problem with the vortex-lattice method (VLM) for lifting surfaces
+ * coupled with an LSPM for nonlifting body effects. Phantom panels are used to handle fuselage-wing 
+ * junction simulations.
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.           
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.    
+ * @param p_flag_zeta_phantom Pointer to vector containing junction partner ids for phantom panel generation.
+ * @param p_dimensions_nonlifting Pointer to array containing dimensions (longitudinal and radial) for each nonlifting surface.
+ * @param p_zeta_nonlifting Pointer to matrix containing corner point coordinates for each nonlifting surface grid.
+ * @param p_u_ext_nonlifting Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each nonlifting surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_forces_nonlifting Pointer to matrix containing forces at corner points of each nonlifting surface grid.  
+ * @param p_pressure_coefficient_nonlifting Pointer to an array of pressure coefficients for each non-lifting body.   
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
+DLLEXPORT void run_VLM_coupled_with_LSPM
 (
     const UVLM::Types::VMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
     unsigned int** p_dimensions,
     unsigned int** p_dimensions_star,
-    double** p_uext,
     double** p_zeta,
     double** p_zeta_star,
     double** p_zeta_dot,
-    double** p_zeta_star_dot,
-    double*  p_rbm_vel,
+    double** p_u_ext,
     double** p_gamma,
     double** p_gamma_star,
-    double** p_normals,
-    double** p_forces
+    double** p_forces,
+    int* p_flag_zeta_phantom,
+    unsigned int** p_dimensions_nonlifting,
+    double** p_zeta_nonlifting,
+    double** p_u_ext_nonlifting,
+    double** p_sigma,
+    double** p_forces_nonlifting,
+    double** p_pressure_coefficient_nonlifting,
+    double*  p_rbm_vel,
+    double*  p_centre_rot
 )
 {
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
-    uint n_surf = options.NumSurfaces;
+    // Setup Lifting Surfaces
+    struct UVLM::StructUtils::lifting_surface Lifting_surfaces = UVLM::StructUtils::lifting_surface
+            (options.NumSurfaces,
+            p_dimensions,
+            p_zeta,
+            p_u_ext,
+            p_forces,
+            p_zeta_star,
+            p_zeta_dot,
+            p_gamma,
+            p_gamma_star,
+            p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot);
+    
+    // Setup Nonlifting Body  
+    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body(options.NumSurfacesNonlifting,
+                                                    p_dimensions_nonlifting,
+                                                    p_zeta_nonlifting,
+                                                    p_u_ext_nonlifting,
+                                                    p_forces_nonlifting,
+                                                    p_pressure_coefficient_nonlifting,
+                                                    p_sigma);
+    // Setup Phantom Surfaces
+    struct UVLM::StructUtils::phantom_surface phantom_surfaces = UVLM::StructUtils::phantom_surface(p_flag_zeta_phantom,
+                                                                                                    Lifting_surfaces.n_surf,
+                                                                                                    Lifting_surfaces.zeta,
+                                                                                                    Lifting_surfaces.zeta_star,
+                                                                                                    Lifting_surfaces.dimensions);
+    
+    //Start solver
+	UVLM::Steady::solver_lifting_and_nonlifting_bodies
+	(
+		Lifting_surfaces,
+		phantom_surfaces,
+		options,
+		flightconditions,
+		nl_body
+	);
+}
 
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions,
-                                             dimensions);
-    UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions_star,
-                                             dimensions_star);
+/**
+ * @brief Runs the Unsteady Vortex-Lattice Method (UVLM).
+ *
+ * This function solves an aerodynamic solver with the unsteady vortex-lattice method (UVLM).
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param i_iter Simulation iteration.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_u_ext_star Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each wake surface grid.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface. 
+ * @param p_dist_to_orig Pointer to array of distances from the trailing edge of the wake vertices.* 
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.          
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
+DLLEXPORT void run_UVLM
+(
+    const UVLM::Types::UVMopts& options,
+    const UVLM::Types::FlightConditions& flightconditions,
+    unsigned int** p_dimensions,
+    unsigned int** p_dimensions_star,
+    unsigned int i_iter,
+    double** p_u_ext,
+    double** p_uext_star,
+    double** p_zeta,
+    double** p_zeta_star,
+    double** p_zeta_dot,
+    double** p_gamma,
+    double** p_gamma_star,
+    double** p_dist_to_orig,
+    double** p_normals,
+    double** p_forces,
+    double** p_dynamic_forces,
+    double*  p_rbm_vel,
+    double*  p_centre_rot
+)
+{
+    #if defined(_OPENMP)
+    omp_set_num_threads(options.NumCores);
+#endif
+    // Setup Lifting Surfaces
+    struct UVLM::StructUtils::lifting_surface_unsteady Lifting_surfaces_unsteady = UVLM::StructUtils::lifting_surface_unsteady
+            (options.NumSurfaces,
+            p_dimensions,
+            p_zeta,
+            p_u_ext,
+            p_forces,
+            p_zeta_star,
+            p_zeta_dot,
+            p_gamma,
+            p_gamma_star,
+            p_dimensions_star,
+            p_rbm_vel,
+            p_centre_rot,
+            p_dist_to_orig,
+            p_dynamic_forces,
+            p_uext_star,
+            p_normals);
 
-    UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta,
-                                      zeta,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star,
-                                      zeta_star,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta_dot,
-                                      zeta_dot,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star_dot,
-                                      zeta_star_dot,
-                                      1);
-
-    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
-
-    UVLM::Types::VecVecMapX uext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_uext,
-                                      uext,
-                                      1);
-
-    UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_gamma,
-                                   gamma,
-                                   0);
-
-    UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_gamma_star,
-                                   gamma_star,
-                                   0);
-
-    UVLM::Types::VecVecMapX forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_forces,
-                                      forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-
-    // UVLM::Types::VMopts steady_options = UVLM::Types::UVMopts2VMopts(options);
-    UVLM::Unsteady::initialise(
-        zeta,
-        zeta_dot,
-        zeta_star,
-        zeta_star_dot,
-        uext,
-        gamma,
-        gamma_star,
-        rbm_velocity,
-        forces,
+    UVLM::Unsteady::solver
+    (
+        i_iter,
+        Lifting_surfaces_unsteady,
         options,
         flightconditions
     );
 }
-
-
-DLLEXPORT void run_UVLM
+/**
+ * @brief Runs the Unsteady Vortex-Lattice Method (UVLM) coupled with the Linear Source Panel Method (LSPM).
+ *
+ * This function solves an aerodynamic problem with the unsteady vortex-lattice method (UVLM) for lifting surfaces
+ * coupled with an LSPM for nonlifting body effects. Phantom panels are used to handle fuselage-wing 
+ * junction simulations. 
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param i_iter Simulation iteration.
+ * @param p_u_ext Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each surface grid.
+ * @param p_u_ext_star Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each wake surface grid.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_zeta_dot Pointer to matrix with corner point velocities of each surface grid.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface. 
+ * @param p_dist_to_orig Pointer to array of distances from the trailing edge of the wake vertices.* 
+ * @param p_forces Pointer to matrix containing forces at corner points of each surface grid.      
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.  
+ * @param p_flag_zeta_phantom Pointer to vector containing junction partner ids for phantom panel generation.
+ * @param p_dimensions_nonlifting Pointer to array containing dimensions (longitudinal and radial) for each nonlifting surface.
+ * @param p_zeta_nonlifting Pointer to matrix containing corner point coordinates for each nonlifting surface grid.
+ * @param p_u_ext_nonlifting Pointer to matrix containing external flow velocities (free flow and gust) at corner points of each nonlifting surface grid.
+ * @param p_sigma Pointer to an array of sigma values for each non-lifting body.
+ * @param p_forces_nonlifting Pointer to matrix containing forces at corner points of each nonlifting surface grid.  
+ * @param p_pressure_coefficient_nonlifting Pointer to an array of pressure coefficients for each non-lifting body.   
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_centre_rot Pointer to array with rotational velocities of rigid bodies around their centers. 
+ */
+DLLEXPORT void run_UVLM_coupled_with_LSPM
 (
     const UVLM::Types::UVMopts& options,
     const UVLM::Types::FlightConditions& flightconditions,
@@ -206,131 +317,90 @@ DLLEXPORT void run_UVLM
     double** p_zeta,
     double** p_zeta_star,
     double** p_zeta_dot,
-    double*  p_rbm_vel,
-    double*  p_centre_rot,
     double** p_gamma,
     double** p_gamma_star,
     double** p_dist_to_orig,
-    // double** p_previous_gamma,
     double** p_normals,
     double** p_forces,
-    double** p_dynamic_forces
+    double** p_dynamic_forces,
+    int* p_flag_zeta_phantom,
+    unsigned int** p_dimensions_nonlifting,
+    double** p_zeta_nonlifting,
+    double** p_u_ext_nonlifting,
+    double** p_sigma,
+    double** p_forces_nonlifting,
+    double** p_pressure_coefficient_nonlifting,
+    double* p_rbm_vel,
+    double* p_centre_rot
 )
 {
 #if defined(_OPENMP)
     omp_set_num_threads(options.NumCores);
 #endif
-    uint n_surf = options.NumSurfaces;
+    
+    struct UVLM::StructUtils::lifting_surface_unsteady Lifting_surfaces_unsteady = UVLM::StructUtils::lifting_surface_unsteady
+        (options.NumSurfaces,
+        p_dimensions,
+        p_zeta,
+        p_uext,
+        p_forces,
+        p_zeta_star,
+        p_zeta_dot,
+        p_gamma,
+        p_gamma_star,
+        p_dimensions_star,
+        p_rbm_vel,
+        p_centre_rot,
+        p_dist_to_orig,
+        p_dynamic_forces,
+        p_uext_star,
+        p_normals);
 
-    UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions,
-                                             dimensions);
-    UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
-                                             p_dimensions_star,
-                                             dimensions_star);
-
-    UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta,
-                                      zeta,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_zeta_star,
-                                      zeta_star,
-                                      1);
-
-    UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_zeta_dot,
-                                      zeta_dot,
-                                      1);
-
-    UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
-    UVLM::Types::MapVectorX centre_rot (p_centre_rot, UVLM::Constants::NDIM);
-
-    UVLM::Types::VecVecMapX uext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_uext,
-                                      uext,
-                                      1);
-
-    UVLM::Types::VecVecMapX uext_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
-                                      p_uext_star,
-                                      uext_star,
-                                      1);
-
-    UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
-                                   p_gamma,
-                                   gamma,
-                                   0);
-    //
-    // UVLM::Types::VecMapX previous_gamma;
-    // UVLM::CppInterface::map_VecMat(dimensions,
-    //                                p_previous_gamma,
-    //                                previous_gamma,
-    //                                0);
-
-    UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_gamma_star,
-                                   gamma_star,
-                                   0);
-
-    UVLM::Types::VecMapX dist_to_orig;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
-                                   p_dist_to_orig,
-                                   dist_to_orig,
-                                   1);
-
-    UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_normals,
-                                      normals,
-                                      0);
-
-    UVLM::Types::VecVecMapX forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_forces,
-                                      forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Types::VecVecMapX dynamic_forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
-                                      p_dynamic_forces,
-                                      dynamic_forces,
-                                      1,
-                                      2*UVLM::Constants::NDIM);
-
-    UVLM::Unsteady::solver
+    struct UVLM::StructUtils::nonlifting_body nl_body = UVLM::StructUtils::nonlifting_body
+    (
+        options.NumSurfacesNonlifting,
+        p_dimensions_nonlifting,
+        p_zeta_nonlifting,
+        p_u_ext_nonlifting,
+        p_forces_nonlifting,
+        p_pressure_coefficient_nonlifting,
+        p_sigma
+    );
+                                                    
+    struct UVLM::StructUtils::phantom_surface phantom_surfaces = UVLM::StructUtils::phantom_surface(p_flag_zeta_phantom,
+                                                                                                    Lifting_surfaces_unsteady.n_surf,
+                                                                                                    Lifting_surfaces_unsteady.zeta,
+                                                                                                    Lifting_surfaces_unsteady.zeta_star,
+                                                                                                    Lifting_surfaces_unsteady.dimensions);
+    UVLM::Unsteady::solver_lifting_and_nonlifting
     (
         i_iter,
-        zeta,
-        zeta_dot,
-        uext,
-        uext_star,
-        zeta_star,
-        gamma,
-        gamma_star,
-        dist_to_orig,
-        normals,
-        // previous_gamma,
-        rbm_velocity,
-        centre_rot,
-        forces,
-        dynamic_forces,
+        Lifting_surfaces_unsteady,
+        nl_body,
+        phantom_surfaces,
         options,
         flightconditions
     );
 }
-
-
+/**
+ * @brief Calculates unsteady forces and moments on lifting surfaces.
+ *
+ * This function computes the unsteady forces and moments acting on lifting surfaces
+ * based on the given inputs and configurations.
+ *
+ * @param options - Configuration options for the solver.
+ * @param flightconditions - Flight conditions for the solver.
+ * @param p_dimensions Pointer to array containing dimensions (chordwise and spanwise) for each surface.
+ * @param p_dimensions_star Pointer to array containing dimensions (chordwise and spanwise) for each wake surface.
+ * @param p_zeta Pointer to matrix containing corner point coordinates for each surface grid.
+ * @param p_zeta_star Pointer to matrix with corner point coordinates of each wake surface grid.
+ * @param p_rbm_vel Pointer to array with rigid body motion velocities.
+ * @param p_gamma Pointer to matrix with circulation strength for each vortex ring panel on each surface.
+ * @param p_gamma_star Pointer to matrix with circulation strength for each wake vortex ring panel on each wake surface.
+ * @param p_gamma_dot Pointer to matrix with gradient of circulation strengths for each vortex ring panel on each surface. 
+ * @param p_normals Pointer to matrix with the normal vectors of the panels of each surface.
+ * @param p_dynamic_forces Pointer to matrix with unsteady forces at each surface corner point.          
+ */
 DLLEXPORT void calculate_unsteady_forces
 (
     const UVLM::Types::UVMopts& options,
@@ -352,22 +422,22 @@ DLLEXPORT void calculate_unsteady_forces
 #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions_star,
                                              dimensions_star);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+    UVLM::Mapping::map_VecVecMat(dimensions_star,
                                       p_zeta_star,
                                       zeta_star,
                                       1);
@@ -375,31 +445,31 @@ DLLEXPORT void calculate_unsteady_forces
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma,
                                    gamma,
                                    0);
 
     UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
+    UVLM::Mapping::map_VecMat(dimensions_star,
                                    p_gamma_star,
                                    gamma_star,
                                    0);
 
     UVLM::Types::VecMapX gamma_dot;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma_dot,
                                    gamma_dot,
                                    0);
 
     UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_normals,
                                       normals,
                                       0);
 
     UVLM::Types::VecVecMapX dynamic_forces;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_dynamic_forces,
                                       dynamic_forces,
                                       1,
@@ -434,34 +504,35 @@ DLLEXPORT void UVLM_check_incidence_angle
     double** p_zeta_dot,
     double** p_normals,
     double*  p_rbm_vel,
-    double** p_incidence_angle
+    double** p_incidence_angle,
+    const UVLM::Types::UVMopts& options
 )
 {
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
 
     UVLM::Types::VecVecMapX u_ext;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_uext,
                                       u_ext,
                                       1);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_dot;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta_dot,
                                       zeta_dot,
                                       1);
 
     UVLM::Types::VecVecMapX normals;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_normals,
                                       normals,
                                       0);
@@ -469,7 +540,7 @@ DLLEXPORT void UVLM_check_incidence_angle
     UVLM::Types::MapVectorX rbm_velocity (p_rbm_vel, 2*UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX incidence_angle;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_incidence_angle,
                                    incidence_angle,
                                    0);
@@ -481,6 +552,7 @@ DLLEXPORT void UVLM_check_incidence_angle
         zeta_dot,
         normals,
         rbm_velocity,
+        options,
         incidence_angle
     );
 }
@@ -504,22 +576,22 @@ DLLEXPORT void total_induced_velocity_at_points
 #endif
     uint n_surf = options.NumSurfaces;
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
     UVLM::Types::VecDimensions dimensions_star;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions_star,
                                              dimensions_star);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     UVLM::Types::VecVecMapX zeta_star;
-    UVLM::CppInterface::map_VecVecMat(dimensions_star,
+    UVLM::Mapping::map_VecVecMat(dimensions_star,
                                       p_zeta_star,
                                       zeta_star,
                                       1);
@@ -533,13 +605,13 @@ DLLEXPORT void total_induced_velocity_at_points
                                           UVLM::Constants::NDIM);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                    p_gamma,
                                    gamma,
                                    0);
 
     UVLM::Types::VecMapX gamma_star;
-    UVLM::CppInterface::map_VecMat(dimensions_star,
+    UVLM::Mapping::map_VecMat(dimensions_star,
                                    p_gamma_star,
                                    gamma_star,
                                    0);
@@ -586,45 +658,45 @@ DLLEXPORT void multisurface
     uint n_surf_target = 1;
 
     UVLM::Types::VecDimensions dimensions;
-    UVLM::CppInterface::transform_dimensions(n_surf,
+    UVLM::Mapping::transform_dimensions(n_surf,
                                              p_dimensions,
                                              dimensions);
 
     // UVLM::Types::VecDimensions dimensions_star;
-    // UVLM::CppInterface::transform_dimensions(n_surf,
+    // UVLM::Mapping::transform_dimensions(n_surf,
     //                                          p_dimensions_star,
     //                                          dimensions_star);
 
     UVLM::Types::VecDimensions dimensions_target;
-    UVLM::CppInterface::transform_dimensions(n_surf_target,
+    UVLM::Mapping::transform_dimensions(n_surf_target,
                                              p_dimensions_target,
                                              dimensions_target);
 
     UVLM::Types::VecDimensions dimensions_uout;
-    UVLM::CppInterface::transform_dimensions(n_surf_target,
+    UVLM::Mapping::transform_dimensions(n_surf_target,
                                              p_dimensions_uout,
                                              dimensions_uout);
 
     UVLM::Types::VecVecMapX zeta;
-    UVLM::CppInterface::map_VecVecMat(dimensions,
+    UVLM::Mapping::map_VecVecMat(dimensions,
                                       p_zeta,
                                       zeta,
                                       1);
 
     // UVLM::Types::VecMapX gamma;
-    // UVLM::CppInterface::map_VecMat(dimensions,
+    // UVLM::Mapping::map_VecMat(dimensions,
     //                               p_gamma,
     //                               gamma,
     //                               0);
     //
     // UVLM::Types::VecMatrixX target_surface;
-    // UVLM::CppInterface::map_VecMatrixX(dimensions_target,
+    // UVLM::Mapping::map_VecMatrixX(dimensions_target,
     //                                   p_target_surface,
     //                                   target_surface,
     //                                   1);
 
     UVLM::Types::VecMapX gamma;
-    UVLM::CppInterface::map_VecMat(dimensions,
+    UVLM::Mapping::map_VecMat(dimensions,
                                   p_gamma,
                                   gamma,
                                   0);
@@ -634,13 +706,13 @@ DLLEXPORT void multisurface
     // std::cout << dimensions[1].first << std::endl;
 
     UVLM::Types::VecMapX uout;
-    UVLM::CppInterface::map_VecMat(dimensions_uout,
+    UVLM::Mapping::map_VecMat(dimensions_uout,
                                   p_uout,
                                   uout,
                                   0);
 
     UVLM::Types::VecVecMapX target_surface;
-    UVLM::CppInterface::map_VecVecMat(dimensions_target,
+    UVLM::Mapping::map_VecVecMat(dimensions_target,
                                       p_target_surface,
                                       target_surface,
                                       1);
