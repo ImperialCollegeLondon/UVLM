@@ -28,7 +28,16 @@ namespace UVLM
                     x = solver.solveWithGuess(b, x);
             } else
             {
-                x = a.partialPivLu().solve(b);
+                if(a.rows() == a.cols())
+                {
+                    //Square Matrix
+                    x = a.partialPivLu().solve(b);
+                }
+                else
+                {
+                    //Non-square matrix (e.g. phantom cells included in AIC)
+                    x = a.fullPivLu().solve(b);
+                }
             }
         }
     }

@@ -110,6 +110,26 @@ namespace UVLM
                     }
                 }
             }
+            template<typename t_u_ind>
+            void no_movement_of_vortices_at_TE
+            (
+               t_u_ind& u_ind 
+            )
+            {
+                // Do not move the vertices in the TE
+                const uint n_surf = u_ind.size();
+                for (uint i_surf=0; i_surf<n_surf; ++i_surf)
+                {
+                    uint N = u_ind[i_surf][0].cols();
+                    for (uint i_n=0; i_n<N; ++i_n)
+                    {
+                        for (uint i_dim=0; i_dim<UVLM::Constants::NDIM; ++i_dim)
+                        {
+                            u_ind[i_surf][i_dim](0, i_n) = 0.;
+                        }
+                    }
+                }
+            }
 
             template <typename t_zeta,
                       typename t_zeta_star,
@@ -158,9 +178,10 @@ namespace UVLM
                       typename t_extra_gamma_star,
                       typename t_extra_zeta_star,
                       typename t_dist_to_orig,
+                      typename t_rbm_velocity,
+                      typename t_centre_rot,
                       typename t_uext_star_total,
-                      typename t_solid_vel,
-                      typename t_centre_rot>
+                      typename t_solid_vel>
             void cfl_n1
             (
                 const UVLM::Types::UVMopts& options,
@@ -169,9 +190,10 @@ namespace UVLM
                 t_extra_gamma_star& extra_gamma_star,
                 t_extra_zeta_star& extra_zeta_star,
                 const t_dist_to_orig& dist_to_orig,
+                const t_rbm_velocity& rbm_velocity,
+                const t_centre_rot& centre_rot, 
                 t_uext_star_total& uext_star_total,
                 t_solid_vel& solid_vel,
-                t_centre_rot& centre_rot,
                 double dt=0.
             )
             {
@@ -276,20 +298,20 @@ namespace UVLM
                                 // Cylindrical coordinates along the z axis
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
-                                    coord0(i_m) = std::sqrt((zeta_star[i_surf][0](i_m, i_n) - centre_rot(0))*(zeta_star[i_surf][0](i_m, i_n) - centre_rot(0)) +
-                                                            (zeta_star[i_surf][1](i_m, i_n) - centre_rot(1))*(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1)));
+                                    coord0(i_m) = std::sqrt((zeta_star[i_surf][0](i_m, i_n) - centre_rot[0])*(zeta_star[i_surf][0](i_m, i_n) - centre_rot[0]) +
+                                                            (zeta_star[i_surf][1](i_m, i_n) - centre_rot[1])*(zeta_star[i_surf][1](i_m, i_n) - centre_rot[1]));
                                     // https://math.stackexchange.com/questions/360113/how-does-one-interpolate-between-polar-coordinates
                                     // coord0(i_m) = 1./coord0(i_m)/coord0(i_m);
-                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n) - centre_rot(1),
-                                                        zeta_star[i_surf][0](i_m, i_n) - centre_rot(0));
-                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) - centre_rot(2);
+                                    coord1(i_m) = atan2(zeta_star[i_surf][1](i_m, i_n) - centre_rot[1],
+                                                        zeta_star[i_surf][0](i_m, i_n) - centre_rot[0]);
+                                    coord2(i_m) = zeta_star[i_surf][2](i_m, i_n) - centre_rot[2];
                                 }
-                                coord0(M + 1) = std::sqrt((extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0))*(extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0)) +
-                                                          (extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1))*(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1)));
+                                coord0(M + 1) = std::sqrt((extra_zeta_star[i_surf][0](0, i_n) - centre_rot[0])*(extra_zeta_star[i_surf][0](0, i_n) - centre_rot[0]) +
+                                                          (extra_zeta_star[i_surf][1](0, i_n) - centre_rot[1])*(extra_zeta_star[i_surf][1](0, i_n) - centre_rot[1]));
                                 // coord0(M + 1) = 1./coord0(M + 1)/coord0(M + 1);
-                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n) - centre_rot(1),
-                                                      extra_zeta_star[i_surf][0](0, i_n) - centre_rot(0));
-                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) - centre_rot(2);
+                                coord1(M + 1) = atan2(extra_zeta_star[i_surf][1](0, i_n) - centre_rot[1],
+                                                      extra_zeta_star[i_surf][0](0, i_n) - centre_rot[0]);
+                                coord2(M + 1) = extra_zeta_star[i_surf][2](0, i_n) - centre_rot[2];
 
                                 if (coord1(2) >= coord1(1))
                                 {
@@ -410,9 +432,9 @@ namespace UVLM
                                 for (unsigned int i_m=0; i_m<M+1; ++i_m)
                                 {
                                     // new_coord0(i_m) = std::sqrt(1./new_coord0(i_m));
-                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m)) + centre_rot(0);
-                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m)) + centre_rot(1);
-                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + centre_rot(2);
+                                    zeta_star[i_surf][0](i_m, i_n) = new_coord0(i_m)*std::cos(new_coord1(i_m)) + centre_rot[0];
+                                    zeta_star[i_surf][1](i_m, i_n) = new_coord0(i_m)*std::sin(new_coord1(i_m)) + centre_rot[1];
+                                    zeta_star[i_surf][2](i_m, i_n) = new_coord2(i_m) + centre_rot[2];
                                 }
                             }
 
