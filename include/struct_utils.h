@@ -184,7 +184,8 @@ namespace UVLM
                                 normals,
                                 options,
                                 options.horseshoe,
-                                aic);      
+                                aic,
+                                Ktotal);      
             }
             /**
              * @brief Get induced velocities at collocation points from sources.

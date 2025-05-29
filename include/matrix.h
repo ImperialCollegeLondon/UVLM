@@ -56,7 +56,8 @@ namespace UVLM
             const t_normals& normals,
             const UVLM::Types::VMopts& options,
             const bool horseshoe,
-            t_aic& aic
+            t_aic& aic,
+            const uint Ktotal
         );
 
         /**
@@ -293,8 +294,7 @@ namespace UVLM
         (
             const t_gamma& gamma,
             UVLM::Types::VectorX& gamma_flat,
-            const t_zeta_col& zeta_col,
-            const uint& Ktotal
+            const t_zeta_col& zeta_col
         );
 		
         /**
@@ -361,7 +361,8 @@ void UVLM::Matrix::AIC
     const t_normals& normals,
     const UVLM::Types::VMopts& options,
     const bool horseshoe,
-    t_aic& aic
+    t_aic& aic,
+    const uint Ktotal
 )
 {
 
@@ -433,11 +434,12 @@ void UVLM::Matrix::AIC
                 
                 if (options.symmetry_condition)
                 {
-                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset[icol_surf],  offset[ii_surf], k_surf, kk_surf);
+                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col, k_surf_panel);
+            
                     UVLM::BiotSavart::multisurface_steady_wake
                     (
-                        zeta_symmetry[ii_surf],
-                        zeta_star_symmetry[ii_surf],
+                        zeta_symmetry[jpanel_surf],
+                        zeta_star_symmetry[jpanel_surf],
                         dummy_gamma,
                         dummy_gamma_star,
                         zeta_col[icol_surf],
@@ -469,11 +471,11 @@ void UVLM::Matrix::AIC
                 
                 if (options.symmetry_condition)
                 {
-                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset[icol_surf],  offset[ii_surf], k_surf, kk_surf);
+                    UVLM::Types::Block block_symmetry = aic_symmetry.block(offset_col[icol_surf], offset_panel[jpanel_surf], k_surf_col, k_surf_panel);
                     UVLM::BiotSavart::multisurface_unsteady_wake
                     (
-                        zeta_symmetry[ii_surf],
-                        zeta_star_symmetry[ii_surf],
+                        zeta_symmetry[jpanel_surf],
+                        zeta_star_symmetry[jpanel_surf],
                         dummy_gamma,
                         dummy_gamma_star,
                         zeta_col[icol_surf],
@@ -483,9 +485,14 @@ void UVLM::Matrix::AIC
                         0,
                         options.vortex_radius
                     ); 
+
                 }
             }
         }   
+    }
+        if (options.symmetry_condition)
+    {
+        aic -= aic_symmetry;
     }
 }
 /*-----------------------------------------------------------------------------
@@ -586,10 +593,7 @@ void UVLM::Matrix::AIC_sources
         }
     }
 
-    if (options.symmetry_condition)
-    {
-        aic -= aic_symmetry;
-    }
+
 }
 
 /*-----------------------------------------------------------------------------
@@ -613,6 +617,8 @@ void UVLM::Matrix::RHS
 )
 {
     const uint n_surf = options.NumSurfaces;
+    UVLM::Types::VecVecMatrixX zeta_star_symmetry;
+    UVLM::Types::VecMatrixX gamma_star_symmetry;
     rhs.setZero(Ktotal);
 
     // filling up RHS
@@ -624,7 +630,7 @@ void UVLM::Matrix::RHS
         uint N = uext_total_col[i_surf][0].cols();
         if (!options.Steady)
         {
-                        if (options.symmetry_condition)
+          if (options.symmetry_condition)
             {                
                 UVLM::Symmetry::generate_symmetric_surface_grids(zeta_star, options.symmetry_plane, zeta_star_symmetry);
                 UVLM::Symmetry::generate_symmetric_gamma_grid(gamma_star, gamma_star_symmetry);
@@ -654,7 +660,7 @@ void UVLM::Matrix::RHS
                                                                     options.ImageMethod,
                                                                     options.vortex_radius);
                     
-                                            if (options.symmetry_condition)
+                        if (options.symmetry_condition)
                         {
                             // TODO: check if -= is possible?? then gamma symmetry is not needed (same in postproc)
 
@@ -947,7 +953,8 @@ void UVLM::Matrix::aic_combined
                       nl_body.normals,
                       options,
                       options.horseshoe,
-                      aic_lifting_on_nonlifting);
+                      aic_lifting_on_nonlifting,
+                      lifting_surfaces.Ktotal);
     // Nonlifting on lifting surfaces
 	UVLM::Types::MatrixX aic_nonlifting_on_lifting_z = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
     UVLM::Types::MatrixX aic_nonlifting_on_lifting_x = UVLM::Types::MatrixX::Zero(lifting_surfaces.Ktotal, nl_body.Ktotal);
@@ -973,7 +980,8 @@ void UVLM::Matrix::aic_combined
                       nl_body.normals,
                       options,
                       options.horseshoe,
-                      aic_phantom_on_nonlifting);
+                      aic_phantom_on_nonlifting,
+                      phantom_surfaces.Ktotal);
                       
     UVLM::Types::copy_Mat_to_block(nl_body.aic_sources_z, aic, lifting_surfaces.Ktotal, lifting_surfaces.Ktotal);
     UVLM::Types::copy_Mat_to_block(aic_lifting_on_nonlifting, aic, lifting_surfaces.Ktotal,0);
@@ -993,7 +1001,8 @@ void UVLM::Matrix::aic_combined
                       lifting_surfaces.normals,
                       options,
                       options.horseshoe,
-                      aic_phantom_on_lifting);
+                      aic_phantom_on_lifting,
+                      phantom_surfaces.Ktotal);
     // Get matrix to enforce linear interpolated circulation on phantom panels   
     UVLM::Types::MatrixX circulation_bc_phantom = UVLM::Types::MatrixX::Zero(phantom_surfaces.Ktotal, aic.cols());
     UVLM::Matrix::aic_phantom_interp_condition(lifting_surfaces.Ktotal,
