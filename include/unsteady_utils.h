@@ -550,8 +550,6 @@ void UVLM::Unsteady::Utils::convect_unsteady_wake
             phantom_surfaces.gamma, //phantom
             phantom_surfaces.gamma_star, //phantom
             u_convection_phantom,
-            options.symmetry_condition,
-            options.symmetry_plane,
             options.ImageMethod,
             options.vortex_radius_wake_ind
         );
